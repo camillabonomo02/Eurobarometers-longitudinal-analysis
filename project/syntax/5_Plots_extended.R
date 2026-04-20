@@ -12,11 +12,24 @@
 #'   Figure 1a — Mappa EU: composite score medio per paese (wave 3, replica G&A)
 #'   Figure 1b — Mappa EU: cambiamento wave 1 → 3 (replica G&A)
 #'   Figure 1c — Mappa EU: composite score medio per paese (wave 4, ESTENSIONE)
-#'   Figure 2   — Barplot: medie per wave e tipo di applicazione (replica + estensione)
-#'   Figure 3   — Quantile regression: predittori individuali (replica + wave 4)
-#'   Figure 4   — Traiettoria longitudinale: Italia vs benchmark EU (ESTENSIONE)
-#'   Figure 5   — Scatter: UAI vs composite score per paese (ESTENSIONE)
-#'   Figure 6   — Random effects per paese con highlight Italia (ESTENSIONE)
+#'   Figure 2  — Barplot: medie per wave e tipo di applicazione (wave 1-3 only)
+#'   Figure 3  — Quantile regression: predittori individuali (replica + wave 4)
+#'   Figure 4  — Traiettoria longitudinale: Italia vs benchmark EU (rob2item)
+#'   Figure 5  — Scatter: UAI vs composite score per paese (rob2item)
+#'   Figure 6  — Random effects per paese con highlight Italia
+#'
+#' SCHEMA COLORI (coerente in tutte le figure):
+#'   Positivo / favorevole / miglioramento → BLU (#2166ac, "#4575b4")
+#'   Negativo / sfavorevole / peggioramento → ROSSO (#d73027, "#e41a1c")
+#'   Neutro / media → GRIGIO (#f7f7f7, "grey60")
+#'   Italia highlight → "#e41a1c" (rosso, coerente con posizione sotto media)
+#'
+#' FIX rispetto alla versione precedente:
+#'   - Figure 2: esclusa wave 4 (rob3 formulazione cambiata nel 2024)
+#'   - Figure 4: usa rob2item (2 item comparabili, scala 0-6) per tutte le wave
+#'   - Figure 5: usa rob2item per entrambi i panel (2017 e 2024)
+#'   - Palette unificata: rosso = negativo, blu = positivo ovunque
+#'   - Legende migliorate per tutti i grafici
 
 
 #' **Clear workspace**
@@ -25,13 +38,12 @@ rm(list = ls())
 #' **Load packages**
 library(doBy)
 library(ggplot2)
-library(ggrepel)    # etichette non sovrapposte nei scatter
+library(ggrepel)
 library(mitml)
 library(weights)
 library(grid)
 library(quantreg)
 library(dplyr)
-# install.packages(c("ggrepel")) se mancante
 
 source("./syntax/0_Start.R")
 
@@ -39,7 +51,7 @@ source("./syntax/0_Start.R")
 load("./data/dat.Rdata")
 rm(dati_mice)
 
-#' **Aggiungi rob2item e recode onde**
+#' **Aggiungi rob2item e recode wave**
 dati <- lapply(dati, function(x) {
   x$rob2item <- x$rob1 + x$rob2
   x
@@ -49,13 +61,33 @@ dati <- as.mitml.list(dati)
 dir.create("./plots", showWarnings = FALSE)
 
 
+#' ===================================================================
+#' # PALETTE GLOBALE
+#' ===================================================================
+#' Definita una sola volta, usata ovunque per coerenza visiva.
+
+#' Divergente: rosso (negativo) → bianco (neutro) → blu (positivo)
+pal_div <- colorRampPalette(c("#d73027", "#f46d43", "#fdae61",
+                              "#f7f7f7",
+                              "#abd9e9", "#74add1", "#4575b4"))
+
+#' Italia: rosso consistente (sotto media EU)
+col_italy   <- "#e41a1c"
+col_eu      <- "black"
+col_neutral <- "grey60"
+
+#' Wave: gradazione dal blu scuro (2012) al rosso (2024)
+col_waves <- c("2012" = "#4575b4",
+               "2014" = "#74add1",
+               "2017" = "#fdae61",
+               "2024" = "#d73027")
+
+
 
 
 #' ===================================================================
 #' # 1. Mappe EU [G&A + ESTENSIONE wave 4]
 #' ===================================================================
-#' Usa rworldmap come G&A. Se non disponibile, sostituire con
-#' approccio alternativo (vedere nota sotto).
 
 maps_available <- requireNamespace("rworldmap", quietly = TRUE)
 
@@ -63,7 +95,6 @@ if (maps_available) {
   library(rworldmap)
   
   #' **Standardizza composite score rispetto a wave 3** [G&A]
-  #' [FIX] describe.imp con 1 solo item crasha — uso weighted.mean diretto
   rob_w3_mean <- mean(sapply(dati, function(x) {
     sub <- x[x$wave == 3, ]
     weighted.mean(sub$rob, sub$wgt2, na.rm = TRUE)
@@ -87,21 +118,18 @@ if (maps_available) {
                    stringsAsFactors = FALSE)
   
   for (i in paesi) {
-    # Score standardizzato wave 3 [FIX: weighted.mean diretto]
     ds$rob_w3[ds$cntry == i] <- mean(sapply(dati, function(x) {
       sub <- x[x$cntry == i & x$wave_n == 3, ]
       if (nrow(sub) > 0) weighted.mean(sub$zrob, sub$wgt2, na.rm = TRUE) else NA
     }))
     
-    # Score standardizzato wave 4 (non standardizzato — estensione)
     ds$rob_w4[ds$cntry == i] <- {
       sub <- dat[dat$cntry == i & dat$wave == 4 &
                    !is.na(dat$rob) & !is.na(dat$wgt2), ]
       if (nrow(sub) > 0) weighted.mean(sub$rob, sub$wgt2) else NA
     }
     
-    # Cohen's d cambiamento wave 1 → 3 [G&A]
-    if (i != "HR") {  # HR assente in wave 1
+    if (i != "HR") {
       ds$delta_13[ds$cntry == i] <-
         ttest.imp(rob ~ wave_n, dati, weights = "wgt2",
                   paired = FALSE, print = FALSE,
@@ -109,7 +137,6 @@ if (maps_available) {
                               dati[[1]]$wave_n %in% c(1, 3)))$d * -1
     }
     
-    # Cohen's d cambiamento wave 1 → 4 [ESTENSIONE]
     if (i != "HR") {
       ds$delta_14[ds$cntry == i] <-
         ttest.imp(rob ~ wave_n, dati, weights = "wgt2",
@@ -121,7 +148,6 @@ if (maps_available) {
   
   ds$rob_w3[ds$rob_w3 < -.50] <- -.495  # Greece floor (G&A)
   
-  #' **Paesi EU senza UK** [ESTENSIONE]
   europeanUnion <- c("Austria","Belgium","Bulgaria","Cyprus",
                      "Czech Rep.","Denmark","Estonia","Finland","France",
                      "Germany","Greece","Croatia","Hungary","Ireland",
@@ -133,15 +159,15 @@ if (maps_available) {
                               nameJoinColumn = "cntry")
   sPDFmyCountries <- sPDF[sPDF$NAME %in% europeanUnion, ]
   
-  #' Palette colori per le mappe
-  #' 1a/1c score: blu (scettico) → bianco → rosso (positivo)
-  pal_score    <- colorRampPalette(c("#4575b4", "#abd9e9", "#f7f7f7",
-                                     "#fdae61", "#d73027"))(12)
-  #' 1b cambiamento: rosso = calo (negativo), bianco = stabile, blu = aumento
-  pal_change   <- colorRampPalette(c("#d73027", "#f7f7f7", "#4575b4"))(12)
-  #' 1c score 2024: sequenziale giallo → arancio → rosso scuro
-  pal_score_w4 <- colorRampPalette(c("#ffffb2", "#fecc5c", "#fd8d3c",
-                                     "#f03b20", "#bd0026"))(12)
+  #' **Palette per le mappe — schema unificato**
+  #' Score: rosso (scettico, sotto media) → bianco → blu (favorevole, sopra media)
+  pal_score <- pal_div(12)
+  #' Cambiamento: rosso (calo) → bianco → blu (miglioramento)
+  pal_change <- pal_div(12)
+  #' Score wave 4 (raw, non standardizzato): stesso schema divergente
+  #' centrato sul valore mediano della distribuzione (~5.5)
+  pal_score_w4 <- pal_div(12)
+  
   
   #' --- Figure 1a: Score wave 3 [G&A] ---
   png("./plots/Figure_1a_map_wave3.png",
@@ -157,12 +183,15 @@ if (maps_available) {
                               addLegend = FALSE,
                               colourPalette = pal_score,
                               mapTitle = "Attitudes towards robots 2017 (standardized)")
-  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2))
+  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
+                          legendLabels = "all"))
+  mtext("Red = below average (negative)    Blue = above average (positive)",
+        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Salvato: Figure_1a_map_wave3.png\n")
   
-  #' --- Figure 1b: Cambiamento wave 1 → 3 [G&A + scala corretta] ---
-  #' Scala ristretta da -0.5 a 0.1 (i dati non superano questi estremi)
+  
+  #' --- Figure 1b: Cambiamento wave 1 → 3 ---
   png("./plots/Figure_1b_map_change13.png",
       width = 7, height = 7, units = "in", res = 150)
   op <- par(fin = c(4, 10), mfcol = c(1, 1),
@@ -176,9 +205,13 @@ if (maps_available) {
                               addLegend = FALSE,
                               colourPalette = pal_change,
                               mapTitle = "Change in attitudes 2012-2017 (Cohen's d)")
-  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2))
+  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
+                          legendLabels = "all"))
+  mtext("Red = decline    Blue = improvement",
+        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Salvato: Figure_1b_map_change13.png\n")
+  
   
   #' --- Figure 1c: Score wave 4 [ESTENSIONE] ---
   png("./plots/Figure_1c_map_wave4.png",
@@ -194,7 +227,10 @@ if (maps_available) {
                               addLegend = FALSE,
                               colourPalette = pal_score_w4,
                               mapTitle = "Attitudes towards robots and AI 2024")
-  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2))
+  do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
+                          legendLabels = "all"))
+  mtext("Red = more negative    Blue = more positive",
+        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Salvato: Figure_1c_map_wave4.png\n")
   
@@ -211,21 +247,19 @@ if (maps_available) {
 
 
 #' ===================================================================
-#' # 2. Barplot medie per wave [G&A + ESTENSIONE wave 4]
+#' # 2. Barplot medie per wave [G&A — solo wave 1-3]
 #' ===================================================================
-#' Estende Figure 2 di G&A aggiungendo la wave 4 (rob e rob2item).
-#' feel1-4 non disponibili in wave 4 — inclusi solo per wave 1-3.
+#' [FIX] Wave 4 esclusa: rob3 formulazione cambiata nel 2024.
+#' Il confronto longitudinale 2012-2024 è nella Figure 4 (rob2item).
 
-cat("\n=== FIGURA 2: MEDIE PER WAVE ===\n")
+cat("\n=== FIGURA 2: MEDIE PER WAVE (1-3, replica G&A) ===\n")
 
-#' **Raccogli medie per wave**
 get_wave_means <- function(wave_num, items, dati) {
   describe.imp(dati, items = items, weights = "wgt2",
                stats = c("mean", "sd"), digits = 10,
                subset = (dati[[1]]$wave_n == wave_num))
 }
 
-# Recode wave_n se non ancora presente
 if (!"wave_n" %in% names(dati[[1]])) {
   dati <- lapply(dati, function(x) {
     x$wave_n <- as.numeric(as.character(x$wave))
@@ -237,44 +271,28 @@ if (!"wave_n" %in% names(dati[[1]])) {
 w1 <- get_wave_means(1, c("rob", "feel1", "feel2"), dati)
 w2 <- get_wave_means(2, c("rob", "feel1", "feel2", "feel3", "feel4"), dati)
 w3 <- get_wave_means(3, c("rob", "feel1", "feel2", "feel3", "feel4"), dati)
-# [FIX] w4 ha un solo item — describe.imp crasha, uso weighted.mean diretto
-w4_mean <- mean(sapply(dati, function(x) {
-  sub <- x[x$wave_n == 4, ]
-  weighted.mean(sub$rob, sub$wgt2, na.rm = TRUE)
-}))
-w4_sd <- mean(sapply(dati, function(x) {
-  sub <- x[x$wave_n == 4, ]
-  sqrt(wtd.var(sub$rob, sub$wgt2))
-}))
-w4 <- matrix(c(1, sum(dati[[1]]$wave_n == 4), w4_mean, w4_sd),
-             nrow = 1,
-             dimnames = list("rob", c("vars", "n", "mean", "sd")))
 
-#' **Dataset per ggplot2** (formato long)
 plot_data <- data.frame(
-  wave  = rep(c("2012", "2014", "2017", "2024"), each = 5),
+  wave  = rep(c("2012", "2014", "2017"), each = 5),
   item  = rep(c("General\nappraisal", "Medical\noperation",
                 "Assisting\nat work", "Services\nfor elderly",
-                "Driverless\ncars"), 4),
+                "Driverless\ncars"), 3),
   mean  = c(
     w1["rob","mean"],  w1["feel1","mean"], w1["feel2","mean"], NA, NA,
     w2["rob","mean"],  w2["feel1","mean"], w2["feel2","mean"],
     w2["feel3","mean"], w2["feel4","mean"],
     w3["rob","mean"],  w3["feel1","mean"], w3["feel2","mean"],
-    w3["feel3","mean"], w3["feel4","mean"],
-    w4["rob","mean"],  NA, NA, NA, NA
+    w3["feel3","mean"], w3["feel4","mean"]
   ),
   sd = c(
     w1["rob","sd"],    w1["feel1","sd"],   w1["feel2","sd"],   NA, NA,
     w2["rob","sd"],    w2["feel1","sd"],   w2["feel2","sd"],
     w2["feel3","sd"],   w2["feel4","sd"],
     w3["rob","sd"],    w3["feel1","sd"],   w3["feel2","sd"],
-    w3["feel3","sd"],   w3["feel4","sd"],
-    w4["rob","sd"],    NA, NA, NA, NA
+    w3["feel3","sd"],   w3["feel4","sd"]
   )
 )
-plot_data$wave <- factor(plot_data$wave,
-                         levels = c("2012","2014","2017","2024"))
+plot_data$wave <- factor(plot_data$wave, levels = c("2012","2014","2017"))
 plot_data$item <- factor(plot_data$item,
                          levels = c("General\nappraisal", "Medical\noperation",
                                     "Assisting\nat work", "Services\nfor elderly",
@@ -286,13 +304,19 @@ p2 <- ggplot(plot_data[!is.na(plot_data$mean), ],
            width = 0.7, colour = "grey30", linewidth = 0.2) +
   geom_errorbar(aes(ymin = mean - sd/2, ymax = mean + sd/2),
                 position = position_dodge(0.8), width = 0.2) +
-  scale_fill_manual(values = c("2012" = "#2166ac", "2014" = "#74add1",
-                               "2017" = "#fdae61", "2024" = "#d73027"),
+  #' Etichetta anno sopra ogni barra
+  geom_text(aes(label = wave, y = mean + sd/2 + 0.25),
+            position = position_dodge(0.8),
+            size = 2.8, colour = "grey30") +
+  scale_fill_manual(values = c("2012" = "#4575b4",
+                               "2014" = "#74add1",
+                               "2017" = "#fdae61"),
                     name = "Wave") +
   scale_y_continuous(limits = c(0, 9), breaks = 0:9) +
-  labs(title = "Mean attitudes towards robots and AI in Europe",
-       subtitle = "Weighted means across EU27 (2012-2024)",
-       x = NULL, y = "Mean attitude score (0-9)") +
+  labs(title = "Mean attitudes towards robots in Europe (2012-2017)",
+       subtitle = "Weighted means, EU27. Wave 2024 excluded (rob3 item not comparable; see Fig. 4)",
+       x = NULL,
+       y = "Mean attitude score (0-9)") +
   theme_minimal(base_size = 13) +
   theme(legend.position = "bottom",
         panel.grid.major.x = element_blank())
@@ -300,7 +324,7 @@ p2 <- ggplot(plot_data[!is.na(plot_data$mean), ],
 ggsave("./plots/Figure_2_attitudes_by_wave.png", p2,
        width = 12, height = 7, dpi = 150)
 cat("Salvato: Figure_2_attitudes_by_wave.png\n")
-rm(w1, w2, w3, w4, plot_data)
+rm(w1, w2, w3, plot_data, p2)
 
 
 
@@ -308,10 +332,6 @@ rm(w1, w2, w3, w4, plot_data)
 #' ===================================================================
 #' # 3. Quantile regression [G&A + ESTENSIONE wave 4]
 #' ===================================================================
-
-#' --- Quantile regression: usa primo dataset imputato ---
-#' [NOTA] rq non supporta pooling nativo su imputazioni multiple.
-#' G&A usano il primo dataset (fm[[1]]) per il plot — stessa scelta qui.
 
 d1 <- dati[[1]]
 d1$white  <- as.factor(d1$white)
@@ -356,12 +376,13 @@ rm(d1, d1_123, fm_plot, fm_plot4)
 
 
 
+
 #' ===================================================================
 #' # 4. Traiettoria longitudinale Italia vs benchmark [ESTENSIONE]
 #' ===================================================================
-#' Composite score ponderato per wave: IT, DE, FR, DK, SE, GR, PT, ES
+#' [FIX] Usa rob2item (2 item comparabili, scala 0-6) per tutte le wave.
 
-cat("\n=== FIGURA 4: TRAIETTORIA LONGITUDINALE ITALIA vs BENCHMARK ===\n")
+cat("\n=== FIGURA 4: TRAIETTORIA LONGITUDINALE (rob2item) ===\n")
 
 benchmark_countries <- c("IT", "DE", "FR", "DK", "SE", "GR", "PT", "ES")
 anni <- c(2012, 2014, 2017, 2024)
@@ -369,41 +390,28 @@ anni <- c(2012, 2014, 2017, 2024)
 traj_data <- do.call(rbind, lapply(benchmark_countries, function(cc) {
   do.call(rbind, lapply(1:4, function(w) {
     sub <- dat[dat$cntry == cc & dat$wave == w &
-                 !is.na(dat$rob) & !is.na(dat$wgt2), ]
+                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
     if (nrow(sub) == 0) return(NULL)
-    data.frame(
-      cntry = cc,
-      anno  = anni[w],
-      wave  = w,
-      mean  = weighted.mean(sub$rob, sub$wgt2),
-      n     = nrow(sub)
-    )
+    data.frame(cntry = cc, anno = anni[w], wave = w,
+               mean = weighted.mean(sub$rob2item, sub$wgt2), n = nrow(sub))
   }))
 }))
 
-# EU media
 eu_traj <- do.call(rbind, lapply(1:4, function(w) {
-  sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
+  sub <- dat[dat$wave == w & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
   data.frame(cntry = "EU27", anno = anni[w], wave = w,
-             mean = weighted.mean(sub$rob, sub$wgt2), n = nrow(sub))
+             mean = weighted.mean(sub$rob2item, sub$wgt2), n = nrow(sub))
 }))
 traj_data <- rbind(traj_data, eu_traj)
 
-#' Colori e linetype
-paese_colors <- c(
-  IT = "#e41a1c", DE = "#377eb8", FR = "#4daf4a",
-  DK = "#984ea3", SE = "#ff7f00", GR = "#a65628",
-  PT = "#f781bf", ES = "#999999", EU27 = "black"
-)
-paese_types <- c(
-  IT = "solid", DE = "dashed", FR = "dashed",
-  DK = "dotted", SE = "dotted", GR = "dashed",
-  PT = "dotted", ES = "dotted", EU27 = "solid"
-)
-paese_sizes <- c(
-  IT = 1.5, DE = 0.8, FR = 0.8, DK = 0.8, SE = 0.8,
-  GR = 0.8, PT = 0.8, ES = 0.8, EU27 = 1.2
-)
+paese_colors <- c(IT = col_italy, DE = "#377eb8", FR = "#4daf4a",
+                  DK = "#984ea3", SE = "#ff7f00", GR = "#a65628",
+                  PT = "#f781bf", ES = "#999999", EU27 = col_eu)
+paese_types <- c(IT = "solid", DE = "dashed", FR = "dashed",
+                 DK = "dotted", SE = "dotted", GR = "dashed",
+                 PT = "dotted", ES = "dotted", EU27 = "solid")
+paese_sizes <- c(IT = 1.5, DE = 0.8, FR = 0.8, DK = 0.8, SE = 0.8,
+                 GR = 0.8, PT = 0.8, ES = 0.8, EU27 = 1.2)
 
 traj_data$cntry <- factor(traj_data$cntry,
                           levels = c("IT","EU27","DE","FR","DK",
@@ -418,16 +426,16 @@ p4 <- ggplot(traj_data, aes(x = anno, y = mean,
   scale_linetype_manual(values = paese_types, name = "Country") +
   scale_linewidth_manual(values = paese_sizes, name = "Country") +
   scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  scale_y_continuous(limits = c(4, 8), breaks = seq(4, 8, 0.5)) +
+  scale_y_continuous(breaks = seq(2, 6, 0.5)) +
   geom_text(data = subset(traj_data, anno == 2024 & cntry == "IT"),
-            aes(label = "Italy"), nudge_x = 0.5, nudge_y = 0.01,
-            colour = "#e41a1c", size = 3.5, fontface = "bold") +
+            aes(label = "Italy"), nudge_x = 0.5, nudge_y = 0.02,
+            colour = col_italy, size = 3.5, fontface = "bold") +
   geom_text(data = subset(traj_data, anno == 2024 & cntry == "EU27"),
             aes(label = "EU27"), nudge_x = 0.5,
-            colour = "black", size = 3.5) +
+            colour = col_eu, size = 3.5) +
   labs(title = "Attitudes toward robots and AI: Italy vs. EU benchmark",
-       subtitle = "Weighted composite score (0-9), 2012-2024",
-       x = "Year", y = "Mean composite score (rob)") +
+       subtitle = "Weighted composite score (rob2item, 2 comparable items, 0-6), 2012-2024",
+       x = "Year", y = "Mean composite score (rob2item, 0-6)") +
   theme_minimal(base_size = 13) +
   theme(legend.position = "right",
         panel.grid.minor = element_blank())
@@ -443,67 +451,78 @@ rm(traj_data, eu_traj, p4, benchmark_countries)
 #' ===================================================================
 #' # 5. UAI vs composite score per paese [ESTENSIONE]
 #' ===================================================================
-#' Scatter: UAI paese (asse x) vs score medio wave 3 e wave 4 (asse y)
-#' con retta di regressione e highlight Italia
+#' [FIX] Usa rob2item per entrambi i panel (2017 e 2024).
 
-cat("\n=== FIGURA 5: UAI vs COMPOSITE SCORE ===\n")
+cat("\n=== FIGURA 5: UAI vs COMPOSITE SCORE (rob2item) ===\n")
 
-#' Calcola medie per paese per wave 3 e wave 4
 scatter_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
   uai_val <- dat$UAI[dat$cntry == cc][1]
   m3 <- {
     sub <- dat[dat$cntry == cc & dat$wave == 3 &
-                 !is.na(dat$rob) & !is.na(dat$wgt2), ]
-    if (nrow(sub) > 0) weighted.mean(sub$rob, sub$wgt2) else NA
+                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+    if (nrow(sub) > 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
   }
   m4 <- {
     sub <- dat[dat$cntry == cc & dat$wave == 4 &
-                 !is.na(dat$rob) & !is.na(dat$wgt2), ]
-    if (nrow(sub) > 0) weighted.mean(sub$rob, sub$wgt2) else NA
+                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+    if (nrow(sub) > 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
   }
   data.frame(cntry = cc, UAI = uai_val, score_w3 = m3, score_w4 = m4)
 }))
 scatter_data$is_italy <- scatter_data$cntry == "IT"
 
-#' Plot wave 3 (replica logica G&A) + wave 4 affiancate
+#' **Correlazioni per il testo della tesi**
+r_2017 <- cor(scatter_data$UAI, scatter_data$score_w3, use = "complete.obs")
+r_2024 <- cor(scatter_data$UAI, scatter_data$score_w4, use = "complete.obs")
+cat(sprintf("  r(UAI, rob2item_2017) = %.3f\n", r_2017))
+cat(sprintf("  r(UAI, rob2item_2024) = %.3f\n", r_2024))
+
 scatter_long <- rbind(
-  data.frame(cntry = scatter_data$cntry,
-             UAI   = scatter_data$UAI,
-             score = scatter_data$score_w3,
-             wave  = "2017",
+  data.frame(cntry = scatter_data$cntry, UAI = scatter_data$UAI,
+             score = scatter_data$score_w3, wave = "2017 (rob2item)",
              is_italy = scatter_data$is_italy),
-  data.frame(cntry = scatter_data$cntry,
-             UAI   = scatter_data$UAI,
-             score = scatter_data$score_w4,
-             wave  = "2024",
+  data.frame(cntry = scatter_data$cntry, UAI = scatter_data$UAI,
+             score = scatter_data$score_w4, wave = "2024 (rob2item)",
              is_italy = scatter_data$is_italy)
 )
 scatter_long <- scatter_long[!is.na(scatter_long$score) &
                                !is.na(scatter_long$UAI), ]
 
+#' **Etichette r per annotazione nei facet**
+r_labels <- data.frame(
+  wave = c("2017 (rob2item)", "2024 (rob2item)"),
+  label = c(sprintf("r = %.3f", r_2017), sprintf("r = %.3f", r_2024)),
+  UAI = 100, score = max(scatter_long$score, na.rm = TRUE) * 0.95
+)
+
 p5 <- ggplot(scatter_long,
              aes(x = UAI, y = score, colour = is_italy)) +
+  geom_smooth(method = "lm", se = TRUE, colour = "grey50",
+              fill = "grey85", linewidth = 0.7, linetype = "dashed") +
   geom_point(aes(size = is_italy)) +
-  geom_smooth(method = "lm", se = TRUE, colour = "grey40",
-              linewidth = 0.7, linetype = "dashed") +
   geom_text_repel(aes(label = cntry),
                   size = 2.8, max.overlaps = 20,
                   segment.size = 0.2) +
-  scale_colour_manual(values = c("FALSE" = "grey50", "TRUE" = "#e41a1c"),
-                      guide = "none") +
+  geom_text(data = r_labels, aes(x = UAI, y = score, label = label),
+            inherit.aes = FALSE, hjust = 1, vjust = 1,
+            size = 4, fontface = "italic", colour = "grey30") +
+  scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
+                      labels = c("EU countries", "Italy"),
+                      name = NULL) +
   scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4), guide = "none") +
   facet_wrap(~ wave, scales = "free_y") +
   labs(title = "Uncertainty Avoidance Index vs. robot attitudes by country",
-       subtitle = "Each dot = one EU country; red = Italy; line = OLS regression",
+       subtitle = "Each dot = one EU country; dashed line = OLS regression with 95% CI",
        x = "Hofstede Uncertainty Avoidance Index (UAI)",
-       y = "Weighted mean composite score") +
+       y = "Weighted mean composite score (rob2item, 0-6)") +
   theme_minimal(base_size = 13) +
-  theme(strip.text = element_text(size = 13, face = "bold"))
+  theme(strip.text = element_text(size = 13, face = "bold"),
+        legend.position = "bottom")
 
 ggsave("./plots/Figure_5_UAI_scatter.png", p5,
        width = 12, height = 6, dpi = 150)
 cat("Salvato: Figure_5_UAI_scatter.png\n")
-rm(scatter_data, scatter_long, p5)
+rm(scatter_data, scatter_long, r_labels, r_2017, r_2024, p5)
 
 
 
@@ -511,91 +530,118 @@ rm(scatter_data, scatter_long, p5)
 #' ===================================================================
 #' # 6. Random effects per paese con highlight Italia [ESTENSIONE]
 #' ===================================================================
-#' Visualizza i residui paese dal Modello A2 (wave 1-4),
-#' ordinati dal piu' basso al piu' alto, con Italia evidenziata.
-#' Usa il primo dataset imputato (come nella sezione 6 dello script 4).
 
-cat("\n=== FIGURA 6: RANDOM EFFECTS PAESE ===\n")
+cat("\n=== FIGURA 6: RANDOM EFFECTS PER PAESE ===\n")
 
+#' Carica modelli (già stimati nello script 4)
+load("./data/dat.Rdata")
+rm(dati_mice)
+dati <- lapply(dati, function(x) {
+  x$rob2item <- x$rob1 + x$rob2
+  x
+})
+dati <- as.mitml.list(dati)
+
+dati <- within(dati, {
+  white <- as.factor(white)
+  sex   <- as.factor(sex)
+  wave  <- as.factor(wave)
+  age   <- scale(age,  scale = FALSE) / 10
+  educ  <- scale(educ, scale = FALSE)
+})
+
+uai_mean <- mean(unique(dati[[1]][, c("cid", "UAI")])$UAI, na.rm = TRUE)
+uai_sd   <- sd(unique(dati[[1]][, c("cid", "UAI")])$UAI,   na.rm = TRUE)
+dati <- lapply(dati, function(x) {
+  x$UAI_z <- (x$UAI - uai_mean) / uai_sd
+  x
+})
+dati <- as.mitml.list(dati)
+
+#' Stima modelli A2 e B2 (wave 1-4) per estrarre random effects
 library(lme4)
+library(lmerTest)
 
-d1 <- dati[[1]]
-d1$wave    <- as.factor(d1$wave)
-d1$white   <- as.factor(d1$white)
-d1$sex     <- as.factor(d1$sex)
-d1$age_s   <- as.numeric(d1$age) / 10
-uai_mean   <- mean(unique(d1[, c("cid","UAI")])$UAI, na.rm = TRUE)
-uai_sd     <- sd(unique(d1[, c("cid","UAI")])$UAI,   na.rm = TRUE)
-d1$UAI_z   <- (d1$UAI - uai_mean) / uai_sd
-d1$educ_s  <- as.numeric(scale(d1$educ, scale = FALSE))
-d1$wgt2_n  <- d1$wgt2 / mean(d1$wgt2, na.rm = TRUE)
+m_A2 <- lapply(dati, function(x) {
+  lmer(rob ~ wave + sex + age + educ + white +
+         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+         (1 | cid),
+       data = x, weights = x$wgt2,
+       control = lmerControl(optimizer = "nloptwrap"))
+})
 
-m_A2 <- lmer(rob ~ wave + sex + age_s + educ_s + white +
-               AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-               (1 | cid),
-             data    = d1,
-             weights = wgt2_n,
-             REML    = FALSE,
-             control = lmerControl(optimizer = "nloptwrap"))
+m_B2 <- lapply(dati, function(x) {
+  lmer(rob ~ wave + sex + age + educ + white +
+         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
+         (1 | cid),
+       data = x, weights = x$wgt2,
+       control = lmerControl(optimizer = "nloptwrap"))
+})
 
-m_B2 <- lmer(rob ~ wave + sex + age_s + educ_s + white +
-               AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-               (1 | cid),
-             data    = d1,
-             weights = wgt2_n,
-             REML    = FALSE,
-             control = lmerControl(optimizer = "nloptwrap"))
+#' Pool random effects (media across imputazioni)
+re_A2 <- Reduce("+", lapply(m_A2, function(m) ranef(m)$cid)) / length(m_A2)
+re_B2 <- Reduce("+", lapply(m_B2, function(m) ranef(m)$cid)) / length(m_B2)
 
-re_A2 <- ranef(m_A2)$cid
-re_B2 <- ranef(m_B2)$cid
 re_A2$cid <- as.integer(rownames(re_A2))
 re_B2$cid <- as.integer(rownames(re_B2))
-cid_cntry <- unique(d1[, c("cid", "cntry")])
+cid_cntry <- unique(dati[[1]][, c("cid", "cntry")])
 re_A2 <- merge(re_A2, cid_cntry, by = "cid")
 re_B2 <- merge(re_B2, cid_cntry, by = "cid")
 names(re_A2)[2] <- "re_A2"
 names(re_B2)[2] <- "re_B2"
 
-re_df <- merge(re_A2[, c("cntry","re_A2")],
-               re_B2[, c("cntry","re_B2")], by = "cntry")
-re_df$is_italy <- re_df$cntry == "IT"
-re_df <- re_df[order(re_df$re_A2), ]
-re_df$cntry <- factor(re_df$cntry, levels = re_df$cntry)
-
-#' Formato long per ggplot
 re_long <- rbind(
-  data.frame(cntry = re_df$cntry, re = re_df$re_A2,
-             modello = "A2 (without UAI)", is_italy = re_df$is_italy),
-  data.frame(cntry = re_df$cntry, re = re_df$re_B2,
-             modello = "B2 (with UAI)", is_italy = re_df$is_italy)
+  data.frame(cntry = re_A2$cntry, re = re_A2$re_A2,
+             modello = "A2 (without UAI)"),
+  data.frame(cntry = re_B2$cntry, re = re_B2$re_B2,
+             modello = "B2 (with UAI)")
 )
+re_long$is_italy <- re_long$cntry == "IT"
 
-p6 <- ggplot(re_long, aes(x = cntry, y = re, group = modello)) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
-  # linee separate per evitare conflitto colour + linetype variabili
-  geom_line(data = subset(re_long, modello == "A2 (without UAI)"),
-            colour = "grey50", linetype = "solid", alpha = 0.5) +
-  geom_line(data = subset(re_long, modello == "B2 (with UAI)"),
-            colour = "grey30", linetype = "dashed", alpha = 0.5) +
+#' Ordina paesi per residuo A2
+ord <- re_A2$cntry[order(re_A2$re_A2)]
+re_long$cntry <- factor(re_long$cntry, levels = ord)
+
+p6 <- ggplot(re_long, aes(x = cntry, y = re)) +
+  geom_hline(yintercept = 0, colour = "grey30", linetype = "dashed",
+             alpha = 0.5) +
+  #' Linee verticali che collegano A2 e B2 per ogni paese
+  #' (disegnate PRIMA dei punti così i punti restano in primo piano)
+  geom_line(aes(group = cntry, colour = is_italy),
+            linewidth = 0.6, alpha = 0.5) +
   geom_point(aes(colour = is_italy, shape = modello), size = 2.5) +
-  scale_colour_manual(values = c("FALSE" = "grey60", "TRUE" = "#e41a1c"),
-                      guide = "none") +
+  scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
+                      labels = c("Other EU countries", "Italy"),
+                      name = NULL) +
   scale_shape_manual(values = c("A2 (without UAI)" = 16,
-                                "B2 (with UAI)"   = 17),
+                                "B2 (with UAI)"    = 17),
                      name = "Model") +
   annotate("text", x = which(levels(re_long$cntry) == "IT"),
            y = min(re_long$re) - 0.06,
-           label = "Italy", colour = "#e41a1c",
+           label = "Italy", colour = col_italy,
            size = 3.5, fontface = "bold") +
+  annotate("text", x = length(levels(re_long$cntry)) - 1,
+           y = max(re_long$re) + 0.04,
+           label = "Above model\nprediction",
+           colour = "#4575b4", size = 3, fontface = "italic",
+           hjust = 0.5) +
+  annotate("text", x = 2,
+           y = min(re_long$re) + 0.04,
+           label = "Below model\nprediction",
+           colour = "#d73027", size = 3, fontface = "italic",
+           hjust = 0.5) +
   labs(title = "Country random effects: Model A2 vs. Model B2 (wave 1-4)",
-       subtitle = "Negative values = below EU average after controlling for structural predictors",
+       subtitle = "Lines connect A2 → B2 for each country. Negative = more sceptical than predictors would expect",
        x = "Country", y = "Random intercept (residual)") +
   theme_minimal(base_size = 12) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-        legend.position = "bottom")
+        legend.position = "bottom",
+        legend.box = "horizontal")
 
 ggsave("./plots/Figure_6_random_effects.png", p6,
        width = 13, height = 6, dpi = 150)
+cat("Salvato: Figure_6_random_effects.png\n")
+
 
 cat("\n=== GRAFICI COMPLETATI ===\n")
 cat("File salvati in ./plots/\n")
