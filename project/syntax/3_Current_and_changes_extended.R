@@ -178,34 +178,36 @@ ttest.imp(rob ~ isItaly, data = dati, weights = "wgt2",
 #' -------------------------------------------------------------------
 #' ## 3b. Between-country differences — wave 4 [EXTENSION]
 #' -------------------------------------------------------------------
-cat("\n=== BETWEEN-COUNTRY DIFFERENCES — WAVE 4 (2024) ===\n")
+#' rob2item used throughout (two-item comparable composite, range 0-6),
+#' because rob3 wording changed in wave 4 and renders rob non-comparable.
+cat("\n=== BETWEEN-COUNTRY DIFFERENCES — WAVE 4 (2024, rob2item) ===\n")
 
 cat("\nDenmark vs. rest of EU:\n")
-ttest.imp(rob ~ isDenmark, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isDenmark, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nSweden vs. rest of EU:\n")
-ttest.imp(rob ~ isSweden, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isSweden, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nGreece vs. rest of EU:\n")
-ttest.imp(rob ~ isGreece, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isGreece, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nFrance vs. rest of EU:\n")
-ttest.imp(rob ~ isFrance, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isFrance, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nItaly vs. rest of EU (wave 4):\n")
-ttest.imp(rob ~ isItaly, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isItaly, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nGermany vs. rest of EU (wave 4):\n")
-ttest.imp(rob ~ isGermany, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isGermany, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 cat("\nPortugal vs. rest of EU (wave 4):\n")
-ttest.imp(rob ~ isPortugal, data = dati, weights = "wgt2",
+ttest.imp(rob2item ~ isPortugal, data = dati, weights = "wgt2",
           subset = (dati[[1]]$wave == 4))
 
 
@@ -242,18 +244,19 @@ cor.imp(dati, items = c("rob", "age", "educ"),
 #' -------------------------------------------------------------------
 #' ## 4b. Wave 4 [EXTENSION]
 #' -------------------------------------------------------------------
-cat("\n=== ASSOCIATIONS WITH INDIVIDUAL CHARACTERISTICS — WAVE 4 ===\n")
+#' rob2item used throughout (two-item comparable composite, range 0-6).
+cat("\n=== ASSOCIATIONS WITH INDIVIDUAL CHARACTERISTICS — WAVE 4 (rob2item) ===\n")
 
 cat("\nSex (wave 4):\n")
-ttest.imp(rob ~ sex, dati, weights = "wgt2", paired = FALSE,
+ttest.imp(rob2item ~ sex, dati, weights = "wgt2", paired = FALSE,
           subset = (dati[[1]]$wave == 4))
 
 cat("\nWhite-collar vs. other (wave 4):\n")
-ttest.imp(rob ~ white_wc, dati, weights = "wgt2", paired = FALSE,
+ttest.imp(rob2item ~ white_wc, dati, weights = "wgt2", paired = FALSE,
           subset = (dati[[1]]$wave == 4))
 
 cat("\nAge and education (correlations, wave 4):\n")
-cor.imp(dati, items = c("rob", "age", "educ"),
+cor.imp(dati, items = c("rob2item", "age", "educ"),
         weights = "wgt2",
         subset  = (dati[[1]]$wave == 4))
 
@@ -276,18 +279,18 @@ cor.imp(dati, items = c("rob", "age", "educ"),
         weights = "wgt2",
         subset  = (dati[[1]]$wave == 3 & dati[[1]]$cid == 16))
 
-cat("\n=== ASSOCIATIONS — ITALY, WAVE 4 ===\n")
+cat("\n=== ASSOCIATIONS — ITALY, WAVE 4 (rob2item) ===\n")
 
 cat("\nSex — Italy, wave 4:\n")
-ttest.imp(rob ~ sex, dati, weights = "wgt2", paired = FALSE,
+ttest.imp(rob2item ~ sex, dati, weights = "wgt2", paired = FALSE,
           subset = (dati[[1]]$wave == 4 & dati[[1]]$cid == 16))
 
 cat("\nWhite-collar — Italy, wave 4:\n")
-ttest.imp(rob ~ white_wc, dati, weights = "wgt2", paired = FALSE,
+ttest.imp(rob2item ~ white_wc, dati, weights = "wgt2", paired = FALSE,
           subset = (dati[[1]]$wave == 4 & dati[[1]]$cid == 16))
 
 cat("\nAge and education — Italy, wave 4:\n")
-cor.imp(dati, items = c("rob", "age", "educ"),
+cor.imp(dati, items = c("rob2item", "age", "educ"),
         weights = "wgt2",
         subset  = (dati[[1]]$wave == 4 & dati[[1]]$cid == 16))
 

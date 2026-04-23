@@ -694,11 +694,14 @@ rm(m_A2_list, m_B2_list, re_A2, re_B2, re_long, ord, p6,
 
 cat("\n=== FIGURE 7: ICC DECLINE ACROSS WAVES ===\n")
 
+#' rob2item used for all four waves to ensure construct consistency:
+#' ICC compares the same two-item composite across time, so the trend
+#' reflects genuine attitude convergence rather than a change in measurement.
 icc_vals <- do.call(rbind, lapply(1:4, function(w) {
-  outcome <- if (w <= 3) "rob" else "rob2item"
   vars <- sapply(dati, function(x) {
-    sub <- x[x$wave_n == w, ]
-    fit <- lmer(as.formula(paste(outcome, "~ 1 + (1 | cid)")),
+    wave_int <- as.integer(as.character(x$wave))
+    sub <- x[!is.na(wave_int) & wave_int == w, ]
+    fit <- lmer(rob2item ~ 1 + (1 | cid),
                 data = sub, weights = sub$wgt2,
                 control = lmerControl(optimizer = "nloptwrap"))
     vc <- as.data.frame(VarCorr(fit))
@@ -706,11 +709,8 @@ icc_vals <- do.call(rbind, lapply(1:4, function(w) {
     v_res <- vc$vcov[vc$grp == "Residual"]
     v_cid / (v_cid + v_res)
   })
-  data.frame(
-    wave  = c(2012, 2014, 2017, 2024)[w],
-    ICC   = mean(vars),
-    scale = if (w <= 3) "rob (0\u20139)" else "rob2item (0\u20136)"
-  )
+  data.frame(wave = c(2012, 2014, 2017, 2024)[w],
+             ICC  = mean(vars))
 }))
 
 p7 <- ggplot(icc_vals, aes(x = wave, y = ICC)) +
@@ -719,15 +719,12 @@ p7 <- ggplot(icc_vals, aes(x = wave, y = ICC)) +
   geom_point(colour = "#d73027", size = 4) +
   geom_text(aes(label = sprintf("%.3f", ICC), y = ICC + 0.003),
             size = 4.5, fontface = "bold", colour = "grey20") +
-  geom_text(aes(label = scale, y = -0.004),
-            size = 3, colour = "grey50") +
   scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  scale_y_continuous(limits = c(-0.008, 0.12),
+  scale_y_continuous(limits = c(0, 0.12),
                      breaks = seq(0, 0.12, 0.02),
                      labels = scales::percent_format(accuracy = 1)) +
   labs(title = "Between-country variance (ICC) across waves: convergence of EU attitudes",
-       subtitle = paste("ICC = proportion of attitude variance attributable to country.",
-                        "Wave 4 uses rob2item (0\u20136); waves 1\u20133 use rob (0\u20139)."),
+       subtitle = "rob2item (two comparable items, range 0\u20136) used across all four waves. ICC = % variance attributable to country.",
        x = "Survey year", y = "ICC (% variance explained by country)") +
   theme_minimal(base_size = 13) +
   theme(panel.grid.major.x = element_blank(),
@@ -923,12 +920,14 @@ sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) &
               !is.na(dat$sex) & !is.na(dat$educ) &
               !is.na(dat$white) & !is.na(dat$wgt2), ]
 
-# Education tertiles computed on the full EU27 wave 4 sample
-educ_breaks <- quantile(sub4$educ, probs = c(0, 1/3, 2/3, 1), na.rm = TRUE)
-sub4$educ_tert <- cut(sub4$educ, breaks = educ_breaks,
-                      labels = c("Low\neducation", "Medium\neducation",
-                                 "High\neducation"),
-                      include.lowest = TRUE)
+# Education tertiles: ntile() avoids the duplicate-breaks error that arises
+# when many respondents share the same ordinal education value (as with the
+# Eurobarometer education scale). ntile() assigns groups by rank, always
+# producing three roughly equal groups regardless of ties.
+sub4$educ_tert <- factor(
+  ntile(sub4$educ, 3),
+  labels = c("Low\neducation", "Medium\neducation", "High\neducation")
+)
 sub4$sex_label <- factor(ifelse(sub4$sex == 0, "Male", "Female"),
                          levels = c("Male", "Female"))
 sub4$empl_label <- factor(
@@ -936,27 +935,34 @@ sub4$empl_label <- factor(
   levels = c("White-collar", "Blue-collar", "Non-employed"))
 sub4$group <- ifelse(sub4$cntry == "IT", "Italy", "EU27")
 
-# Compute weighted means for sex x education subgroups
-sg_edu <- sub4 %>%
-  filter(!is.na(educ_tert)) %>%
-  group_by(group, sex_label, educ_tert) %>%
-  summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
-            .groups = "drop")
+# Three separate dimensions \u2014 each aggregated independently, then stacked.
+# This avoids mixing a two-way interaction (sex x education) with a one-way
+# dimension (employment), which made the earlier version visually incoherent.
 
-# Compute weighted means for employment subgroups
-sg_empl <- sub4 %>%
-  filter(!is.na(empl_label)) %>%
-  group_by(group, empl_label) %>%
+sg_sex <- sub4 %>%
+  group_by(group, subgroup = sex_label) %>%
   summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
             .groups = "drop") %>%
-  rename(subgroup = empl_label)
+  mutate(dimension = "Gender")
 
-sg_edu2 <- sg_edu %>%
-  mutate(subgroup = interaction(sex_label, educ_tert, sep = "\n")) %>%
-  select(group, subgroup, mean_rob)
+sg_educ <- sub4 %>%
+  filter(!is.na(educ_tert)) %>%
+  group_by(group, subgroup = educ_tert) %>%
+  summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(dimension = "Education")
 
-sg_all <- rbind(sg_edu2, sg_empl)
-sg_all$group <- factor(sg_all$group, levels = c("EU27", "Italy"))
+sg_empl <- sub4 %>%
+  filter(!is.na(empl_label)) %>%
+  group_by(group, subgroup = empl_label) %>%
+  summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(dimension = "Employment")
+
+sg_all <- rbind(sg_sex, sg_educ, sg_empl)
+sg_all$group     <- factor(sg_all$group,     levels = c("EU27", "Italy"))
+sg_all$dimension <- factor(sg_all$dimension,
+                            levels = c("Gender", "Education", "Employment"))
 
 p11 <- ggplot(sg_all, aes(x = subgroup, y = mean_rob,
                            colour = group, group = group)) +
@@ -965,21 +971,20 @@ p11 <- ggplot(sg_all, aes(x = subgroup, y = mean_rob,
   scale_colour_manual(values = c("EU27" = col_eu, "Italy" = col_italy),
                       name = NULL) +
   scale_shape_manual(values = c("EU27" = 16, "Italy" = 17), name = NULL) +
-  facet_wrap(~sub("\\n.*", "", subgroup),
-             scales = "free_x", nrow = 1, strip.position = "bottom") +
+  facet_wrap(~ dimension, scales = "free_x", nrow = 1) +
   labs(title = "Italy vs. EU27: robot attitudes by demographic subgroup (wave 4, 2024)",
-       subtitle = "Weighted mean rob2item (0\u20136). Each panel groups a different dimension.",
+       subtitle = "Weighted mean rob2item (0\u20136) by dimension. Each panel is independent.",
        x = NULL, y = "Mean composite score (rob2item, 0\u20136)") +
   theme_minimal(base_size = 12) +
-  theme(legend.position   = "top",
-        axis.text.x       = element_text(size = 8, angle = 30, hjust = 1),
-        panel.grid.minor  = element_blank(),
-        strip.placement   = "outside")
+  theme(legend.position  = "top",
+        axis.text.x      = element_text(size = 9, angle = 30, hjust = 1),
+        panel.grid.minor = element_blank(),
+        strip.text       = element_text(size = 12, face = "bold"))
 
 ggsave("./plots/Figure_11_italy_subgroup_profile.png", p11,
        width = 13, height = 6, dpi = 150)
 cat("Saved: Figure_11_italy_subgroup_profile.png\n")
-rm(sub4, sg_edu, sg_empl, sg_edu2, sg_all, p11)
+rm(sub4, sg_sex, sg_educ, sg_empl, sg_all, p11)
 
 
 
@@ -994,14 +999,16 @@ rm(sub4, sg_edu, sg_empl, sg_edu2, sg_all, p11)
 
 cat("\n=== FIGURE 13: AGE GRADIENT ACROSS WAVES ===\n")
 
-age_breaks <- quantile(dat$age, probs = c(0, 1/3, 2/3, 1), na.rm = TRUE)
-cat(sprintf("  Age tertile boundaries: <=%.0f | %.0f-%.0f | >%.0f\n",
-            age_breaks[2], age_breaks[2], age_breaks[3], age_breaks[3]))
+age_q <- quantile(dat$age, probs = c(1/3, 2/3), na.rm = TRUE)
+cat(sprintf("  Age tertile boundaries (approx.): <=%.0f | %.0f-%.0f | >%.0f\n",
+            age_q[1], age_q[1], age_q[2], age_q[2]))
 
-dat$age_tert <- cut(dat$age,
-                    breaks         = age_breaks,
-                    labels         = c("Young", "Middle-aged", "Older"),
-                    include.lowest = TRUE)
+# ntile() used for the same reason as in Figure 11: avoids duplicate-breaks
+# errors that occur when many respondents share boundary age values.
+dat$age_tert <- factor(
+  ntile(dat$age, 3),
+  labels = c("Young", "Middle-aged", "Older")
+)
 
 anni <- c(2012, 2014, 2017, 2024)
 
@@ -1057,7 +1064,7 @@ p13 <- ggplot(age_data, aes(x = anno, y = mean,
 ggsave("./plots/Figure_13_age_gradient.png", p13,
        width = 12, height = 6, dpi = 150)
 cat("Saved: Figure_13_age_gradient.png\n")
-rm(age_breaks, age_data, p13)
+rm(age_q, age_data, p13)
 
 
 

@@ -258,37 +258,59 @@ apply(dat[dat$wave == 4,
 #' for EU27 and the Italian subsample.
 
 #' **Weighted means by wave — EU27**
+#' Waves 1-3: rob (three-item, 0-9). Wave 4: rob2item (two-item, 0-6).
+#' Means are not directly comparable in magnitude across the two composites.
 cat("\n=== WEIGHTED COMPOSITE SCORE BY WAVE (EU27) ===\n")
-for (w in 1:4) {
+cat("  [Waves 1-3: rob (0-9); Wave 4: rob2item (0-6) — different scales]\n")
+for (w in 1:3) {
     sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
     m   <- weighted.mean(sub$rob, sub$wgt2)
-    cat(sprintf("  Wave %d: M = %.3f  (N = %d)\n", w, m, nrow(sub)))
+    cat(sprintf("  Wave %d: M(rob)     = %.3f  (N = %d)\n", w, m, nrow(sub)))
 }
+sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+cat(sprintf("  Wave 4: M(rob2item) = %.3f  (N = %d)\n",
+            weighted.mean(sub4$rob2item, sub4$wgt2), nrow(sub4)))
 
 #' **Weighted means by wave — Italy** [EXTENSION]
 cat("\n=== ITALY: WEIGHTED COMPOSITE SCORE BY WAVE ===\n")
-for (w in 1:4) {
+cat("  [Waves 1-3: rob (0-9); Wave 4: rob2item (0-6) — different scales]\n")
+for (w in 1:3) {
     sub <- dat[dat$wave == w & dat$cntry == "IT" &
                !is.na(dat$rob) & !is.na(dat$wgt2), ]
     m   <- weighted.mean(sub$rob, sub$wgt2)
     eu  <- weighted.mean(
                dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), "rob"],
                dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), "wgt2"])
-    cat(sprintf("  Wave %d: IT = %.3f  EU = %.3f  diff = %+.3f  (N_IT = %d)\n",
+    cat(sprintf("  Wave %d (rob):     IT = %.3f  EU = %.3f  diff = %+.3f  (N_IT = %d)\n",
                 w, m, eu, m - eu, nrow(sub)))
 }
+sub4_it <- dat[dat$wave == 4 & dat$cntry == "IT" &
+               !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+sub4_eu <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+m4_it   <- weighted.mean(sub4_it$rob2item, sub4_it$wgt2)
+m4_eu   <- weighted.mean(sub4_eu$rob2item, sub4_eu$wgt2)
+cat(sprintf("  Wave 4 (rob2item): IT = %.3f  EU = %.3f  diff = %+.3f  (N_IT = %d)\n",
+            m4_it, m4_eu, m4_it - m4_eu, nrow(sub4_it)))
 
 #' **Country rankings by wave** [EXTENSION]
 cat("\n=== COUNTRY RANKINGS BY WAVE ===\n")
-for (w in 1:4) {
+cat("  [Waves 1-3: rob (0-9); Wave 4: rob2item (0-6) — not comparable in magnitude]\n")
+for (w in 1:3) {
     sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
     means_by_country <- tapply(sub$rob * sub$wgt2, sub$cntry, sum) /
                         tapply(sub$wgt2,   sub$cntry, sum)
-    cat(sprintf("\nWave %d — Top 3:\n", w))
+    cat(sprintf("\nWave %d (rob) — Top 3:\n", w))
     print(round(sort(means_by_country, decreasing = TRUE)[1:3], 3))
-    cat(sprintf("Wave %d — Bottom 3:\n", w))
+    cat(sprintf("Wave %d (rob) — Bottom 3:\n", w))
     print(round(sort(means_by_country)[1:3], 3))
 }
+sub4r <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+means_w4 <- tapply(sub4r$rob2item * sub4r$wgt2, sub4r$cntry, sum) /
+            tapply(sub4r$wgt2, sub4r$cntry, sum)
+cat("\nWave 4 (rob2item) — Top 3:\n")
+print(round(sort(means_w4, decreasing = TRUE)[1:3], 3))
+cat("Wave 4 (rob2item) — Bottom 3:\n")
+print(round(sort(means_w4)[1:3], 3))
 
 
 
@@ -367,9 +389,11 @@ for (w in 1:4) {
 }
 
 #' **Composite score — Italy, pooled across imputed datasets**
-cat("\n=== COMPOSITE SCORE — ITALY (weighted, pooled) ===\n")
+#' Waves 1-3: rob (0-9). Wave 4: rob2item (0-6). Not directly comparable.
+cat("\n=== COMPOSITE SCORE — ITALY (weighted, pooled across m=20 imputations) ===\n")
+cat("  [Waves 1-3: rob (0-9); Wave 4: rob2item (0-6)]\n")
 
-for (w in 1:4) {
+for (w in 1:3) {
   m_imp <- sapply(dati, function(x) {
     sub <- x[x$cntry == "IT" & x$wave == w, ]
     weighted.mean(sub$rob, sub$wgt2, na.rm = TRUE)
@@ -379,16 +403,20 @@ for (w in 1:4) {
     sqrt(wtd.var(sub$rob, sub$wgt2))
   })
   n <- sum(dat$cntry == "IT" & dat$wave == w & !is.na(dat$rob))
-  cat(sprintf("  Wave %d: M = %.3f  SD = %.3f  N = %d\n",
+  cat(sprintf("  Wave %d (rob):     M = %.3f  SD = %.3f  N = %d\n",
               w, mean(m_imp), mean(sd_imp), n))
 }
 
-# rob2item for wave 4 (two-item comparable composite)
-cat("\n  Wave 4 (rob2item): ")
-m2 <- sapply(dati, function(x) {
+m4_imp <- sapply(dati, function(x) {
   sub <- x[x$cntry == "IT" & x$wave == 4, ]
   weighted.mean(sub$rob2item, sub$wgt2, na.rm = TRUE)
 })
-cat(sprintf("M = %.3f\n", mean(m2)))
+sd4_imp <- sapply(dati, function(x) {
+  sub <- x[x$cntry == "IT" & x$wave == 4, ]
+  sqrt(wtd.var(sub$rob2item, sub$wgt2))
+})
+n4 <- sum(dat$cntry == "IT" & dat$wave == 4 & !is.na(dat$rob2item))
+cat(sprintf("  Wave 4 (rob2item): M = %.3f  SD = %.3f  N = %d\n",
+            mean(m4_imp), mean(sd4_imp), n4))
 
 cat("\nScript 2_1 complete. Proceed to 2_2_Measurement_invariance_extended.R\n")

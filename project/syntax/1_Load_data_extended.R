@@ -559,20 +559,34 @@ cat("  dati_mice:  mice object\n")
 cat("\n=== VALIDATION ===\n")
 
 #' **Mean composite score by wave** (unweighted, for quick sanity check)
-cat("\nUnweighted mean composite score (rob) by wave:\n")
-for (w in 1:4) {
+#' Waves 1-3: rob (three-item, range 0-9).
+#' Wave 4:    rob2item (two-item comparable composite, range 0-6).
+#' The two composites are NOT directly comparable in magnitude;
+#' they are printed separately to avoid misleading juxtaposition.
+cat("\nUnweighted mean composite score by wave:\n")
+cat("  [Waves 1-3: rob (0-9); Wave 4: rob2item (0-6) — different scales]\n")
+for (w in 1:3) {
     m <- mean(dat$rob[dat$wave == w], na.rm = TRUE)
     n <- sum(!is.na(dat$rob[dat$wave == w]))
-    cat(sprintf("  Wave %d: M = %.2f  N = %d\n", w, m, n))
+    cat(sprintf("  Wave %d: M(rob)     = %.2f  N = %d\n", w, m, n))
 }
+m4 <- mean(dat$rob2item[dat$wave == 4], na.rm = TRUE)
+n4 <- sum(!is.na(dat$rob2item[dat$wave == 4]))
+cat(sprintf("  Wave 4: M(rob2item) = %.2f  N = %d\n", m4, n4))
 
 #' **Italy vs. EU comparison**
-cat("\nItaly vs. EU (unweighted composite score):\n")
-for (w in 1:4) {
-    it <- mean(dat$rob[dat$wave == w & dat$cntry == "IT"],  na.rm = TRUE)
+cat("\nItaly vs. EU (unweighted):\n")
+cat("  [Waves 1-3: rob; Wave 4: rob2item — not directly comparable across rows]\n")
+for (w in 1:3) {
+    it <- mean(dat$rob[dat$wave == w & dat$cntry == "IT"], na.rm = TRUE)
     eu <- mean(dat$rob[dat$wave == w], na.rm = TRUE)
-    cat(sprintf("  Wave %d: IT = %.2f  EU = %.2f  diff = %+.2f\n", w, it, eu, it - eu))
+    cat(sprintf("  Wave %d (rob):     IT = %.2f  EU = %.2f  diff = %+.2f\n",
+                w, it, eu, it - eu))
 }
+it4 <- mean(dat$rob2item[dat$wave == 4 & dat$cntry == "IT"], na.rm = TRUE)
+eu4 <- mean(dat$rob2item[dat$wave == 4], na.rm = TRUE)
+cat(sprintf("  Wave 4 (rob2item): IT = %.2f  EU = %.2f  diff = %+.2f\n",
+            it4, eu4, it4 - eu4))
 
 #' **Check rob2item consistency** [EXTENSION]
 cat("\nConsistency check — rob2item == rob1 + rob2 (wave 4, unimputed):\n")
