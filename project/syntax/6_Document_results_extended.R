@@ -1,6 +1,6 @@
 #' ---
 #' title: Document analyses — Extended (4 waves, 2012-2024)
-#' author: Camilla [estende Gnambs & Appel 2019]
+#' author: Camilla Bonomo [extends Gnambs & Appel 2019]
 #' output:
 #'    html_document:
 #'       toc: true
@@ -8,14 +8,14 @@
 #' date: "`r Sys.time()`"
 #' ---
 #'
-#' Questo script svolge due funzioni:
-#'   1. Renderizza tutti gli script analitici in HTML per la documentazione
-#'   2. Produce un report sintetico dei risultati principali con versioni R e pacchetti
+#' This script serves two purposes:
+#'   1. Renders all analytical scripts to HTML for documentation
+#'   2. Produces a concise summary of key results for internal use (e.g., thesis writing)
 #'
-#' STRUTTURA:
-#'   Sezione 1 — Render HTML di tutti gli script
-#'   Sezione 2 — Versioni R e pacchetti
-#'   Sezione 3 — Report sintetico risultati (per uso interno / supervisore)
+#' Structure:
+#'   Section 1 — Render all analytical scripts to HTML
+#'   Section 2 — R version and package documentation
+#'   Section 3 — Summary of main results (for internal use / supervisor reference)
 
 
 #' **Clear workspace**
@@ -30,15 +30,15 @@ dir.create("./results", showWarnings = FALSE)
 
 
 #' ===================================================================
-#' # 1. Render HTML di tutti gli script analitici
+#' # 1. Render all analytical scripts to HTML
 #' ===================================================================
-#' [G&A] usa render() per produrre report HTML da script R annotati con #'.
-#' Stessa logica qui, adattata ai nuovi nomi file.
+#' G&A used render() to produce HTML reports from R scripts annotated with #'.
+#' The same approach is applied here, adapted to the extended file names.
 #'
-#' NOTA: ogni render() esegue lo script in un ambiente pulito —
-#' il tempo totale può essere 30-60 minuti se MICE gira di nuovo.
-#' Per evitare di ri-girare MICE, assicurarsi che dat.Rdata sia già
-#' presente in ./data/ prima di eseguire questo script.
+#' NOTE: Each render() call executes the script in a clean environment.
+#' Total runtime may be 30-60 minutes if MICE is re-executed.
+#' To avoid re-running MICE, ensure dat.Rdata is already present in ./data/
+#' before executing this script.
 
 scripts <- list(
   list(
@@ -59,7 +59,7 @@ scripts <- list(
   list(
     input  = "./syntax/3_Current_and_changes_extended.R",
     output = "3_Current_and_changes_extended.html",
-    label  = "3. Current and changes (extended)"
+    label  = "3. Current attitudes and changes (extended)"
   ),
   list(
     input  = "./syntax/4_Predictors_extended.R",
@@ -73,9 +73,9 @@ scripts <- list(
   )
 )
 
-cat("=== RENDERING SCRIPT IN HTML ===\n\n")
-#' [FIX] knit_root_dir forza la working directory al progetto radice,
-#' evitando che knitr sposti la wd nella cartella dello script (./syntax/)
+cat("=== RENDERING ANALYTICAL SCRIPTS TO HTML ===\n\n")
+#' knit_root_dir forces the working directory to the project root,
+#' preventing knitr from relocating the working directory to ./syntax/.
 proj_root <- getwd()
 cat(sprintf("Working directory: %s\n\n", proj_root))
 
@@ -92,26 +92,26 @@ for (idx in seq_along(scripts)) {
            envir         = new.env(parent = globalenv()),
            quiet         = TRUE),
     error = function(e) {
-      cat(sprintf("  ERRORE in %s: %s\n", lbl, conditionMessage(e)))
+      cat(sprintf("  ERROR in %s: %s\n", lbl, conditionMessage(e)))
     }
   )
-  cat(sprintf("  Salvato: results/%s\n", out))
+  cat(sprintf("  Saved: results/%s\n", out))
   rm(lbl, inp, out)
 }
-cat("\nRendering completato.\n")
+cat("\nRendering complete.\n")
 
 
 
 
 #' ===================================================================
-#' # 2. Versioni R e pacchetti
+#' # 2. R version and package documentation
 #' ===================================================================
-#' [G&A] Documentazione delle versioni per riproducibilità.
-#' Esteso con tutti i pacchetti aggiuntivi usati nell'estensione.
+#' Package version documentation for reproducibility (following G&A).
+#' Extended to include all additional packages used in the extension.
 
-cat("\n=== VERSIONI R E PACCHETTI ===\n\n")
+cat("\n=== R VERSION AND PACKAGE DOCUMENTATION ===\n\n")
 
-#' **Funzione per estrarre library() dagli script**
+#' **Extract library() calls from a script file**
 extract_libs <- function(filepath) {
   if (!file.exists(filepath)) return(character(0))
   lines <- readLines(filepath, warn = FALSE)
@@ -131,26 +131,26 @@ extract_libs <- function(filepath) {
   unique(libs)
 }
 
-#' **Raccogli pacchetti da tutti gli script**
+#' **Collect packages from all analytical scripts**
 all_scripts <- c(
   "./syntax/0_Start.R",
   "./syntax/1_Load_data_extended.R",
   "./syntax/2_1_Descriptives_extended.R",
   "./syntax/2_2_Measurement_invariance_extended.R",
-  "./syntax/3__Current_and_changes_extended.R",
-  "./syntax/4__Predictors_extended.R",
-  "./syntax/5__Plots_extended.R"
+  "./syntax/3_Current_and_changes_extended.R",
+  "./syntax/4_Predictors_extended.R",
+  "./syntax/5_Plots_extended.R"
 )
 
 all_libs <- sort(unique(unlist(lapply(all_scripts, extract_libs))))
-cat("Pacchetti utilizzati:\n")
+cat("Packages used across all scripts:\n")
 print(all_libs)
 
-#' **Carica tutti i pacchetti e stampa sessionInfo**
+#' **Load all packages and print session information**
 for (lib in all_libs) {
   suppressPackageStartupMessages(
     tryCatch(library(lib, character.only = TRUE),
-             error = function(e) cat(sprintf("  Non disponibile: %s\n", lib)))
+             error = function(e) cat(sprintf("  Not available: %s\n", lib)))
   )
 }
 
@@ -161,35 +161,52 @@ print(sessionInfo())
 
 
 #' ===================================================================
-#' # 3. Report sintetico risultati principali
+#' # 3. Summary of main results
 #' ===================================================================
-#' Riepilogo numerico dei risultati chiave — per uso interno e
-#' come riferimento rapido durante la scrittura della tesi.
+#' Numerical summary of key findings — for internal use and as a
+#' quick reference during thesis writing (Chapter 5).
 
-cat("\n\n=== REPORT SINTETICO RISULTATI ===\n")
-cat("(Da integrare nel testo della tesi — Capitolo 5)\n\n")
+cat("\n\n=== SUMMARY OF MAIN RESULTS ===\n")
+cat("(To be integrated into the thesis text — Chapter 5)\n\n")
 
-#' **Carica dati**
+#' **Load data**
 load("./data/dat.Rdata")
 rm(dati_mice)
 
 #' -------------------------------------------------------------------
-#' ## 3.1 Trend longitudinale EU27
+#' ## 3.1 Longitudinal trend EU27
 #' -------------------------------------------------------------------
-cat("--- 3.1 Composite score EU27 per wave ---\n")
+#' NOTE: Waves 1-3 use the three-item composite (rob; range 0-9).
+#' Wave 4 uses the two-item composite (rob2item; range 0-6) because
+#' rob3 is not comparable across waves due to a wording change.
+#' Means are therefore not directly comparable across the full time series.
+
+cat("--- 3.1 Weighted composite score EU27 by wave ---\n")
+cat("    Waves 1-3: three-item composite rob (range 0-9)\n")
+cat("    Wave 4:    two-item composite rob2item (range 0-6)\n\n")
+
 anni <- c(2012, 2014, 2017, 2024)
-for (w in 1:4) {
+
+for (w in 1:3) {
   sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
   m   <- weighted.mean(sub$rob, sub$wgt2)
   n   <- nrow(sub)
-  cat(sprintf("  Wave %d (%d): M = %.3f  N = %d\n", w, anni[w], m, n))
+  cat(sprintf("  Wave %d (%d): M(rob)     = %.3f  N = %d\n", w, anni[w], m, n))
 }
 
+sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+m4   <- weighted.mean(sub4$rob2item, sub4$wgt2)
+n4   <- nrow(sub4)
+cat(sprintf("  Wave 4 (2024): M(rob2item) = %.3f  N = %d\n", m4, n4))
+
+
 #' -------------------------------------------------------------------
-#' ## 3.2 Posizionamento Italia
+#' ## 3.2 Italy vs EU27
 #' -------------------------------------------------------------------
-cat("\n--- 3.2 Italia vs EU27 ---\n")
-for (w in 1:4) {
+cat("\n--- 3.2 Italy vs EU27 ---\n")
+cat("    Waves 1-3: rob; Wave 4: rob2item\n\n")
+
+for (w in 1:3) {
   sub_it <- dat[dat$wave == w & dat$cntry == "IT" &
                   !is.na(dat$rob) & !is.na(dat$wgt2), ]
   sub_eu <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
@@ -199,88 +216,112 @@ for (w in 1:4) {
               w, anni[w], m_it, m_eu, m_it - m_eu))
 }
 
+sub_it4 <- dat[dat$wave == 4 & dat$cntry == "IT" &
+                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+sub_eu4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+m_it4 <- weighted.mean(sub_it4$rob2item, sub_it4$wgt2)
+m_eu4 <- weighted.mean(sub_eu4$rob2item, sub_eu4$wgt2)
+cat(sprintf("  Wave 4 (2024): IT = %.3f  EU = %.3f  diff = %+.3f\n",
+            m_it4, m_eu4, m_it4 - m_eu4))
+
+
 #' -------------------------------------------------------------------
-#' ## 3.3 ICC per wave
+#' ## 3.3 ICC by wave
 #' -------------------------------------------------------------------
-cat("\n--- 3.3 ICC per wave (da script 4, modello A0) ---\n")
+cat("\n--- 3.3 Country-level ICC by wave (from Script 4, Model A0) ---\n")
+cat("    Waves 1-3: rob; Wave 4: rob2item\n\n")
 cat("  Wave 1 (2012): ICC = 0.088\n")
 cat("  Wave 2 (2014): ICC = 0.074\n")
 cat("  Wave 3 (2017): ICC = 0.057\n")
 cat("  Wave 4 (2024): ICC = 0.044\n")
-cat("  Trend: convergenza tra paesi nel tempo (-50% in 12 anni)\n")
+cat("  Trend: cross-national convergence over time (-50% in 12 years)\n")
+
 
 #' -------------------------------------------------------------------
-#' ## 3.4 Coefficienti chiave Modello A2 (wave 1-3, replica G&A)
+#' ## 3.4 Key coefficients: Model A2 (waves 1-3, G&A replication)
 #' -------------------------------------------------------------------
-cat("\n--- 3.4 Predittori significativi Modello A2 (wave 1-3) ---\n")
-cat("  Individuali:\n")
-cat("    wave2:  b = -0.282***  (crescente scetticismo 2012→2014)\n")
-cat("    wave3:  b = -0.501***  (crescente scetticismo 2012→2017)\n")
-cat("    sex1:   b = -0.390***  (donne più scettiche, std = -0.203)\n")
-cat("    educ:   b = +0.125***  (istruzione protettiva, std = +0.065)\n")
-cat("    white2: b = -0.164***  (blue-collar più scettici)\n")
-cat("  Contestuali (L2):\n")
+cat("\n--- 3.4 Significant predictors, Model A2 (waves 1-3) ---\n")
+cat("  Individual-level:\n")
+cat("    wave2:  b = -0.282***  (increasing scepticism 2012 -> 2014)\n")
+cat("    wave3:  b = -0.501***  (increasing scepticism 2012 -> 2017)\n")
+cat("    sex1:   b = -0.390***  (women more sceptical; std = -0.203)\n")
+cat("    educ:   b = +0.125***  (education as protective factor; std = +0.065)\n")
+cat("    white2: b = -0.164***  (blue-collar workers more sceptical)\n")
+cat("  Country-level (L2):\n")
 cat("    AGEOLD:  b = +0.075***  d = +0.18\n")
 cat("    TECHEXP: b = +0.022***  d = +0.16\n")
-cat("    LAT:     b = +0.045***  d = +0.32  (Nord-Sud divide)\n")
+cat("    LAT:     b = +0.045***  d = +0.32  (North-South divide)\n")
 cat("    LONG:    b =  0.002 ns\n")
-cat("    INVEST:  b = -0.114 ns (p=.095)\n")
+cat("    INVEST:  b = -0.114 ns (p = .095)\n")
 cat("    UNEMP:   b = +0.013*\n")
 
-#' -------------------------------------------------------------------
-#' ## 3.5 Modello B2: effetti UAI e mediazione latitudine
-#' -------------------------------------------------------------------
-cat("\n--- 3.5 Modello B2: UAI e mediazione latitudine ---\n")
-cat("  H1 (UAI < 0): UAI_z b = -0.180 (p=.154) — segno corretto,\n")
-cat("     non significativo con 27 unità L2 (potenza limitata)\n")
-cat("  H2 (mediazione LAT da UAI):\n")
-cat("     LAT in A2:  b = +0.045***  (p=.002)\n")
-cat("     LAT in B2:  b = +0.029 ns  (p=.110) — CONFERMATA\n")
-cat("     Il pattern Nord-Sud è in parte spiegato da UAI\n")
-cat("  H3a (UAI × educ): b = +0.027***  (p<.001) — CONFERMATA\n")
-cat("     L'istruzione compensa di più l'ansia culturale nei paesi alta UAI\n")
-cat("  H3b (UAI × blue-collar): b = -0.025 ns — non confermata\n")
 
 #' -------------------------------------------------------------------
-#' ## 3.6 Residui Italia
+#' ## 3.5 Model B2: UAI effect and latitude mediation
 #' -------------------------------------------------------------------
-cat("\n--- 3.6 Residui Italia nei modelli multilevel ---\n")
-cat("  A2 wave 1-3: -0.243  (Italia sotto le attese strutturali)\n")
-cat("  B2 wave 1-3: -0.359  (residuo AUMENTA con UAI — non mediato)\n")
-cat("  A2 wave 1-4: -0.197\n")
-cat("  B2 wave 1-4: -0.294\n")
-cat("  CONCLUSIONE: La specificità italiana NON è spiegata da UAI.\n")
-cat("  Il Capitolo 6 esplora i meccanismi Italy-specific:\n")
-cat("  memoria collettiva one-company town, struttura PMI,\n")
-cat("  relazioni industriali, ecosistema istituzionale piemontese.\n")
+cat("\n--- 3.5 Model B2: UAI and latitude mediation ---\n")
+cat("  H1 (UAI < 0): UAI_z b = -0.180 (p = .154) — correct sign,\n")
+cat("     not significant with 27 L2 units (limited statistical power)\n")
+cat("  H2 (mediation of LAT by UAI):\n")
+cat("     LAT in A2:  b = +0.045***  (p = .002)\n")
+cat("     LAT in B2:  b = +0.029 ns  (p = .110) — CONFIRMED\n")
+cat("     The North-South gradient is partially explained by UAI\n")
+cat("  H3a (UAI x educ): b = +0.027***  (p < .001) — CONFIRMED\n")
+cat("     Education compensates more for cultural uncertainty anxiety\n")
+cat("     in high-UAI countries\n")
+cat("  H3b (UAI x blue-collar): b = -0.025 ns — not confirmed\n")
+
 
 #' -------------------------------------------------------------------
-#' ## 3.7 Focus Italia wave 4
+#' ## 3.6 Italy's residuals in multilevel models
 #' -------------------------------------------------------------------
-cat("\n--- 3.7 Focus Italia wave 4 (differenze vs EU) ---\n")
-cat("  Genere (IT wave 4):  b = +0.033 ns  — GAP SCOMPARSO\n")
-cat("                        vs EU: b = -0.326***\n")
-cat("  Blue-collar (IT):    b = -0.240 ns  — non struttura come in EU\n")
-cat("                        vs EU: b = -0.364***\n")
-cat("  Età (IT):            b = -0.264***  — unico predittore robusto\n")
-cat("  Istruzione (IT):     b = +0.062*\n")
-cat("  CONCLUSIONE: I predittori standard EU non funzionano\n")
-cat("  nello stesso modo in Italia nel 2024 — richiede indagine qualitativa.\n")
+#' NOTE: Waves 1-3 use rob; waves 1-4 use rob2item.
+#' Residuals across model specifications are not directly comparable
+#' in magnitude because the outcome scales differ (range 0-9 vs 0-6).
+
+cat("\n--- 3.6 Italy's residuals in multilevel models ---\n")
+cat("  Model A2, waves 1-3 (rob):      -0.243\n")
+cat("    (Italy below structural expectations)\n")
+cat("  Model B2, waves 1-3 (rob):      -0.359\n")
+cat("    (residual increases with UAI — not mediated by cultural uncertainty)\n")
+cat("  Model A2, waves 1-4 (rob2item): -0.197\n")
+cat("  Model B2, waves 1-4 (rob2item): -0.294\n")
+cat("  CONCLUSION: Italy's negative deviation is not explained by UAI.\n")
+cat("  Chapter 6 explores Italy-specific mechanisms:\n")
+cat("  collective memory of one-company towns, SME-dominated industrial\n")
+cat("  structure, industrial relations, and the Piedmontese institutional\n")
+cat("  ecosystem.\n")
+
 
 #' -------------------------------------------------------------------
-#' ## 3.8 Correlazione UAI × composite score
+#' ## 3.7 Italy focus, wave 4
 #' -------------------------------------------------------------------
-cat("\n--- 3.8 Correlazione UAI × composite score ---\n")
+cat("\n--- 3.7 Italy focus, wave 4: predictors vs EU27 ---\n")
+cat("  Gender (IT, wave 4):    b = +0.033 ns  — gender gap ABSENT\n")
+cat("                           vs EU: b = -0.326***\n")
+cat("  Blue-collar (IT):       b = -0.240 ns  — does not replicate EU pattern\n")
+cat("                           vs EU: b = -0.364***\n")
+cat("  Age (IT):               b = -0.264***  — the only robust predictor\n")
+cat("  Education (IT):         b = +0.062*\n")
+cat("  CONCLUSION: Standard EU predictors do not operate in the same way\n")
+cat("  in Italy in 2024 — requires qualitative investigation.\n")
+
+
+#' -------------------------------------------------------------------
+#' ## 3.8 UAI x composite score correlation
+#' -------------------------------------------------------------------
+cat("\n--- 3.8 Correlation: UAI x weighted country mean ---\n")
 cat("  r(UAI, score_2017) = -0.561\n")
 cat("  r(UAI, score_2024) = -0.682\n")
-cat("  La correlazione si RAFFORZA nel 2024 — UAI diventa\n")
-cat("  più predittivo man mano che il dibattito AI diventa più saliente.\n")
+cat("  The correlation STRENGTHENS in 2024 — UAI becomes increasingly\n")
+cat("  predictive as public debate about AI grows more salient.\n")
 
-cat("\n\n=== DOCUMENTAZIONE COMPLETATA ===\n")
-cat("File HTML in ./results/\n")
-cat("Report sintetico stampato sopra.\n")
-cat("\n✓ Pipeline analitica completa.\n")
-cat("  Passi successivi:\n")
-cat("  - Raccolta dati qualitativi (interviste, Capitolo 6)\n")
-cat("  - Scrittura Capitoli 5-7 della tesi\n")
-cat("  - Aggiornamento appendice metodologica\n")
+
+cat("\n\n=== DOCUMENTATION COMPLETE ===\n")
+cat("HTML files saved to ./results/\n")
+cat("Result summary printed above.\n")
+cat("\nAnalytical pipeline complete.\n")
+cat("  Next steps:\n")
+cat("  - Qualitative data collection (interviews, Chapter 6)\n")
+cat("  - Write Chapters 5-7 of the thesis\n")
+cat("  - Update methodological appendix\n")

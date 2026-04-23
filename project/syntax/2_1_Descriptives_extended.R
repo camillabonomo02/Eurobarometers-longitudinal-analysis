@@ -1,6 +1,6 @@
 #' ---
 #' title: Descriptive results — Extended (4 waves, 2012-2024)
-#' author: Camilla [estende Gnambs & Appel 2019]
+#' author: Camilla Bonomo [extends Gnambs & Appel 2019]
 #' output:
 #'    html_document:
 #'       toc: true
@@ -16,14 +16,14 @@ library(weights)
 library(psych)
 library(doBy)
 library(mitml)
-source("./syntax/0_Start.R")   # funzioni helper: describe.imp, cor.imp, omg.imp
+source("./syntax/0_Start.R")   # helper functions: describe.imp, cor.imp, omg.imp
 
 #' **Load data**
 load("./data/dat.Rdata")
-rm(dati_mice)   # [NOTA] G&A usano dati.mice, qui dati_mice (underscore)
+rm(dati_mice)   # dati_mice is not required for descriptive analyses
 
-# [FIX] Aggiunge rob2item a ogni dataset imputato
-# Non incluso nell'imputazione (somma di rob1+rob2, non ha missing propri)
+# rob2item is available as a passive-imputed variable in dati;
+# the line below recomputes it from components as a consistency safeguard.
 dati <- lapply(dati, function(x) {
   x$rob2item <- x$rob1 + x$rob2
   x
@@ -31,28 +31,28 @@ dati <- lapply(dati, function(x) {
 dati <- as.mitml.list(dati)
 
 
+
+
 #' ===================================================================
 #' # 1. Sample description
 #' ===================================================================
 
-#' **Paesi inclusi**
+#' **Countries included**
 sort(unique(dat$cntry))
-length(unique(dat$cntry))   # N paesi
+length(unique(dat$cntry))   # number of countries
 
-#' **N per paese × wave**
-#' [ESTENSIONE] Include wave 4; UK assente (post-Brexit)
+#' **N per country x wave** [EXTENSION: includes wave 4; UK excluded post-Brexit]
 table(dat$cntry, dat$wave)
 describe(c(table(dat$cntry, dat$wave)))
 
-#' **N totale**
+#' **Total N**
 nrow(dat)
 
-#' **N per wave**
+#' **N by wave**
 table(dat$wave)
 
-#' **N Italia per wave**
-#' [ESTENSIONE — Focus Italia]
-cat("\n=== ITALIA ===\n")
+#' **N Italy by wave** [EXTENSION: Italy focus]
+cat("\n=== ITALY ===\n")
 table(dat$wave[dat$cntry == "IT"])
 
 
@@ -62,23 +62,22 @@ table(dat$wave[dat$cntry == "IT"])
 #' # 2. Sociodemographic characteristics
 #' ===================================================================
 
-#' **Sesso** (0 = uomo, 1 = donna)
-#' [NOTA] wave 4: d10 include opzione non-binary (N=49), ricodificato NA
+#' **Sex** (0 = male, 1 = female)
+#' Note: wave 4 includes a non-binary option (N = 49), recoded as NA.
 prop.table(table(dat$sex))
-prop.table(table(dat$sex, dat$wave), margin = 2)   # [ESTENSIONE] per wave
+prop.table(table(dat$sex, dat$wave), margin = 2)   # [EXTENSION] by wave
 
-#' **Età**
+#' **Age**
 describe(dat$age)
-tapply(dat$age, dat$wave, mean, na.rm = TRUE)   # [ESTENSIONE] media per wave
+tapply(dat$age, dat$wave, mean, na.rm = TRUE)   # [EXTENSION] mean age by wave
 
-#' **Istruzione** (anni di fine studi)
+#' **Education** (age at end of full-time education)
 describe(dat$educ)
 tapply(dat$educ, dat$wave, mean, na.rm = TRUE)
 
-#' **Status occupazionale**
-#' (1 = white-collar, 2 = blue-collar, 3 = non-employed)
+#' **Employment status** (1 = white-collar, 2 = blue-collar, 3 = non-employed)
 prop.table(table(dat$white))
-prop.table(table(dat$white, dat$wave), margin = 2)   # [ESTENSIONE] per wave
+prop.table(table(dat$white, dat$wave), margin = 2)   # [EXTENSION] by wave
 
 
 
@@ -86,10 +85,10 @@ prop.table(table(dat$white, dat$wave), margin = 2)   # [ESTENSIONE] per wave
 #' ===================================================================
 #' # 3. Reliability of the attitude scale
 #' ===================================================================
-#' [G&A] Omega categoriale (poly = TRUE) su rob1–rob3 per wave 1–3.
-#' [ESTENSIONE] Wave 4: rob3 ha formulazione diversa ("boring/repetitive"
-#' invece di "hard/dangerous"). Si calcola omega su rob1+rob2 (2 item)
-#' per confronto longitudinale pulito.
+#' [G&A] Categorical omega (poly = TRUE) computed on rob1-rob3 for waves 1-3.
+#' [EXTENSION] Wave 4: rob3 wording changed ("boring/repetitive" instead of
+#' "hard/dangerous"). Reliability is therefore computed on the two-item
+#' comparable composite (rob2item = rob1 + rob2) for wave 4.
 
 #' **Wave 1 — 2012** (rob1, rob2, rob3) [G&A]
 cat("\n--- Reliability Wave 1 (2012) ---\n")
@@ -109,19 +108,19 @@ omg.imp(dati, items = paste0("rob", 1:3), poly = TRUE,
         weights = "wgt1",
         subset  = (dati[[1]]$wave == 3))
 
-#' **Wave 4 — 2024** (rob1, rob2 — scala comparabile) [ESTENSIONE]
-#' rob3 escluso: "boring/repetitive" non comparabile con "hard/dangerous"
-#' delle wave 1-3. Reliability calcolata sul composite a 2 item (rob2item).
-cat("\n--- Reliability Wave 4 (2024) — 2 item comparabili ---\n")
+#' **Wave 4 — 2024** (rob1, rob2 — comparable two-item scale) [EXTENSION]
+#' rob3 is excluded because the wording "boring/repetitive tasks" is not
+#' equivalent to "hard/dangerous tasks" used in waves 1-3.
+cat("\n--- Reliability Wave 4 (2024) — two-item comparable scale ---\n")
 omg.imp(dati, items = paste0("rob", 1:2), poly = TRUE,
         weights = "wgt1",
         subset  = (dati[[1]]$wave == 4))
 
-#' **Nota metodologica** [ESTENSIONE]
-#' Per l'analisi longitudinale principale si usa `rob` (3 item, wave 1-3)
-#' con verifica di invarianza di misura (script 2_2).
-#' Per i confronti che includono wave 4 si usa `rob2item` (2 item),
-#' documentando il compromesso in appendice metodologica.
+#' Methodological note [EXTENSION]:
+#' The three-item composite (rob) is used for the longitudinal analysis of
+#' waves 1-3, supported by measurement invariance testing (Script 2_2).
+#' The two-item composite (rob2item) is used for all comparisons extending
+#' to wave 4. This choice is documented in the methodological appendix.
 
 
 
@@ -135,15 +134,15 @@ dati <- within(dati, {
   sex1     <- ifelse(sex == 1, 1, 0)
   white2   <- ifelse(white == 2, 1, 0)
   white3   <- ifelse(white == 3, 1, 0)
-  rob2item <- rob1 + rob2     # [FIX] ridefinito qui per sicurezza
+  rob2item <- rob1 + rob2     # recompute for safety
 })
 
 #' -------------------------------------------------------------------
-#' ## 4a. Medie e deviazioni standard
+#' ## 4a. Means and standard deviations
 #' -------------------------------------------------------------------
 
 #' **Wave 1 — 2012** [G&A]
-#' NOTA: feel3, feel4 assenti in wave 1
+#' Note: feel3 and feel4 are not available in wave 1.
 cat("\n--- Descriptives Wave 1 (2012) ---\n")
 describe.imp(dati,
              items   = c("rob", paste0("feel", 1:2),
@@ -170,8 +169,9 @@ describe.imp(dati,
              stats   = c("mean", "sd"),
              subset  = (dati[[1]]$wave == 3))
 
-#' **Wave 4 — 2024** [ESTENSIONE]
-#' feel1-4 non comparabili in wave 4 (NA). Si usa rob2item.
+#' **Wave 4 — 2024** [EXTENSION]
+#' feel1-4 are structurally absent in wave 4 (non-comparable scale).
+#' rob2item is the appropriate comparable composite for this wave.
 cat("\n--- Descriptives Wave 4 (2024) ---\n")
 describe.imp(dati,
              items   = c("rob", "rob2item",
@@ -182,7 +182,7 @@ describe.imp(dati,
 
 
 #' -------------------------------------------------------------------
-#' ## 4b. Correlazioni tra variabili di studio
+#' ## 4b. Correlations between study variables
 #' -------------------------------------------------------------------
 
 #' **Wave 1 — 2012** [G&A]
@@ -209,17 +209,18 @@ cor.imp(dati,
         weights = "wgt2", digits = 3,
         subset  = (dati[[1]]$wave == 3))
 
-#' **Wave 4 — 2024** [ESTENSIONE]
+#' **Wave 4 — 2024** [EXTENSION]
+#' rob2item replaces rob as the focal dependent variable for wave 4.
 cat("\n--- Correlations Wave 4 (2024) ---\n")
 cor.imp(dati,
-        items   = c("rob", "rob2item",
+        items   = c("rob2item",
                     "sex1", "age", "educ", "white2", "white3"),
         weights = "wgt2", digits = 3,
         subset  = (dati[[1]]$wave == 4))
 
 
 #' -------------------------------------------------------------------
-#' ## 4c. Missing data per wave
+#' ## 4c. Missing data patterns by wave
 #' -------------------------------------------------------------------
 
 #' **Wave 1** [G&A]
@@ -240,8 +241,8 @@ apply(dat[dat$wave == 3,
           c("rob", paste0("feel", 1:4), "sex", "age", "educ", "white")],
       2, function(x) round(mean(is.na(x)), 3))
 
-#' **Wave 4** [ESTENSIONE]
-#' feel1-4 omesse (NA strutturali, non dati mancanti)
+#' **Wave 4** [EXTENSION]
+#' feel1-4 are structurally absent (structural zeros, not missing data).
 cat("\n--- Missing Wave 4 ---\n")
 apply(dat[dat$wave == 4,
           c("rob", "rob2item", "sex", "age", "educ", "white")],
@@ -251,21 +252,21 @@ apply(dat[dat$wave == 4,
 
 
 #' ===================================================================
-#' # 5. Longitudinal overview — composite score per wave e per paese
+#' # 5. Longitudinal overview — composite score by wave and country
 #' ===================================================================
-#' [ESTENSIONE] Tabella riassuntiva del composite score (rob, ponderato)
-#' per tutte e 4 le wave, EU27 e sotto-campione italiano.
+#' [EXTENSION] Summary of weighted composite scores across all four waves,
+#' for EU27 and the Italian subsample.
 
-#' **Medie ponderate per wave — EU27**
-cat("\n=== COMPOSITE SCORE MEDIO PER WAVE (wgt2) ===\n")
+#' **Weighted means by wave — EU27**
+cat("\n=== WEIGHTED COMPOSITE SCORE BY WAVE (EU27) ===\n")
 for (w in 1:4) {
     sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
     m   <- weighted.mean(sub$rob, sub$wgt2)
     cat(sprintf("  Wave %d: M = %.3f  (N = %d)\n", w, m, nrow(sub)))
 }
 
-#' **Medie ponderate per wave — solo Italia** [ESTENSIONE]
-cat("\n=== ITALIA: COMPOSITE SCORE MEDIO PER WAVE ===\n")
+#' **Weighted means by wave — Italy** [EXTENSION]
+cat("\n=== ITALY: WEIGHTED COMPOSITE SCORE BY WAVE ===\n")
 for (w in 1:4) {
     sub <- dat[dat$wave == w & dat$cntry == "IT" &
                !is.na(dat$rob) & !is.na(dat$wgt2), ]
@@ -277,8 +278,8 @@ for (w in 1:4) {
                 w, m, eu, m - eu, nrow(sub)))
 }
 
-#' **Paese con score più alto e più basso per wave** [ESTENSIONE]
-cat("\n=== RANKING PAESI PER WAVE ===\n")
+#' **Country rankings by wave** [EXTENSION]
+cat("\n=== COUNTRY RANKINGS BY WAVE ===\n")
 for (w in 1:4) {
     sub <- dat[dat$wave == w & !is.na(dat$rob) & !is.na(dat$wgt2), ]
     means_by_country <- tapply(sub$rob * sub$wgt2, sub$cntry, sum) /
@@ -295,23 +296,24 @@ for (w in 1:4) {
 #' ===================================================================
 #' # 6. Country-level contextual variables
 #' ===================================================================
-#' [ESTENSIONE] Verifica che le variabili contestuali siano correttamente
-#' presenti nel dataset e controllare i valori per l'Italia.
+#' [EXTENSION] Verification of contextual variables and inspection of
+#' Italian country-level values across waves.
 
-#' **Snapshot contestuale per l'Italia** [ESTENSIONE]
-cat("\n=== VARIABILI CONTESTUALI — ITALIA ===\n")
+#' **Contextual variables — Italy**
+cat("\n=== CONTEXTUAL VARIABLES — ITALY ===\n")
 it_ctx <- dat[dat$cntry == "IT" & !duplicated(paste(dat$cntry, dat$wave)),
               c("cntry", "wave", "AGEOLD", "UNEMP", "TECHEXP", "INVEST",
                 "LAT", "LONG", "UAI")]
 print(it_ctx[order(it_ctx$wave), ])
 
-#' **UAI per tutti i paesi** (time-invariant) [ESTENSIONE]
-cat("\n=== UAI PER PAESE ===\n")
+#' **UAI by country** (time-invariant) [EXTENSION]
+cat("\n=== UAI BY COUNTRY ===\n")
 uai_tab <- dat[!duplicated(dat$cntry), c("cntry", "UAI")]
 print(uai_tab[order(uai_tab$UAI, decreasing = TRUE), ])
 
-#' **Correlazione tra UAI e composite score medio (wave 3 — replicà G&A)**
-cat("\n=== CORRELAZIONE UAI × COMPOSITE SCORE (Wave 3) ===\n")
+#' **Correlation UAI x composite score — wave 3** [G&A replication]
+#' Uses rob (three-item composite) for wave 3, consistent with G&A.
+cat("\n=== CORRELATION UAI x COMPOSITE SCORE (Wave 3) ===\n")
 sub <- dat[dat$wave == 3 & !is.na(dat$rob) & !is.na(dat$wgt2), ]
 cntry_means <- tapply(sub$rob * sub$wgt2, sub$cntry, sum) /
                tapply(sub$wgt2,   sub$cntry, sum)
@@ -320,53 +322,54 @@ common      <- intersect(names(cntry_means), names(uai_vals))
 cat(sprintf("r(UAI, composite_wave3) = %.3f\n",
             cor(cntry_means[common], uai_vals[common], use = "complete.obs")))
 
-#' **Stessa correlazione per wave 4** [ESTENSIONE]
-cat("\n=== CORRELAZIONE UAI × COMPOSITE SCORE (Wave 4) ===\n")
-sub4 <- dat[dat$wave == 4 & !is.na(dat$rob) & !is.na(dat$wgt2), ]
-cntry_means4 <- tapply(sub4$rob * sub4$wgt2, sub4$cntry, sum) /
-                tapply(sub4$wgt2,   sub4$cntry, sum)
+#' **Correlation UAI x composite score — wave 4** [EXTENSION]
+#' Uses rob2item (two-item comparable composite) for wave 4,
+#' because rob includes a non-comparable rob3 item.
+cat("\n=== CORRELATION UAI x COMPOSITE SCORE (Wave 4) ===\n")
+sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
+cntry_means4 <- tapply(sub4$rob2item * sub4$wgt2, sub4$cntry, sum) /
+                tapply(sub4$wgt2,      sub4$cntry, sum)
 uai_vals4    <- tapply(sub4$UAI, sub4$cntry, mean, na.rm = TRUE)
 common4      <- intersect(names(cntry_means4), names(uai_vals4))
-cat(sprintf("r(UAI, composite_wave4) = %.3f\n",
+cat(sprintf("r(UAI, rob2item_wave4) = %.3f\n",
             cor(cntry_means4[common4], uai_vals4[common4], use = "complete.obs")))
 
 
 
 
 #' ===================================================================
-#' # 7. Focus Italia — descrittive sociodemografiche
+#' # 7. Italy focus — sociodemographic profile
 #' ===================================================================
-#' [ESTENSIONE] Profilo del sotto-campione italiano per wave.
-#' Da usare per la sezione Focus Italia nel Capitolo 5.
+#' [EXTENSION] Sociodemographic profile of the Italian subsample by wave.
+#' Intended for the Italy-focus section of Chapter 5.
 
-cat("\n=== PROFILO SOCIODEMOGRAFICO ITALIA PER WAVE ===\n")
+cat("\n=== SOCIODEMOGRAPHIC PROFILE — ITALY BY WAVE ===\n")
 
 it <- dat[dat$cntry == "IT", ]
 
-#' **Sesso**
-cat("\nSesso (proporzione donne):\n")
+#' **Sex** (proportion female)
+cat("\nProportion female:\n")
 print(tapply(it$sex, it$wave, mean, na.rm = TRUE))
 
-#' **Età media**
-cat("\nEtà media:\n")
+#' **Mean age**
+cat("\nMean age:\n")
 print(tapply(it$age, it$wave, mean, na.rm = TRUE))
 
-#' **Istruzione media**
-cat("\nIstruzione media (anni fine studi):\n")
+#' **Mean education**
+cat("\nMean education (age at end of full-time education):\n")
 print(tapply(it$educ, it$wave, mean, na.rm = TRUE))
 
-#' **Status occupazionale**
-cat("\nStatus occupazionale (proporzioni per wave):\n")
+#' **Employment status**
+cat("\nEmployment status (proportions by wave):\n")
 for (w in 1:4) {
     cat(sprintf("  Wave %d:\n", w))
     print(round(prop.table(table(it$white[it$wave == w])), 3))
 }
 
-#' **Composite score Italia per wave (ponderato)**
-cat("\n=== COMPOSITE SCORE ITALIA (rob, ponderato) ===\n")
+#' **Composite score — Italy, pooled across imputed datasets**
+cat("\n=== COMPOSITE SCORE — ITALY (weighted, pooled) ===\n")
 
 for (w in 1:4) {
-  # media pooled sui 20 dataset imputati
   m_imp <- sapply(dati, function(x) {
     sub <- x[x$cntry == "IT" & x$wave == w, ]
     weighted.mean(sub$rob, sub$wgt2, na.rm = TRUE)
@@ -380,7 +383,7 @@ for (w in 1:4) {
               w, mean(m_imp), mean(sd_imp), n))
 }
 
-# Stesso per rob2item in wave 4
+# rob2item for wave 4 (two-item comparable composite)
 cat("\n  Wave 4 (rob2item): ")
 m2 <- sapply(dati, function(x) {
   sub <- x[x$cntry == "IT" & x$wave == 4, ]
@@ -388,4 +391,4 @@ m2 <- sapply(dati, function(x) {
 })
 cat(sprintf("M = %.3f\n", mean(m2)))
 
-cat("\n✓ Script 2_1 completato. Procedere con 2_2_Measurement_invariance_extended.R\n")
+cat("\nScript 2_1 complete. Proceed to 2_2_Measurement_invariance_extended.R\n")

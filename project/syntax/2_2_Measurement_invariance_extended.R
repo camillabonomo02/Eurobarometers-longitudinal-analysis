@@ -1,6 +1,6 @@
 #' ---
 #' title: Measurement invariance — Extended (4 waves, 2012-2024)
-#' author: Camilla [estende Gnambs & Appel 2019 — lavaan invece di Mplus]
+#' author: Camilla Bonomo [extends Gnambs & Appel 2019 — lavaan instead of Mplus]
 #' output:
 #'    html_document:
 #'       toc: true
@@ -8,17 +8,17 @@
 #' date: "`r Sys.time()`"
 #' ---
 #'
-#' **NOTA METODOLOGICA**
-#' G&A usano Mplus con MplusAutomation per il test di invarianza.
-#' Questo script replica la stessa sequenza di modelli (configurale →
-#' metrico → scalare) usando lavaan + semTools in R, con stimatore
-#' WLSMV appropriato per item ordinali a 4 categorie.
+#' Methodological note:
+#' G&A used Mplus with MplusAutomation for invariance testing.
+#' This script replicates the same sequence of models (configural ->
+#' metric -> scalar) using lavaan and semTools in R, with the WLSMV
+#' estimator appropriate for four-category ordinal items.
 #'
-#' Struttura:
-#'   Sezione 1 — Invarianza wave 1-3 a 3 item (replica G&A)
-#'   Sezione 2 — Comparabilità wave 1-4 a 2 item (correlazioni policoriche)
-#'   Sezione 3 — Significatività pratica non-invarianza (replica G&A)
-#'   Sezione 4 — Riepilogo e decisione metodologica
+#' Structure:
+#'   Section 1 — Measurement invariance across waves 1-3 (3 items; replicates G&A)
+#'   Section 2 — Comparability across waves 1-4 (2 items; polychoric correlations)
+#'   Section 3 — Practical significance of non-invariance (replicates G&A)
+#'   Section 4 — Summary and methodological decision
 
 
 #' **Clear workspace**
@@ -27,7 +27,7 @@ rm(list = ls())
 #' **Load packages**
 library(lavaan)
 library(semTools)
-library(polycor)     # correlazioni policoriche per sezione 2
+library(polycor)     # polychoric correlations for Section 2
 library(doBy)
 source("./syntax/0_Start.R")
 
@@ -35,16 +35,16 @@ source("./syntax/0_Start.R")
 load("./data/dat.Rdata")
 rm(dati_mice)
 
-#' **Prepara item ordinali e subset**
+#' **Convert attitude items to ordered factors and prepare subsets**
 dat$rob1 <- ordered(dat$rob1)
 dat$rob2 <- ordered(dat$rob2)
 dat$rob3 <- ordered(dat$rob3)
 
-# Wave 1-3: 3 item (replica G&A)
+# Waves 1-3: three-item scale (replicates G&A)
 d123 <- dat[dat$wave %in% 1:3, ]
 d123$wave_f <- factor(d123$wave, labels = c("w2012", "w2014", "w2017"))
 
-# Wave 1-4: 2 item (estensione — rob3 non comparabile in wave 4)
+# Waves 1-4: two-item scale (rob3 not comparable in wave 4)
 d1234 <- dat[dat$wave %in% 1:4, ]
 d1234$wave_f <- factor(d1234$wave,
                        labels = c("w2012", "w2014", "w2017", "w2024"))
@@ -53,22 +53,22 @@ d1234$wave_f <- factor(d1234$wave,
 
 
 #' ===================================================================
-#' # 1. Measurement invariance across waves 1-3 (replica G&A)
+#' # 1. Measurement invariance across waves 1-3 [G&A replication]
 #' ===================================================================
-#' Fattore unico F su rob1, rob2, rob3
-#' Stimatore WLSMV, 3 gruppi (wave), sequenza configurale -> metrico -> scalare
+#' Single-factor model (F) with three indicators: rob1, rob2, rob3.
+#' Estimator: WLSMV; three groups (waves); sequence: configural -> metric -> scalar.
 
-cat("\n=== INVARIANZA DI MISURA: WAVE 1-3 (3 item) ===\n")
-cat("Replica di Gnambs & Appel (2019)\n\n")
+cat("\n=== MEASUREMENT INVARIANCE: WAVES 1-3 (3 items) ===\n")
+cat("Replication of Gnambs & Appel (2019)\n\n")
 
 model_3item <- '
   F =~ rob1 + rob2 + rob3
 '
 
 #' -------------------------------------------------------------------
-#' ## 1a. Modello configurale
+#' ## 1a. Configural model
 #' -------------------------------------------------------------------
-cat("--- Modello 1: Configurale ---\n")
+cat("--- Model 1: Configural ---\n")
 fit_conf_123 <- cfa(model_3item,
                     data        = d123,
                     group       = "wave_f",
@@ -80,9 +80,9 @@ fitMeasures(fit_conf_123, c("cfi", "tli", "rmsea", "srmr"))
 
 
 #' -------------------------------------------------------------------
-#' ## 1b. Modello metrico (loadings vincolati)
+#' ## 1b. Metric model (loadings constrained equal across waves)
 #' -------------------------------------------------------------------
-cat("\n--- Modello 2: Metrico ---\n")
+cat("\n--- Model 2: Metric ---\n")
 fit_metr_123 <- cfa(model_3item,
                     data        = d123,
                     group       = "wave_f",
@@ -94,9 +94,9 @@ fitMeasures(fit_metr_123, c("cfi", "tli", "rmsea", "srmr"))
 
 
 #' -------------------------------------------------------------------
-#' ## 1c. Modello scalare (loadings + thresholds vincolati)
+#' ## 1c. Scalar model (loadings and thresholds constrained equal)
 #' -------------------------------------------------------------------
-cat("\n--- Modello 3: Scalare ---\n")
+cat("\n--- Model 3: Scalar ---\n")
 fit_scal_123 <- cfa(model_3item,
                     data        = d123,
                     group       = "wave_f",
@@ -108,11 +108,12 @@ fitMeasures(fit_scal_123, c("cfi", "tli", "rmsea", "srmr"))
 
 
 #' -------------------------------------------------------------------
-#' ## 1d. Tabella riepilogativa con delta fit
+#' ## 1d. Summary table with delta fit indices
 #' -------------------------------------------------------------------
-cat("\n--- Confronto modelli (wave 1-3) ---\n")
-#' Criterio: |dCFI| < .010 e |dRMSEA| < .015 (Cheung & Rensvold 2002)
-#' Con N ~75.000 il test LRT e' quasi sempre significativo -> usare dCFI
+cat("\n--- Model comparison (waves 1-3) ---\n")
+#' Decision criteria: |dCFI| < .010 and |dRMSEA| < .015 (Cheung & Rensvold 2002).
+#' With N ~ 75,000 the chi-square difference test is almost always significant;
+#' incremental fit indices are therefore preferred.
 
 cfi_123   <- sapply(list(fit_conf_123, fit_metr_123, fit_scal_123),
                     function(x) fitMeasures(x, "cfi"))
@@ -124,44 +125,45 @@ df_123    <- sapply(list(fit_conf_123, fit_metr_123, fit_scal_123),
                     function(x) fitMeasures(x, "df"))
 
 tab_123 <- data.frame(
-  Modello = c("Configurale", "Metrico", "Scalare"),
-  df      = df_123,
-  CFI     = round(cfi_123,   3),
-  TLI     = round(tli_123,   3),
-  RMSEA   = round(rmsea_123, 3),
-  dCFI    = round(c(NA, diff(cfi_123)),   3),
-  dRMSEA  = round(c(NA, diff(rmsea_123)), 3)
+  Model  = c("Configural", "Metric", "Scalar"),
+  df     = df_123,
+  CFI    = round(cfi_123,   3),
+  TLI    = round(tli_123,   3),
+  RMSEA  = round(rmsea_123, 3),
+  dCFI   = round(c(NA, diff(cfi_123)),   3),
+  dRMSEA = round(c(NA, diff(rmsea_123)), 3)
 )
-cat("\nRiepilogo fit indices (wave 1-3, 3 item):\n")
+cat("\nFit indices summary (waves 1-3, 3 items):\n")
 print(tab_123)
 
 
 
 
 #' ===================================================================
-#' # 2. Comparabilita' wave 1-4: correlazioni policoriche (2 item)
+#' # 2. Comparability waves 1-4: polychoric correlations (2 items)
 #' ===================================================================
-#' Con soli 2 indicatori la CFA configurale ha df=0 e non e' identificata.
-#' L'approccio corretto e' il confronto delle correlazioni policoriche
-#' (equivalente funzionale del test di invarianza metrica per scale a
-#' 2 item) e delle distribuzioni di risposta (invarianza scalare approx).
-#' Riferimento: Raykov (2012), Psychological Assessment.
+#' With only two indicators, the configural CFA has df = 0 and is
+#' not identified. The appropriate approach is to compare polychoric
+#' correlations across waves (functional equivalent of metric invariance
+#' testing for two-item scales) and to inspect response distributions
+#' (approximate scalar invariance). See Raykov (2012), Psychological Assessment.
 
-cat("\n\n=== COMPARABILITA' WAVE 1-4: 2 ITEM (rob1 + rob2) ===\n")
-cat("[ESTENSIONE] CFA non identificata con 2 item (df=0 nel configurale).\n")
-cat("Approccio: correlazioni policoriche + distribuzioni di risposta.\n\n")
+cat("\n\n=== COMPARABILITY WAVES 1-4: 2-ITEM SCALE (rob1 + rob2) ===\n")
+cat("[EXTENSION] CFA not identified with 2 items (configural df = 0).\n")
+cat("Approach: polychoric correlations + response distribution inspection.\n\n")
 
 #' -------------------------------------------------------------------
-#' ## 2a. Correlazioni policoriche rob1 x rob2 per wave
+#' ## 2a. Polychoric correlations rob1 x rob2 by wave
 #' -------------------------------------------------------------------
-#' Invarianza metrica = stabilita' della correlazione (dr < .05)
+#' Metric invariance is approximated when polychoric correlations are
+#' stable across waves (criterion: dr < .05).
 
-cat("--- Correlazioni policoriche rob1 x rob2 per wave ---\n")
-polychor_tab <- data.frame(wave  = integer(),
-                           anno  = character(),
+cat("--- Polychoric correlations rob1 x rob2 by wave ---\n")
+polychor_tab <- data.frame(wave   = integer(),
+                           year   = character(),
                            r_poly = numeric(),
-                           SE    = numeric(),
-                           N     = integer())
+                           SE     = numeric(),
+                           N      = integer())
 
 for (w in 1:4) {
   sub <- d1234[d1234$wave == w &
@@ -170,66 +172,67 @@ for (w in 1:4) {
                   std.err = TRUE)
   polychor_tab <- rbind(polychor_tab,
                         data.frame(wave   = w,
-                                   anno   = c("2012","2014","2017","2024")[w],
+                                   year   = c("2012","2014","2017","2024")[w],
                                    r_poly = round(pc$rho, 3),
                                    SE     = round(sqrt(pc$var[1,1]), 3),
                                    N      = nrow(sub)))
 }
 print(polychor_tab)
-cat(sprintf("\n  Max dr tra wave adiacenti: %.3f\n",
+cat(sprintf("\n  Max dr between adjacent waves: %.3f\n",
             max(abs(diff(polychor_tab$r_poly)))))
-cat("  Criterio: dr < .05 -> invarianza metrica supportata\n")
+cat("  Criterion: dr < .05 -> metric invariance supported\n")
 
 
 #' -------------------------------------------------------------------
-#' ## 2b. Distribuzioni di risposta per wave
+#' ## 2b. Response distributions by wave
 #' -------------------------------------------------------------------
-cat("\n--- Distribuzioni risposta rob1 per wave (proporzioni) ---\n")
+cat("\n--- Response distributions for rob1 by wave (proportions) ---\n")
 print(round(prop.table(
   table(as.numeric(d1234$rob1), d1234$wave_f), margin = 2), 3))
 
-cat("\n--- Distribuzioni risposta rob2 per wave (proporzioni) ---\n")
+cat("\n--- Response distributions for rob2 by wave (proportions) ---\n")
 print(round(prop.table(
   table(as.numeric(d1234$rob2), d1234$wave_f), margin = 2), 3))
 
 cat("
-  Interpretazione: proporzioni stabili (max D < .05) -> invarianza
-  scalare approssimata supportata. Differenze sistematiche indicano
-  shift nelle soglie di risposta tra wave (response style change).
+  Interpretation: stable proportions (max D < .05) support approximate
+  scalar invariance. Systematic differences indicate shifts in response
+  thresholds across waves (response style change), which should be
+  acknowledged as a limitation if observed.
 ")
 
 
 
 
 #' ===================================================================
-#' # 3. Significatività pratica della non-invarianza (replica G&A)
+#' # 3. Practical significance of non-invariance [G&A replication]
 #' ===================================================================
-#' G&A verificano che le differenze nelle probabilita' predette di
-#' risposta tra modello configurale e scalare siano < .06.
-#' Usa ThresholdProbability() definita in 0_Start.R
+#' G&A verify that differences in predicted response probabilities
+#' between the configural and scalar models do not exceed .06.
+#' Uses ThresholdProbability() defined in 0_Start.R.
 
-cat("\n\n=== SIGNIFICATIVITA' PRATICA NON-INVARIANZA (wave 1-3) ===\n")
-cat("Replica di Gnambs & Appel (2019)\n\n")
+cat("\n\n=== PRACTICAL SIGNIFICANCE OF NON-INVARIANCE (waves 1-3) ===\n")
+cat("Replication of Gnambs & Appel (2019)\n\n")
 
-#' Helper: estrai parametri da oggetto lavaan per un gruppo
+#' Helper: extract model parameters from a lavaan object for a given group
 extract_params_lavaan <- function(fit, group_idx, items) {
-  
+
   params <- parameterestimates(fit, standardized = FALSE)
-  
-  # factor mean (0 nel gruppo di riferimento)
+
+  # Factor mean (fixed to 0 in the reference group)
   F_mean <- params$est[params$lhs == "F" &
                          params$op  == "~1" &
                          params$group == group_idx]
   if (length(F_mean) == 0) F_mean <- 0
-  
-  # factor variance
+
+  # Factor variance
   F_var <- params$est[params$lhs == "F" &
                         params$op  == "~~" &
                         params$rhs == "F" &
                         params$group == group_idx]
   if (length(F_var) == 0) F_var <- 1
-  
-  # loadings
+
+  # Factor loadings
   loadings <- sapply(items, function(it) {
     v <- params$est[params$lhs == "F" &
                       params$op  == "=~" &
@@ -237,8 +240,8 @@ extract_params_lavaan <- function(fit, group_idx, items) {
                       params$group == group_idx]
     if (length(v) == 0) NA else v[1]
   })
-  
-  # thresholds (3 soglie per item a 4 categorie)
+
+  # Thresholds (3 thresholds per 4-category item)
   thresholds <- lapply(items, function(it) {
     th <- params$est[params$lhs == it &
                        params$op  == "|" &
@@ -246,10 +249,10 @@ extract_params_lavaan <- function(fit, group_idx, items) {
     if (length(th) < 3) rep(NA, 3) else th[1:3]
   })
   th_mat <- do.call(rbind, thresholds)
-  
-  list(F_mean    = F_mean,
-       F_var     = F_var,
-       loadings  = loadings,
+
+  list(F_mean     = F_mean,
+       F_var      = F_var,
+       loadings   = loadings,
        thresholds = th_mat)
 }
 
@@ -258,34 +261,34 @@ items_3 <- c("rob1", "rob2", "rob3")
 for (g in 1:3) {
   wave_label <- c("2012", "2014", "2017")[g]
   cat(sprintf("Wave %s:\n", wave_label))
-  
+
   p_conf <- tryCatch({
     pr <- extract_params_lavaan(fit_conf_123, g, items_3)
     ThresholdProbability(3, pr$loadings, pr$F_mean, pr$F_var,
                          rep(1, 3), 3, pr$thresholds)
   }, error = function(e) {
-    cat("  [Errore estrazione configurale]\n"); NULL
+    cat("  [Error extracting configural parameters]\n"); NULL
   })
-  
+
   p_scal <- tryCatch({
     pr <- extract_params_lavaan(fit_scal_123, g, items_3)
     ThresholdProbability(3, pr$loadings, pr$F_mean, pr$F_var,
                          rep(1, 3), 3, pr$thresholds)
   }, error = function(e) {
-    cat("  [Errore estrazione scalare]\n"); NULL
+    cat("  [Error extracting scalar parameters]\n"); NULL
   })
-  
+
   if (!is.null(p_conf) && !is.null(p_scal)) {
     diff_mat <- round(p_conf - p_scal, 3)
     rownames(diff_mat) <- items_3
-    cat("  Differenza probabilita' (Configurale - Scalare):\n")
+    cat("  Probability differences (Configural - Scalar):\n")
     print(diff_mat)
     max_diff <- max(abs(diff_mat), na.rm = TRUE)
-    cat(sprintf("  Max diff assoluta: %.3f  %s\n\n",
+    cat(sprintf("  Max absolute difference: %.3f  %s\n\n",
                 max_diff,
                 ifelse(max_diff < .06,
-                       "OK: < .06 (non-invarianza non sostanziale)",
-                       "ATTENZIONE: > .06 (da discutere)")))
+                       "OK: < .06 (non-invariance not practically significant)",
+                       "ATTENTION: > .06 (discuss as limitation)")))
   }
 }
 
@@ -293,40 +296,40 @@ for (g in 1:3) {
 
 
 #' ===================================================================
-#' # 4. Riepilogo e decisione metodologica
+#' # 4. Summary and methodological decision
 #' ===================================================================
 
-cat("\n=== RIEPILOGO FINALE ===\n\n")
+cat("\n=== FINAL SUMMARY ===\n\n")
 
-cat("--- Wave 1-3 (3 item, replica G&A) ---\n")
+cat("--- Waves 1-3 (3 items, G&A replication) ---\n")
 print(tab_123)
 
-cat("\n--- Wave 1-4 (2 item, estensione) ---\n")
+cat("\n--- Waves 1-4 (2 items, extension) ---\n")
 print(polychor_tab)
 
 cat("
-=== REGOLE DECISIONALI ===
+=== DECISION CRITERIA ===
 
-Wave 1-3 (CFA):
-  |dCFI|   < .010 -> invarianza supportata  (Cheung & Rensvold 2002)
-  |dRMSEA| < .015 -> invarianza supportata
-  Max Dprob < .06  -> non-invarianza non sostanzialmente rilevante (G&A)
+Waves 1-3 (CFA-based):
+  |dCFI|   < .010 -> invariance supported  (Cheung & Rensvold 2002)
+  |dRMSEA| < .015 -> invariance supported
+  Max Dprob < .06  -> non-invariance not practically significant (G&A)
 
-Wave 1-4 (correlazioni policoriche):
-  dr_poly  < .05  -> invarianza metrica approssimata supportata
-  Proporzioni stabili -> invarianza scalare approssimata
+Waves 1-4 (polychoric correlation-based):
+  dr_poly  < .05  -> approximate metric invariance supported
+  Stable proportions -> approximate scalar invariance
 
-=== DECISIONE PER L'ANALISI PRINCIPALE ===
+=== DECISION FOR THE MAIN ANALYSIS ===
 
-  Se invarianza (almeno metrica) supportata:
-    -> Usare composite rob (3 item) per wave 1-3 nell'analisi multilevel
-    -> Usare rob2item (2 item) per confronti longitudinali con wave 4
-    -> Documentare entrambe le scelte in appendice metodologica (Cap. 4.3.4)
+  If (at minimum) metric invariance is supported:
+    -> Use the three-item composite (rob) for the waves 1-3 multilevel analysis
+    -> Use the two-item composite (rob2item) for all comparisons extending to wave 4
+    -> Document both choices in the methodological appendix (Ch. 4.3.4)
 
-  Se invarianza scalare non supportata (dCFI > .010):
-    -> Confronti di correlazioni e regressioni restano legittimi
-    -> Confronti di medie richiedono cautela: riportare come limite
-    -> G&A procedono con invarianza approssimata: stessa scelta qui
+  If scalar invariance is not supported (dCFI > .010):
+    -> Correlation and regression comparisons remain legitimate
+    -> Mean comparisons require caution: report as a methodological limitation
+    -> G&A proceed under approximate invariance; the same decision applies here
 ")
 
-cat("\n✓ Script 2_2 completato. Procedere con 3__Current_and_changes_extended.R\n")
+cat("\nScript 2_2 complete. Proceed to 3_Current_and_changes_extended.R\n")
