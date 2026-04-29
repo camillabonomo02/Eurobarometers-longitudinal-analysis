@@ -13,30 +13,32 @@
 #'   Figure 1b — EU map: attitude change wave 1 -> 3 (G&A replication)
 #'   Figure 1c — EU map: mean composite score by country (wave 4; EXTENSION)
 #'   Figure 2  — Bar chart: mean attitude by wave and application domain (waves 1-3)
-#'   Figure 3  — Quantile regression: individual-level predictors (G&A + wave 4)
+#'   Figure 3a — Quantile regression: individual predictors, waves 1-3 (G&A replication)
+#'   Figure 3b — Quantile regression: individual predictors, waves 1-4 (EXTENSION, rob2item)
 #'   Figure 4  — Longitudinal trajectory: Italy vs. EU benchmark (rob2item)
 #'   Figure 5  — Scatter plot: UAI vs. composite score by country (rob2item)
-#'   Figure 6  — Country random effects with Italy highlighted (rob2item; FIXED)
-#'   Figure 7  — ICC decline across waves: convergence of national attitudes
+#'   Figure 6  — Country random effects with Italy highlighted (rob2item)
+#'   Figure 7  — ICC decline across waves: convergence of national attitudes (rob2item)
 #'   Figure 8  — Gender gap by country (wave 4): dot plot
-#'   Figure 9  — Country rank bump chart across all four waves
-#'   Figure 10 — Attitude distribution by wave: density plot (rob2item)
+#'   Figure 9  — Country rank bump chart across all four waves (rob2item)
+#'   Figure 10 — Attitude distribution by wave: bar chart (rob2item)
 #'   Figure 11 — Italy vs. EU27 by demographic subgroup (wave 4)
 #'   Figure 12 — EU map: attitude change wave 3 -> 4 (EXTENSION)
-#'   Figure 13 — Age gradient across waves: EU27 and Italy
-#'   Figure 15 — Latitude vs. composite score by country (North-South divide)
-#'   Figure 16 — Gender gap across waves: EU27 and Italy
-#'
-#' Colour scheme (consistent across all figures):
-#'   Positive / favourable / improvement -> BLUE  (#2166ac, #4575b4)
-#'   Negative / unfavourable / decline   -> RED   (#d73027, #e41a1c)
-#'   Neutral / mean                      -> GREY  (#f7f7f7, grey60)
-#'   Italy highlight                     -> #e41a1c (red; below EU mean)
+#'   Figure 13 — Age gradient across waves: EU27 and Italy (rob2item)
+#'   Figure 14 — Latitude vs. composite score by country (North-South divide)
+#'   Figure 15 — Gender gap across waves: EU27 and Italy (rob2item)
 #'
 #' Dependent variable note:
-#'   All analyses that include wave 4 use rob2item (two-item comparable
-#'   composite, range 0-6). Figures using rob (three-item, range 0-9)
-#'   are restricted to waves 1-3 and labelled accordingly.
+#'   rob      = three-item composite (rob1+rob2+rob3, range 0-9), waves 1-3 only.
+#'   rob2item = two-item comparable composite (rob1+rob2, range 0-6), waves 1-4.
+#'   All figures including wave 4 use rob2item. rob is restricted to waves 1-3.
+#'
+#' Colour scheme:
+#'   Palette: Okabe-Ito (2008), colorblind-safe throughout.
+#'   Italy highlight  -> #D55E00 (vermilion)
+#'   EU27 reference   -> #0072B2 (blue)
+#'   Neutral/other    -> #999999 (grey)
+#'   Positive/high    -> blue family; Negative/low -> red-orange family
 
 
 #' **Clear workspace**
@@ -77,30 +79,71 @@ dir.create("./plots", showWarnings = FALSE)
 
 
 #' ===================================================================
-#' # GLOBAL COLOUR PALETTE
+#' # GLOBAL COLOUR PALETTE AND THEME
 #' ===================================================================
-#' Defined once and reused across all figures for visual consistency.
+#' Okabe-Ito (2008) colorblind-safe palette used consistently throughout.
+#' theme_academic() provides a uniform academic look for all ggplot figures.
 
-# Diverging: red (sceptical) -> white (neutral) -> blue (favourable)
-pal_div <- colorRampPalette(c("#d73027", "#f46d43", "#fdae61",
+# Diverging palette (red-white-blue): used for maps and ICC
+pal_div <- colorRampPalette(c("#b2182b", "#ef8a62", "#fddbc7",
                               "#f7f7f7",
-                              "#abd9e9", "#74add1", "#4575b4"))
+                              "#d1e5f0", "#67a9cf", "#2166ac"))
 
-col_italy   <- "#e41a1c"   # Italy: red (below EU mean)
-col_eu      <- "black"     # EU27 mean: black
-col_neutral <- "grey60"    # other countries
+# Primary semantic colours
+col_italy   <- "#D55E00"   # Okabe-Ito vermilion (Italy, below EU mean)
+col_eu      <- "#0072B2"   # Okabe-Ito blue (EU27 reference)
+col_neutral <- "#999999"   # grey (other countries)
 
-# Wave gradient: dark blue (2012) -> orange (2017) -> red (2024)
-col_waves <- c("2012" = "#4575b4",
-               "2014" = "#74add1",
-               "2017" = "#fdae61",
-               "2024" = "#d73027")
+# Wave palette: 4 time points, dark-to-warm progression
+col_waves <- c("2012" = "#0072B2",
+               "2014" = "#56B4E9",
+               "2017" = "#E69F00",
+               "2024" = "#D55E00")
+
+# Benchmark country colours for Figures 4 and 9 (Okabe-Ito + ColorBrewer Dark2)
+col_benchmark <- c(
+  IT   = "#D55E00",   # vermilion
+  EU27 = "#0072B2",   # blue
+  DE   = "#009E73",   # teal
+  FR   = "#7570B3",   # purple
+  DK   = "#E7298A",   # magenta
+  SE   = "#66A61E",   # olive green
+  GR   = "#E6AB02",   # gold
+  PT   = "#A6761D",   # brown
+  ES   = "#666666"    # dark grey
+)
+
+#' **Consistent academic theme**
+theme_academic <- function(base_size = 12) {
+  theme_bw(base_size = base_size) %+replace%
+    theme(
+      panel.grid.minor    = element_blank(),
+      panel.grid.major    = element_line(colour = "grey88", linewidth = 0.3),
+      strip.background    = element_rect(fill = "grey94", colour = "grey70",
+                                         linewidth = 0.5),
+      strip.text          = element_text(size = base_size, face = "bold",
+                                         margin = margin(4, 4, 4, 4)),
+      legend.background   = element_blank(),
+      legend.key          = element_blank(),
+      legend.title        = element_text(size = base_size - 1, face = "bold"),
+      legend.text         = element_text(size = base_size - 1),
+      plot.title          = element_text(size = base_size + 1, face = "bold",
+                                         hjust = 0, margin = margin(b = 3)),
+      plot.subtitle       = element_text(size = base_size - 1, colour = "grey40",
+                                         hjust = 0, margin = margin(b = 5)),
+      plot.caption        = element_text(size = base_size - 2, colour = "grey50",
+                                         hjust = 0, margin = margin(t = 4)),
+      axis.text           = element_text(colour = "grey30", size = base_size - 1),
+      axis.title          = element_text(size = base_size, face = "bold"),
+      plot.margin         = margin(10, 12, 10, 10)
+    )
+}
 
 
 
 
 #' ===================================================================
-#' # 1. EU maps [G&A + EXTENSION wave 4]
+#' # 1. EU maps [G&A replication + EXTENSION wave 4]
 #' ===================================================================
 
 maps_available <- requireNamespace("rworldmap", quietly = TRUE)
@@ -124,7 +167,7 @@ if (maps_available) {
   })
   dati <- as.mitml.list(dati)
 
-  #' **Compute country-level statistics** [G&A]
+  #' **Compute country-level statistics**
   paesi <- unique(dat$cntry)
   ds <- data.frame(cntry = paesi, rob_w3 = NA, rob_w4 = NA,
                    delta_13 = NA, delta_14 = NA, delta_34 = NA,
@@ -137,7 +180,6 @@ if (maps_available) {
       else NA
     }))
 
-    # Wave 4 map uses rob2item (two-item comparable composite)
     ds$rob_w4[ds$cntry == i] <- {
       sub <- dat[dat$cntry == i & dat$wave == 4 &
                    !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
@@ -160,7 +202,6 @@ if (maps_available) {
                               dati[[1]]$wave_n %in% c(1, 4)))$d * -1
     }
 
-    # Cohen's d for the AI-debate period: wave 3 (2017) -> wave 4 (2024)
     ds$delta_34[ds$cntry == i] <- tryCatch(
       ttest.imp(rob2item ~ wave_n, dati, weights = "wgt2",
                 paired = FALSE, print = FALSE,
@@ -170,7 +211,7 @@ if (maps_available) {
     )
   }
 
-  ds$rob_w3[ds$rob_w3 < -.50] <- -.495  # floor for extreme values (G&A)
+  ds$rob_w3[ds$rob_w3 < -.50] <- -.495
 
   europeanUnion <- c("Austria", "Belgium", "Bulgaria", "Cyprus",
                      "Czech Rep.", "Denmark", "Estonia", "Finland", "France",
@@ -179,8 +220,7 @@ if (maps_available) {
                      "Netherlands", "Poland", "Portugal", "Romania",
                      "Slovakia", "Slovenia", "Spain", "Sweden")
 
-  sPDF <- joinCountryData2Map(ds, joinCode = "ISO2",
-                              nameJoinColumn = "cntry")
+  sPDF <- joinCountryData2Map(ds, joinCode = "ISO2", nameJoinColumn = "cntry")
   sPDFmyCountries <- sPDF[sPDF$NAME %in% europeanUnion, ]
 
   pal_score    <- pal_div(12)
@@ -201,11 +241,9 @@ if (maps_available) {
     ylim             = bbox(sPDFmyCountries)[2, ],
     addLegend        = FALSE,
     colourPalette    = pal_score,
-    mapTitle         = "Attitudes towards robots 2017 (standardized)")
+    mapTitle         = "Attitudes towards robots, 2017 (standardised)")
   do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
                           legendLabels = "all"))
-  mtext("Red = below average (more sceptical)    Blue = above average (more favourable)",
-        side = 1, line = 0, cex = 0.65, col = "grey40")
   par(op); dev.off()
   cat("Saved: Figure_1a_map_wave3.png\n")
 
@@ -219,16 +257,14 @@ if (maps_available) {
     sPDF,
     nameColumnToPlot = "delta_13",
     numCats          = 12,
-    catMethod        = seq(-0.5, 0.1, length.out = 13),
+    catMethod        = seq(-0.5, 0.3, length.out = 13),
     xlim             = bbox(sPDFmyCountries)[1, ],
     ylim             = bbox(sPDFmyCountries)[2, ],
     addLegend        = FALSE,
     colourPalette    = pal_change,
-    mapTitle         = "Change in attitudes 2012-2017 (Cohen's d)")
+    mapTitle         = "Attitude change 2012–2017 (Cohen's d, rob)")
   do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
                           legendLabels = "all"))
-  mtext("Red = decline in acceptance    Blue = improvement",
-        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Saved: Figure_1b_map_change13.png\n")
 
@@ -242,22 +278,19 @@ if (maps_available) {
     sPDF,
     nameColumnToPlot = "rob_w4",
     numCats          = 12,
-    catMethod        = seq(2.5, 4.5, length.out = 13),
+    catMethod        = seq(2.0, 4.5, length.out = 13),
     xlim             = bbox(sPDFmyCountries)[1, ],
     ylim             = bbox(sPDFmyCountries)[2, ],
     addLegend        = FALSE,
     colourPalette    = pal_score_w4,
-    mapTitle         = "Attitudes towards robots and AI 2024 (rob2item, 0-6)")
+    mapTitle         = "Attitudes towards robots and AI, 2024 (rob2item, 0–6)")
   do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
                           legendLabels = "all"))
-  mtext("Red = more negative    Blue = more positive",
-        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Saved: Figure_1c_map_wave4.png\n")
 
+
   #' --- Figure 12: attitude change 2017 -> 2024 (rob2item) [EXTENSION] ---
-  #' Covers the AI-debate period following the rapid diffusion of large language
-  #' models post-2020. Uses rob2item throughout for cross-wave comparability.
   pal_change_34 <- pal_div(12)
   png("./plots/Figure_12_map_change34.png",
       width = 7, height = 7, units = "in", res = 150)
@@ -272,11 +305,9 @@ if (maps_available) {
     ylim             = bbox(sPDFmyCountries)[2, ],
     addLegend        = FALSE,
     colourPalette    = pal_change_34,
-    mapTitle         = "Change in attitudes 2017\u20132024 (Cohen\u2019s d, rob2item)")
+    mapTitle         = "Attitude change 2017–2024 (Cohen’s d, rob2item)")
   do.call(addMapLegend, c(mapParams, legendWidth = 0.5, legendMar = 2,
                           legendLabels = "all"))
-  mtext("Red = decline in acceptance    Blue = improvement (2017 \u2192 2024)",
-        side = 1, line = 0, cex = 0.7, col = "grey40")
   par(op); dev.off()
   cat("Saved: Figure_12_map_change34.png\n")
 
@@ -285,8 +316,7 @@ if (maps_available) {
      pal_score, pal_change, pal_score_w4, pal_change_34)
 
 } else {
-  cat("rworldmap not available. Install with install.packages('rworldmap')\n")
-  cat("Figures 1a-c skipped.\n")
+  cat("rworldmap not available — Figures 1a/1b/1c/12 skipped.\n")
 }
 
 
@@ -295,10 +325,11 @@ if (maps_available) {
 #' ===================================================================
 #' # 2. Bar chart — mean attitudes by wave [G&A, waves 1-3 only]
 #' ===================================================================
-#' Wave 4 is excluded because rob3 wording changed in 2024.
-#' The longitudinal comparison including wave 4 is presented in Figure 4.
+#' Wave 4 excluded: rob3 wording changed in 2024 (not comparable).
+#' feel1-feel4 are single-item measures on the same 0-9 scale as rob.
+#' Error bars show ±½ SD (between-country dispersion).
 
-cat("\n=== FIGURE 2: MEAN ATTITUDES BY WAVE (1-3, G&A replication) ===\n")
+cat("\n=== FIGURE 2: MEAN ATTITUDES BY WAVE (1-3) ===\n")
 
 get_wave_means <- function(wave_num, items, dati) {
   if (!"wave_n" %in% names(dati[[1]])) {
@@ -319,7 +350,7 @@ w3 <- get_wave_means(3, c("rob", "feel1", "feel2", "feel3", "feel4"), dati)
 plot_data <- data.frame(
   wave = rep(c("2012", "2014", "2017"), each = 5),
   item = rep(c("General\nappraisal", "Medical\noperation",
-               "Assisting\nat work",  "Services\nfor elderly",
+               "Assisting\nat work", "Services\nfor elderly",
                "Driverless\ncars"), 3),
   mean = c(
     w1["rob",   "mean"], w1["feel1", "mean"], w1["feel2", "mean"], NA, NA,
@@ -329,11 +360,11 @@ plot_data <- data.frame(
     w3["feel3", "mean"], w3["feel4", "mean"]
   ),
   sd = c(
-    w1["rob",   "sd"],   w1["feel1", "sd"],   w1["feel2", "sd"],   NA, NA,
-    w2["rob",   "sd"],   w2["feel1", "sd"],   w2["feel2", "sd"],
-    w2["feel3", "sd"],   w2["feel4", "sd"],
-    w3["rob",   "sd"],   w3["feel1", "sd"],   w3["feel2", "sd"],
-    w3["feel3", "sd"],   w3["feel4", "sd"]
+    w1["rob",   "sd"], w1["feel1", "sd"], w1["feel2", "sd"], NA, NA,
+    w2["rob",   "sd"], w2["feel1", "sd"], w2["feel2", "sd"],
+    w2["feel3", "sd"], w2["feel4", "sd"],
+    w3["rob",   "sd"], w3["feel1", "sd"], w3["feel2", "sd"],
+    w3["feel3", "sd"], w3["feel4", "sd"]
   )
 )
 plot_data$wave <- factor(plot_data$wave, levels = c("2012", "2014", "2017"))
@@ -344,22 +375,24 @@ plot_data$item <- factor(plot_data$item,
 
 p2 <- ggplot(plot_data[!is.na(plot_data$mean), ],
              aes(x = item, y = mean, fill = wave)) +
-  geom_bar(stat = "identity", position = position_dodge(0.8),
-           width = 0.7, colour = "grey30", linewidth = 0.2) +
+  geom_bar(stat = "identity", position = position_dodge(0.82),
+           width = 0.75, colour = "white", linewidth = 0.2) +
   geom_errorbar(aes(ymin = mean - sd / 2, ymax = mean + sd / 2),
-                position = position_dodge(0.8), width = 0.2) +
-  scale_fill_manual(values = c("2012" = "#4575b4",
-                               "2014" = "#74add1",
-                               "2017" = "#fdae61"),
-                    name = "Wave") +
-  scale_y_continuous(limits = c(0, 9), breaks = 0:9) +
-  labs(title = "Mean attitudes towards robots in Europe (2012\u20132017)",
-       subtitle = paste("Weighted means, EU27.",
-                        "Wave 2024 excluded (rob3 item non-comparable; see Fig. 4)."),
+                position = position_dodge(0.82), width = 0.25,
+                colour = "grey30", linewidth = 0.5) +
+  scale_fill_manual(values = c("2012" = "#0072B2",
+                               "2014" = "#56B4E9",
+                               "2017" = "#E69F00"),
+                    name = "Survey year") +
+  scale_y_continuous(limits = c(0, 9), breaks = 0:9,
+                     expand = expansion(mult = c(0, 0.02))) +
+  labs(title = "Attitudes towards robots in Europe, 2012–2017",
+       subtitle = "Weighted means, EU27. Wave 2024 excluded (rob3 not comparable; see Figure 4).",
        x = NULL,
-       y = "Mean attitude score (0\u20139)") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position  = "bottom",
+       y = "Mean attitude score (0–9)",
+       caption = "Error bars: ±½ SD. rob = three-item composite (0–9); feel items = single measures (0–9).") +
+  theme_academic(base_size = 12) +
+  theme(legend.position   = "bottom",
         panel.grid.major.x = element_blank())
 
 ggsave("./plots/Figure_2_attitudes_by_wave.png", p2,
@@ -371,51 +404,133 @@ rm(w1, w2, w3, plot_data, p2)
 
 
 #' ===================================================================
-#' # 3. Quantile regression [G&A + EXTENSION wave 4]
+#' # 3. Quantile regression [G&A replication + EXTENSION]
 #' ===================================================================
+#' Figure 3a: waves 1-3, DV = rob (G&A replication).
+#' Figure 3b: waves 1-4, DV = rob2item (EXTENSION; two-item comparable composite).
+#'
+#' Following G&A, estimates are pooled across all m=20 imputed datasets
+#' using Rubin's rules (Rubin, 1987). For each tau in seq(0.10, 0.90, 0.05),
+#' rq() is fit on every imputed dataset; the pooled estimate is the mean
+#' across datasets, and the SE combines within- and between-imputation
+#' variance: T = U_bar + (1 + 1/m) * B.
 
-d1 <- dati[[1]]
-d1$white  <- as.factor(d1$white)
-d1$sex    <- as.factor(d1$sex)
-d1$wave   <- as.factor(d1$wave)
-d1$age_s  <- as.numeric(d1$age) / 10
-d1$zrob   <- as.numeric(scale(d1$rob))
+cat("\n=== FIGURE 3: QUANTILE REGRESSION (pooled across m=20) ===\n")
 
-#' --- Waves 1-3 (G&A replication) ---
-d1_123 <- d1[d1$wave_n %in% 1:3, ]
-fm_plot <- rq(zrob ~ wave + sex + age_s + educ + white,
-              tau = c(.25, .50, .75), data = d1_123,
-              weights = d1_123$wgt2)
+tau_seq <- seq(0.10, 0.90, by = 0.05)
+m_imp   <- length(dati)
 
-png("./plots/Figure_3a_quantreg_wave123.png",
-    width = 12, height = 5, units = "in", res = 150)
-plot(summary(fm_plot, se = "nid"), ols = FALSE,
-     parm = 4:8, mfrow = c(2, 3),
-     main = c("Male vs. female", "Age (10 yr)", "Education",
-              "White- vs. blue-collar", "White-collar vs. non-employed"),
-     xlab = "Percentile of attitude rating",
-     ylab = "Standardized regression weight")
-dev.off()
+#' **Rubin's-rules pooling helper for rq()**
+#' Returns a data frame: tau | term | estimate | lower | upper
+pool_qr <- function(imp_list, formula_obj) {
+  m <- length(imp_list)
+  do.call(rbind, lapply(tau_seq, function(tau) {
+    fits <- lapply(imp_list, function(d) {
+      fit <- do.call(rq, list(formula = formula_obj, tau = tau,
+                              data = d, weights = d$wgt2))
+      sm  <- tryCatch(
+        summary(fit, se = "nid", covariance = TRUE),
+        error = function(e) summary(fit, se = "iid", covariance = TRUE)
+      )
+      list(coef = coef(fit), vcov = sm$cov)
+    })
+    Q    <- do.call(rbind, lapply(fits, `[[`, "coef"))
+    Qbar <- colMeans(Q)
+    Ubar <- Reduce("+", lapply(fits, `[[`, "vcov")) / m
+    B    <- cov(Q)
+    Tvar <- Ubar + (1 + 1/m) * B
+    se   <- sqrt(diag(Tvar))
+    data.frame(tau      = tau,
+               term     = names(Qbar),
+               estimate = as.numeric(Qbar),
+               lower    = as.numeric(Qbar) - 1.96 * se,
+               upper    = as.numeric(Qbar) + 1.96 * se,
+               row.names = NULL)
+  }))
+}
+
+#' **Predictor label mapping** (applied to both figures by term position)
+pred_labs <- c("Male vs. female", "Age (10 yr)", "Education",
+               "White- vs. blue-collar", "White-collar vs. non-employed")
+
+#' **QR plot helper**: takes pooled data frame, filters predictors, draws figure
+plot_qr <- function(qr_df, title_str, subtitle_str) {
+  # Drop intercept and wave dummies; remaining terms are in formula order
+  preds <- qr_df[!grepl("^\\(Intercept\\)|^wave", qr_df$term), ]
+  term_order <- unique(preds$term)            # preserves formula order
+  preds$label <- factor(pred_labs[match(preds$term, term_order)],
+                        levels = pred_labs)
+  ggplot(preds, aes(x = tau, y = estimate)) +
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey55",
+               linewidth = 0.5) +
+    geom_ribbon(aes(ymin = lower, ymax = upper),
+                alpha = 0.15, fill = col_eu) +
+    geom_line(colour = col_eu, linewidth = 0.7) +
+    facet_wrap(~ label, nrow = 2, scales = "fixed") +
+    scale_x_continuous(breaks = c(0.25, 0.50, 0.75),
+                       labels = c("25th", "50th", "75th"),
+                       minor_breaks = NULL) +
+    labs(title    = title_str,
+         subtitle = subtitle_str,
+         x        = "Attitude percentile",
+         y        = "Standardised regression weight") +
+    theme_academic()
+}
+
+#' --- Figure 3a: waves 1-3 (G&A replication, rob, pooled across m=20) ---
+#' rob standardised within each imputed dataset using waves 1-3 only.
+cat("  Fitting Figure 3a (waves 1-3, rob) across m=20 datasets...\n")
+
+imp_123 <- lapply(dati, function(x) {
+  d        <- droplevels(x[x$wave_n %in% 1:3, ])
+  d$white  <- as.factor(d$white)
+  d$sex    <- as.factor(d$sex)
+  d$wave   <- droplevels(as.factor(d$wave))
+  d$age_s  <- as.numeric(d$age) / 10
+  d$zrob   <- as.numeric(scale(d$rob))
+  d
+})
+
+qr_3a <- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)
+
+p3a <- plot_qr(
+  qr_3a,
+  title_str    = "Figure 3a: Quantile regression — individual predictors (waves 1–3, rob)",
+  subtitle_str = "Pooled across m=20 imputed datasets (Rubin's rules). Shaded band: 95% CI."
+)
+
+ggsave("./plots/Figure_3a_quantreg_wave123.png", p3a,
+       width = 12, height = 5, dpi = 150)
 cat("Saved: Figure_3a_quantreg_wave123.png\n")
 
-#' --- Waves 1-4 (EXTENSION) ---
-#' rob is used here for continuity with the quantile regression framework;
-#' note that wave 4 includes a non-comparable rob3 item.
-fm_plot4 <- rq(zrob ~ wave + sex + age_s + educ + white,
-               tau = c(.25, .50, .75), data = d1,
-               weights = d1$wgt2)
 
-png("./plots/Figure_3b_quantreg_wave1234.png",
-    width = 12, height = 5, units = "in", res = 150)
-plot(summary(fm_plot4, se = "nid"), ols = FALSE,
-     parm = 5:9, mfrow = c(2, 3),
-     main = c("Male vs. female", "Age (10 yr)", "Education",
-              "White- vs. blue-collar", "White-collar vs. non-employed"),
-     xlab = "Percentile of attitude rating",
-     ylab = "Standardized regression weight")
-dev.off()
+#' --- Figure 3b: waves 1-4 (EXTENSION, rob2item, pooled across m=20) ---
+#' rob2item standardised within each imputed dataset using all four waves.
+cat("  Fitting Figure 3b (waves 1-4, rob2item) across m=20 datasets...\n")
+
+imp_1234 <- lapply(dati, function(x) {
+  x$white    <- as.factor(x$white)
+  x$sex      <- as.factor(x$sex)
+  x$wave     <- as.factor(x$wave)
+  x$age_s    <- as.numeric(x$age) / 10
+  x$zrob2item <- as.numeric(scale(x$rob2item))
+  x
+})
+
+qr_3b <- pool_qr(imp_1234, zrob2item ~ wave + sex + age_s + educ + white)
+
+p3b <- plot_qr(
+  qr_3b,
+  title_str    = "Figure 3b: Quantile regression — individual predictors (waves 1–4, rob2item)",
+  subtitle_str = "Pooled across m=20 imputed datasets (Rubin's rules). Shaded band: 95% CI."
+)
+
+ggsave("./plots/Figure_3b_quantreg_wave1234.png", p3b,
+       width = 12, height = 5, dpi = 150)
 cat("Saved: Figure_3b_quantreg_wave1234.png\n")
-rm(d1_123, fm_plot, fm_plot4)
+
+rm(imp_123, imp_1234, qr_3a, qr_3b, p3a, p3b,
+   tau_seq, m_imp, pred_labs, pool_qr, plot_qr)
 
 
 
@@ -423,7 +538,7 @@ rm(d1_123, fm_plot, fm_plot4)
 #' ===================================================================
 #' # 4. Longitudinal trajectory — Italy vs. EU benchmark [EXTENSION]
 #' ===================================================================
-#' rob2item (two-item comparable composite, range 0-6) used throughout.
+#' rob2item (range 0-6) used throughout all four waves.
 
 cat("\n=== FIGURE 4: LONGITUDINAL TRAJECTORY (rob2item) ===\n")
 
@@ -435,58 +550,66 @@ traj_data <- do.call(rbind, lapply(benchmark_countries, function(cc) {
     sub <- dat[dat$cntry == cc & dat$wave == w &
                  !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
     if (nrow(sub) == 0) return(NULL)
-    data.frame(cntry = cc, anno = anni[w], wave = w,
-               mean = weighted.mean(sub$rob2item, sub$wgt2), n = nrow(sub))
+    data.frame(cntry = cc, anno = anni[w],
+               mean = weighted.mean(sub$rob2item, sub$wgt2))
   }))
 }))
 
 eu_traj <- do.call(rbind, lapply(1:4, function(w) {
   sub <- dat[dat$wave == w & !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
-  data.frame(cntry = "EU27", anno = anni[w], wave = w,
-             mean = weighted.mean(sub$rob2item, sub$wgt2), n = nrow(sub))
+  data.frame(cntry = "EU27", anno = anni[w],
+             mean = weighted.mean(sub$rob2item, sub$wgt2))
 }))
 traj_data <- rbind(traj_data, eu_traj)
 
-paese_colors <- c(IT = col_italy, DE = "#377eb8", FR = "#4daf4a",
-                  DK = "#984ea3", SE = "#ff7f00", GR = "#a65628",
-                  PT = "#f781bf", ES = "#999999", EU27 = col_eu)
-paese_types  <- c(IT = "solid", DE = "dashed", FR = "dashed",
-                  DK = "dotted", SE = "dotted", GR = "dashed",
-                  PT = "dotted", ES = "dotted", EU27 = "solid")
-paese_sizes  <- c(IT = 1.5, DE = 0.8, FR = 0.8, DK = 0.8, SE = 0.8,
-                  GR = 0.8, PT = 0.8, ES = 0.8, EU27 = 1.2)
+traj_data$is_key   <- traj_data$cntry %in% c("IT", "EU27")
+traj_data$cntry    <- factor(traj_data$cntry,
+                              levels = c("IT", "EU27", "DE", "FR",
+                                         "DK", "SE", "GR", "PT", "ES"))
 
-traj_data$cntry <- factor(traj_data$cntry,
-                          levels = c("IT", "EU27", "DE", "FR", "DK",
-                                     "SE", "GR", "PT", "ES"))
+paese_sizes <- c(IT = 1.5, EU27 = 1.2,
+                 DE = 0.7, FR = 0.7, DK = 0.7,
+                 SE = 0.7, GR = 0.7, PT = 0.7, ES = 0.7)
+paese_types <- c(IT = "solid", EU27 = "solid",
+                 DE = "dashed", FR = "dashed", DK = "dotted",
+                 SE = "dotted", GR = "longdash", PT = "longdash", ES = "dotdash")
+
+# Labels only at 2024 to avoid clutter
+labels_2024 <- subset(traj_data, anno == 2024)
 
 p4 <- ggplot(traj_data, aes(x = anno, y = mean,
-                            colour = cntry, linetype = cntry,
-                            linewidth = cntry)) +
+                             colour = cntry, linetype = cntry,
+                             linewidth = cntry, group = cntry)) +
   geom_line() +
   geom_point(size = 2) +
-  scale_colour_manual(values = paese_colors,  name = "Country") +
-  scale_linetype_manual(values = paese_types, name = "Country") +
-  scale_linewidth_manual(values = paese_sizes, name = "Country") +
-  scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  scale_y_continuous(breaks = seq(2, 6, 0.5)) +
-  geom_text(data = subset(traj_data, anno == 2024 & cntry == "IT"),
-            aes(label = "Italy"), nudge_x = 0.5, nudge_y = 0.02,
-            colour = col_italy, size = 3.5, fontface = "bold") +
-  geom_text(data = subset(traj_data, anno == 2024 & cntry == "EU27"),
-            aes(label = "EU27"), nudge_x = 0.5,
-            colour = col_eu, size = 3.5) +
-  labs(title = "Attitudes toward robots and AI: Italy vs. EU benchmark (2012\u20132024)",
-       subtitle = "Weighted composite score (rob2item, two comparable items, 0\u20136)",
-       x = "Year", y = "Mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position  = "right",
-        panel.grid.minor = element_blank())
+  geom_text_repel(data      = labels_2024,
+                  aes(label = cntry, colour = cntry),
+                  nudge_x   = 2, direction = "y",
+                  segment.size  = 0.3, segment.color = "grey60",
+                  size      = 3.2, fontface = "bold",
+                  hjust     = 0, max.overlaps = Inf) +
+  scale_colour_manual(values = col_benchmark, name = "Country",
+                      guide  = "none") +
+  scale_linetype_manual(values = paese_types,  name = "Country",
+                        guide  = "none") +
+  scale_linewidth_manual(values = paese_sizes, name = "Country",
+                         guide  = "none") +
+  scale_x_continuous(breaks = c(2012, 2014, 2017, 2024),
+                     expand = expansion(mult = c(0.03, 0.16))) +
+  scale_y_continuous(breaks = seq(2.0, 5.5, 0.5),
+                     limits = c(NA, NA)) +
+  labs(title    = "Attitudes toward robots and AI: Italy vs. EU benchmark (2012–2024)",
+       subtitle = "Weighted composite score rob2item (0–6); labels at 2024. IT and EU27 in bold lines.",
+       x        = "Survey year",
+       y        = "Mean composite score (rob2item, 0–6)",
+       caption  = "Source: Eurobarometer waves 1–4. Weighted by post-stratification weight.") +
+  theme_academic(base_size = 12)
 
 ggsave("./plots/Figure_4_italy_trajectory.png", p4,
        width = 11, height = 6, dpi = 150)
 cat("Saved: Figure_4_italy_trajectory.png\n")
-rm(traj_data, eu_traj, p4, benchmark_countries)
+rm(traj_data, eu_traj, p4, labels_2024, benchmark_countries,
+   paese_sizes, paese_types)
 
 
 
@@ -495,6 +618,9 @@ rm(traj_data, eu_traj, p4, benchmark_countries)
 #' # 5. UAI scatter — by country [EXTENSION]
 #' ===================================================================
 #' rob2item used for both panels (waves 3 and 4).
+#' FIX: geom_smooth uses inherit.aes = FALSE to fit ONE line over ALL countries
+#' (not grouped by is_italy). r computed and displayed over all countries.
+#' Fixed y-axis enables direct comparison of association strength across waves.
 
 cat("\n=== FIGURE 5: UAI vs. COMPOSITE SCORE (rob2item) ===\n")
 
@@ -520,63 +646,81 @@ cat(sprintf("  r(UAI, rob2item_2017) = %.3f\n", r_2017))
 cat(sprintf("  r(UAI, rob2item_2024) = %.3f\n", r_2024))
 
 scatter_long <- rbind(
-  data.frame(cntry = scatter_data$cntry, UAI = scatter_data$UAI,
-             score = scatter_data$score_w3,
-             wave = "2017 (rob2item)", is_italy = scatter_data$is_italy),
-  data.frame(cntry = scatter_data$cntry, UAI = scatter_data$UAI,
-             score = scatter_data$score_w4,
-             wave = "2024 (rob2item)", is_italy = scatter_data$is_italy)
+  data.frame(cntry    = scatter_data$cntry,
+             UAI      = scatter_data$UAI,
+             score    = scatter_data$score_w3,
+             wave     = "2017",
+             is_italy = scatter_data$is_italy),
+  data.frame(cntry    = scatter_data$cntry,
+             UAI      = scatter_data$UAI,
+             score    = scatter_data$score_w4,
+             wave     = "2024",
+             is_italy = scatter_data$is_italy)
 )
 scatter_long <- scatter_long[!is.na(scatter_long$score) &
                                !is.na(scatter_long$UAI), ]
+scatter_long$wave <- factor(scatter_long$wave, levels = c("2017", "2024"))
+
+y_max <- max(scatter_long$score, na.rm = TRUE)
+y_min <- min(scatter_long$score, na.rm = TRUE)
+uai_max <- max(scatter_long$UAI, na.rm = TRUE)
 
 r_labels <- data.frame(
-  wave  = c("2017 (rob2item)", "2024 (rob2item)"),
-  label = c(sprintf("r = %.3f", r_2017), sprintf("r = %.3f", r_2024)),
-  UAI   = 100,
-  score = max(scatter_long$score, na.rm = TRUE) * 0.95
+  wave  = factor(c("2017", "2024"), levels = c("2017", "2024")),
+  label = c(sprintf("italic(r) == %.3f", r_2017),
+            sprintf("italic(r) == %.3f", r_2024)),
+  UAI   = uai_max,
+  score = y_max - 0.05 * (y_max - y_min)
 )
 
-p5 <- ggplot(scatter_long, aes(x = UAI, y = score, colour = is_italy)) +
-  geom_smooth(method = "lm", se = TRUE, colour = "grey50",
-              fill = "grey85", linewidth = 0.7, linetype = "dashed") +
-  geom_point(aes(size = is_italy)) +
-  geom_text_repel(aes(label = cntry),
-                  size = 2.8, max.overlaps = 20, segment.size = 0.2) +
-  geom_text(data = r_labels, aes(x = UAI, y = score, label = label),
-            inherit.aes = FALSE, hjust = 1, vjust = 1,
-            size = 4, fontface = "italic", colour = "grey30") +
+p5 <- ggplot(scatter_long, aes(x = UAI, y = score)) +
+  # Regression line over ALL countries (inherit.aes = FALSE prevents grouping by is_italy)
+  geom_smooth(inherit.aes = FALSE,
+              mapping      = aes(x = UAI, y = score),
+              method       = "lm", se = TRUE,
+              colour       = "grey40", fill = "grey80",
+              linewidth    = 0.8, linetype = "dashed") +
+  geom_point(aes(colour = is_italy, size = is_italy)) +
+  geom_text_repel(aes(label = cntry, colour = is_italy),
+                  size = 2.8, max.overlaps = 20,
+                  segment.size = 0.2, segment.color = "grey60") +
+  geom_text(data        = r_labels,
+            aes(x = UAI, y = score, label = label),
+            inherit.aes = FALSE,
+            parse       = TRUE,
+            hjust = 1, vjust = 1,
+            size = 4, fontface = "italic", colour = "grey25") +
   scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
                       labels = c("EU countries", "Italy"), name = NULL) +
   scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4), guide = "none") +
-  facet_wrap(~wave, scales = "free_y") +
-  labs(title = "Uncertainty Avoidance Index vs. robot attitudes by country",
-       subtitle = "Each point = one EU country; dashed line = OLS fit with 95% CI",
-       x = "Hofstede Uncertainty Avoidance Index (UAI)",
-       y = "Weighted mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 13) +
-  theme(strip.text       = element_text(size = 13, face = "bold"),
-        legend.position  = "bottom")
+  facet_wrap(~ wave, scales = "fixed",
+             labeller = labeller(wave = c("2017" = "2017 (rob2item)",
+                                          "2024" = "2024 (rob2item)"))) +
+  labs(title    = "Uncertainty Avoidance Index and robot attitudes by EU country",
+       subtitle = "Each point = one country; dashed line = OLS fit (95% CI) over all 27 countries.",
+       x        = "Hofstede Uncertainty Avoidance Index (UAI)",
+       y        = "Weighted mean score (rob2item, 0–6)",
+       caption  = "Fixed y-axis enables direct comparison of association strength across waves.") +
+  theme_academic(base_size = 12) +
+  theme(legend.position = "bottom")
 
 ggsave("./plots/Figure_5_UAI_scatter.png", p5,
        width = 12, height = 6, dpi = 150)
 cat("Saved: Figure_5_UAI_scatter.png\n")
-rm(scatter_data, scatter_long, r_labels, r_2017, r_2024, p5)
+rm(scatter_data, scatter_long, r_labels, r_2017, r_2024, p5,
+   y_max, y_min, uai_max)
 
 
 
 
 #' ===================================================================
-#' # 6. Country random effects with Italy highlighted [EXTENSION — FIXED]
+#' # 6. Country random effects with Italy highlighted [EXTENSION]
 #' ===================================================================
-#' METHODOLOGICAL FIX relative to earlier versions:
-#'   Models for waves 1-4 now use rob2item (two-item comparable composite)
-#'   rather than rob, which included a non-comparable rob3 item in wave 4.
-#'   Random effects are averaged across all m=20 imputed datasets.
+#' Models A2 and B2 fitted on rob2item (waves 1-4). Random effects (BLUPs)
+#' averaged across all m=20 imputed datasets.
 
 cat("\n=== FIGURE 6: COUNTRY RANDOM EFFECTS ===\n")
 
-#' **Re-prepare imputed data with required transformations**
 load("./data/dat.Rdata")
 rm(dati_mice)
 dati <- lapply(dati, function(x) {
@@ -594,15 +738,10 @@ dati <- within(dati, {
 })
 
 uai_mean <- mean(unique(dati[[1]][, c("cid", "UAI")])$UAI, na.rm = TRUE)
-uai_sd   <- sd(unique(dati[[1]][, c("cid", "UAI")])$UAI,   na.rm = TRUE)
-dati <- lapply(dati, function(x) {
-  x$UAI_z <- (x$UAI - uai_mean) / uai_sd
-  x
-})
+uai_sd   <- sd(unique(dati[[1]][,  c("cid", "UAI")])$UAI,  na.rm = TRUE)
+dati <- lapply(dati, function(x) { x$UAI_z <- (x$UAI - uai_mean) / uai_sd; x })
 dati <- as.mitml.list(dati)
 
-#' **Fit Models A2 and B2 (waves 1-4) across all 20 imputed datasets**
-#' rob2item is used as the dependent variable throughout.
 m_A2_list <- lapply(dati, function(x) {
   lmer(rob2item ~ wave + sex + age + educ + white +
          AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
@@ -619,7 +758,6 @@ m_B2_list <- lapply(dati, function(x) {
        control = lmerControl(optimizer = "nloptwrap"))
 })
 
-#' **Pool random effects by averaging BLUPs across imputed datasets**
 re_A2 <- Reduce("+", lapply(m_A2_list, function(m) ranef(m)$cid)) /
   length(m_A2_list)
 re_B2 <- Reduce("+", lapply(m_B2_list, function(m) ranef(m)$cid)) /
@@ -634,52 +772,54 @@ names(re_A2)[2] <- "re_A2"
 names(re_B2)[2] <- "re_B2"
 
 re_long <- rbind(
-  data.frame(cntry = re_A2$cntry, re = re_A2$re_A2,
-             model = "A2 (without UAI)"),
-  data.frame(cntry = re_B2$cntry, re = re_B2$re_B2,
-             model = "B2 (with UAI)")
+  data.frame(cntry = re_A2$cntry, re = re_A2$re_A2, model = "A2 (without UAI)"),
+  data.frame(cntry = re_B2$cntry, re = re_B2$re_B2, model = "B2 (with UAI)")
 )
 re_long$is_italy <- re_long$cntry == "IT"
 
 ord <- re_A2$cntry[order(re_A2$re_A2)]
 re_long$cntry <- factor(re_long$cntry, levels = ord)
 
+it_pos  <- which(levels(re_long$cntry) == "IT")
+re_range <- range(re_long$re, na.rm = TRUE)
+
 p6 <- ggplot(re_long, aes(x = cntry, y = re)) +
-  geom_hline(yintercept = 0, colour = "grey30", linetype = "dashed",
-             alpha = 0.5) +
+  geom_hline(yintercept = 0, colour = "grey40", linetype = "dashed",
+             linewidth = 0.5) +
   geom_line(aes(group = cntry, colour = is_italy),
             linewidth = 0.6, alpha = 0.5) +
   geom_point(aes(colour = is_italy, shape = model), size = 2.5) +
+  annotate("text", x = it_pos, y = re_range[1] - 0.05,
+           label = "Italy", colour = col_italy,
+           size = 3.5, fontface = "bold") +
+  annotate("text", x = length(levels(re_long$cntry)) - 1,
+           y = re_range[2] + 0.03,
+           label = "Above prediction", colour = col_eu,
+           size = 2.8, fontface = "italic", hjust = 0.5) +
+  annotate("text", x = 2, y = re_range[1] + 0.03,
+           label = "Below prediction", colour = col_italy,
+           size = 2.8, fontface = "italic", hjust = 0.5) +
   scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
                       labels = c("Other EU countries", "Italy"), name = NULL) +
   scale_shape_manual(values = c("A2 (without UAI)" = 16, "B2 (with UAI)" = 17),
                      name = "Model") +
-  annotate("text", x = which(levels(re_long$cntry) == "IT"),
-           y = min(re_long$re) - 0.06,
-           label = "Italy", colour = col_italy,
-           size = 3.5, fontface = "bold") +
-  annotate("text", x = length(levels(re_long$cntry)) - 1,
-           y = max(re_long$re) + 0.04,
-           label = "Above model\nprediction",
-           colour = "#4575b4", size = 3, fontface = "italic", hjust = 0.5) +
-  annotate("text", x = 2,
-           y = min(re_long$re) + 0.04,
-           label = "Below model\nprediction",
-           colour = "#d73027", size = 3, fontface = "italic", hjust = 0.5) +
-  labs(title = "Country random effects: Model A2 vs. B2 (waves 1\u20134, rob2item)",
-       subtitle = paste("Lines connect A2 \u2192 B2 for each country.",
-                        "Negative = more sceptical than structural predictors expect."),
-       x = "Country", y = "Random intercept") +
-  theme_minimal(base_size = 12) +
-  theme(axis.text.x    = element_text(angle = 45, hjust = 1, size = 9),
+  coord_cartesian(clip = "off") +
+  labs(title    = "Country random effects: Model A2 vs. B2 (waves 1–4, rob2item)",
+       subtitle = "Lines connect A2 → B2 per country. Negative = below structural prediction.",
+       x        = "Country (ordered by A2 random intercept)",
+       y        = "Random intercept",
+       caption  = "Models fitted on rob2item across m = 20 imputed datasets; BLUPs averaged.") +
+  theme_academic(base_size = 11) +
+  theme(axis.text.x    = element_text(angle = 45, hjust = 1, size = 8.5),
         legend.position = "bottom",
-        legend.box      = "horizontal")
+        legend.box      = "horizontal",
+        plot.margin     = margin(10, 12, 15, 10))
 
 ggsave("./plots/Figure_6_random_effects.png", p6,
-       width = 13, height = 6, dpi = 150)
+       width = 13, height = 6.5, dpi = 150)
 cat("Saved: Figure_6_random_effects.png\n")
 rm(m_A2_list, m_B2_list, re_A2, re_B2, re_long, ord, p6,
-   uai_mean, uai_sd, cid_cntry)
+   uai_mean, uai_sd, cid_cntry, it_pos, re_range)
 
 
 
@@ -687,16 +827,12 @@ rm(m_A2_list, m_B2_list, re_A2, re_B2, re_long, ord, p6,
 #' ===================================================================
 #' # 7. ICC decline across waves — convergence [EXTENSION]
 #' ===================================================================
-#' A declining ICC indicates that country membership explains a
-#' progressively smaller proportion of individual-level variance,
-#' consistent with homogenisation of attitudes across the EU.
-#' Wave 4 ICC is computed on rob2item for comparability.
+#' rob2item used for all four waves: same construct across time, so the
+#' declining ICC reflects genuine convergence of national attitudes rather
+#' than a change in measurement instrument.
 
 cat("\n=== FIGURE 7: ICC DECLINE ACROSS WAVES ===\n")
 
-#' rob2item used for all four waves to ensure construct consistency:
-#' ICC compares the same two-item composite across time, so the trend
-#' reflects genuine attitude convergence rather than a change in measurement.
 icc_vals <- do.call(rbind, lapply(1:4, function(w) {
   vars <- sapply(dati, function(x) {
     wave_int <- as.integer(as.character(x$wave))
@@ -704,36 +840,40 @@ icc_vals <- do.call(rbind, lapply(1:4, function(w) {
     fit <- lmer(rob2item ~ 1 + (1 | cid),
                 data = sub, weights = sub$wgt2,
                 control = lmerControl(optimizer = "nloptwrap"))
-    vc <- as.data.frame(VarCorr(fit))
+    vc    <- as.data.frame(VarCorr(fit))
     v_cid <- vc$vcov[vc$grp == "cid"]
     v_res <- vc$vcov[vc$grp == "Residual"]
     v_cid / (v_cid + v_res)
   })
-  data.frame(wave = c(2012, 2014, 2017, 2024)[w],
-             ICC  = mean(vars))
+  data.frame(wave = c(2012, 2014, 2017, 2024)[w], ICC = mean(vars))
 }))
 
+pct_change <- round((icc_vals$ICC[4] / icc_vals$ICC[1] - 1) * 100)
+cat(sprintf("  ICC change 2012→2024: %+d%%\n", pct_change))
+
 p7 <- ggplot(icc_vals, aes(x = wave, y = ICC)) +
-  geom_col(fill = "#4575b4", width = 1.5, alpha = 0.8, colour = "white") +
-  geom_line(colour = "#d73027", linewidth = 1.2) +
-  geom_point(colour = "#d73027", size = 4) +
-  geom_text(aes(label = sprintf("%.3f", ICC), y = ICC + 0.003),
-            size = 4.5, fontface = "bold", colour = "grey20") +
+  geom_col(fill = col_eu, width = 1.8, alpha = 0.75, colour = "white") +
+  geom_line(colour = col_italy, linewidth = 1.3) +
+  geom_point(colour = col_italy, size = 4.5, shape = 16) +
+  geom_text(aes(label = sprintf("%.3f", ICC), y = ICC + 0.004),
+            size = 4.2, fontface = "bold", colour = "grey20") +
   scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  scale_y_continuous(limits = c(0, 0.12),
-                     breaks = seq(0, 0.12, 0.02),
-                     labels = scales::percent_format(accuracy = 1)) +
-  labs(title = "Between-country variance (ICC) across waves: convergence of EU attitudes",
-       subtitle = "rob2item (two comparable items, range 0\u20136) used across all four waves. ICC = % variance attributable to country.",
-       x = "Survey year", y = "ICC (% variance explained by country)") +
-  theme_minimal(base_size = 13) +
-  theme(panel.grid.major.x = element_blank(),
-        panel.grid.minor   = element_blank())
+  scale_y_continuous(limits = c(0, 0.11),
+                     breaks = seq(0, 0.10, 0.02),
+                     labels = scales::percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0, 0.05))) +
+  labs(title    = "Between-country variance (ICC) across waves",
+       subtitle = "rob2item (same construct across all waves): declining ICC indicates convergence of EU attitudes.",
+       x        = "Survey year",
+       y        = "ICC (% variance attributable to country)",
+       caption  = sprintf("Null multilevel model; averaged over m = 20 imputed datasets. ICC change 2012→2024: %+d%%.", pct_change)) +
+  theme_academic(base_size = 12) +
+  theme(panel.grid.major.x = element_blank())
 
 ggsave("./plots/Figure_7_icc_convergence.png", p7,
        width = 9, height = 6, dpi = 150)
 cat("Saved: Figure_7_icc_convergence.png\n")
-rm(icc_vals, p7)
+rm(icc_vals, p7, pct_change)
 
 
 
@@ -741,18 +881,14 @@ rm(icc_vals, p7)
 #' ===================================================================
 #' # 8. Gender gap by country — wave 4 [EXTENSION]
 #' ===================================================================
-#' For each EU country, the gender gap is computed as the difference
-#' in weighted mean rob2item between female and male respondents.
-#' A negative value indicates that women hold more sceptical attitudes.
-#' Italy is highlighted to examine whether the EU-wide gender pattern
-#' holds within the Italian subsample.
+#' Gender gap = women's mean minus men's mean rob2item.
+#' Negative = women more sceptical. EU mean reference line added.
 
-cat("\n=== FIGURE 8: GENDER GAP BY COUNTRY (wave 4, rob2item) ===\n")
+cat("\n=== FIGURE 8: GENDER GAP BY COUNTRY (wave 4) ===\n")
 
 gap_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
-  sub <- dat[dat$cntry == cc & dat$wave == 4 &
-               !is.na(dat$rob2item) & !is.na(dat$sex) &
-               !is.na(dat$wgt2), ]
+  sub   <- dat[dat$cntry == cc & dat$wave == 4 &
+                 !is.na(dat$rob2item) & !is.na(dat$sex) & !is.na(dat$wgt2), ]
   sub_f <- sub[sub$sex == 1, ]
   sub_m <- sub[sub$sex == 0, ]
   if (nrow(sub_f) < 10 || nrow(sub_m) < 10) return(NULL)
@@ -763,34 +899,41 @@ gap_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
              is_italy = cc == "IT")
 }))
 
-gap_data <- gap_data[order(gap_data$gap), ]
+gap_data  <- gap_data[order(gap_data$gap), ]
 gap_data$cntry <- factor(gap_data$cntry, levels = gap_data$cntry)
+eu_mean_gap    <- mean(gap_data$gap, na.rm = TRUE)
+cat(sprintf("  EU mean gender gap: %.3f\n", eu_mean_gap))
 
 p8 <- ggplot(gap_data, aes(x = gap, y = cntry, colour = is_italy)) +
-  geom_vline(xintercept = 0, colour = "grey40", linetype = "dashed") +
+  geom_vline(xintercept = 0, colour = "grey40",
+             linetype = "solid", linewidth = 0.4) +
+  geom_vline(xintercept = eu_mean_gap, colour = col_eu,
+             linetype = "dotted", linewidth = 0.8, alpha = 0.9) +
+  annotate("text",
+           x     = eu_mean_gap + 0.015,
+           y     = levels(gap_data$cntry)[round(nrow(gap_data) * 0.97)],
+           label = sprintf("EU mean\n%.2f", eu_mean_gap),
+           colour = col_eu, size = 3, hjust = 0, fontface = "italic") +
   geom_segment(aes(x = 0, xend = gap, y = cntry, yend = cntry,
-                   colour = is_italy), linewidth = 0.8) +
+                   colour = is_italy), linewidth = 0.9) +
   geom_point(aes(size = is_italy)) +
-  geom_text(data = subset(gap_data, is_italy),
-            aes(label = "Italy"), nudge_y = 0.5, nudge_x = 0.01,
-            colour = col_italy, size = 3.5, fontface = "bold") +
   scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
                       guide = "none") +
-  scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4), guide = "none") +
-  scale_x_continuous(breaks = seq(-0.8, 0.4, 0.2)) +
-  labs(title = "Gender gap in robot attitudes by country (wave 4, 2024)",
-       subtitle = paste("Gap = women\u2019s mean \u2212 men\u2019s mean (rob2item, 0\u20136).",
-                        "Negative = women more sceptical."),
-       x = "Gender gap (female \u2212 male)", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.major.y = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey85"),
+  scale_size_manual(values = c("FALSE" = 2.2, "TRUE" = 4.5), guide = "none") +
+  scale_x_continuous(breaks = seq(-0.8, 0.5, 0.2)) +
+  labs(title    = "Gender gap in robot attitudes by country (wave 4, 2024)",
+       subtitle = "Gap = women’s mean − men’s mean (rob2item, 0–6). Italy in orange.",
+       x        = "Gender gap (female − male)",
+       y        = NULL,
+       caption  = "Dotted vertical line = EU27 unweighted mean gap. Negative = women more sceptical.") +
+  theme_academic(base_size = 11) +
+  theme(panel.grid.major.y = element_line(colour = "grey90", linewidth = 0.3),
         axis.text.y        = element_text(size = 9))
 
 ggsave("./plots/Figure_8_gender_gap_by_country.png", p8,
        width = 10, height = 9, dpi = 150)
 cat("Saved: Figure_8_gender_gap_by_country.png\n")
-rm(gap_data, p8)
+rm(gap_data, p8, eu_mean_gap)
 
 
 
@@ -798,11 +941,10 @@ rm(gap_data, p8)
 #' ===================================================================
 #' # 9. Country rank bump chart across waves [EXTENSION]
 #' ===================================================================
-#' Ranks countries by mean rob2item within each wave. Selected countries
-#' (Italy, Germany, France, Denmark, Sweden, Greece, EU25 median) are
-#' highlighted to show rank mobility. Rank 1 = most favourable.
+#' Ranks countries by weighted mean rob2item within each wave.
+#' Highlighted countries labelled at 2024 (ggrepel avoids overlap).
 
-cat("\n=== FIGURE 9: COUNTRY RANK EVOLUTION ACROSS WAVES ===\n")
+cat("\n=== FIGURE 9: COUNTRY RANK EVOLUTION ===\n")
 
 anni <- c(2012, 2014, 2017, 2024)
 
@@ -811,62 +953,64 @@ country_means <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
     sub <- dat[dat$cntry == cc & dat$wave == w &
                  !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
     if (nrow(sub) == 0) return(NULL)
-    data.frame(cntry = cc, wave = w, anno = anni[w],
+    data.frame(cntry = cc, anno = anni[w],
                mean_rob2 = weighted.mean(sub$rob2item, sub$wgt2))
   }))
 }))
 
 country_means <- country_means %>%
-  group_by(wave) %>%
+  group_by(anno) %>%
   mutate(rank = rank(-mean_rob2, ties.method = "average")) %>%
   ungroup()
 
 highlight <- c("IT", "DE", "DK", "SE", "GR", "FR")
-country_means$highlight <- country_means$cntry %in% highlight
-country_means$label_cntry <- ifelse(country_means$highlight,
-                                    country_means$cntry, "")
+country_means$highlight   <- country_means$cntry %in% highlight
+country_means$cntry_label <- ifelse(country_means$highlight,
+                                    country_means$cntry, NA_character_)
 
-hl_colors <- c(IT = col_italy, DE = "#377eb8", DK = "#984ea3",
-               SE = "#ff7f00", GR = "#a65628", FR = "#4daf4a")
+hl_colors <- c(IT = col_italy, DE = "#009E73", DK = "#E7298A",
+               SE = "#66A61E", GR = "#E6AB02", FR = "#7570B3")
 
 p9 <- ggplot(country_means, aes(x = anno, y = rank, group = cntry)) +
   geom_line(data = subset(country_means, !highlight),
-            colour = "grey80", linewidth = 0.4, alpha = 0.7) +
+            colour = "grey82", linewidth = 0.4, alpha = 0.8) +
+  geom_point(data = subset(country_means, !highlight),
+             colour = "grey82", size = 1.2) +
   geom_line(data = subset(country_means, highlight),
-            aes(colour = cntry), linewidth = 1.2) +
+            aes(colour = cntry), linewidth = 1.3) +
   geom_point(data = subset(country_means, highlight),
-             aes(colour = cntry), size = 2.5) +
-  geom_text(data = subset(country_means, highlight & anno == 2024),
-            aes(label = cntry, colour = cntry),
-            nudge_x = 0.8, size = 3.5, fontface = "bold") +
-  geom_text(data = subset(country_means, highlight & anno == 2012),
-            aes(label = cntry, colour = cntry),
-            nudge_x = -0.8, size = 3.5, fontface = "bold") +
+             aes(colour = cntry), size = 2.8) +
+  geom_text_repel(data      = subset(country_means, highlight & anno == 2024),
+                  aes(label = cntry, colour = cntry),
+                  nudge_x   = 1.5, direction = "y",
+                  segment.size  = 0.3, segment.color = "grey55",
+                  size      = 3.5, fontface = "bold",
+                  hjust     = 0, max.overlaps = Inf) +
   scale_colour_manual(values = hl_colors, guide = "none") +
-  scale_x_continuous(breaks = c(2012, 2014, 2017, 2024),
-                     expand = expansion(mult = 0.15)) +
+  scale_x_continuous(breaks  = c(2012, 2014, 2017, 2024),
+                     expand  = expansion(mult = c(0.05, 0.15))) +
   scale_y_reverse(breaks = c(1, 5, 10, 15, 20, 27),
                   labels = c("1st", "5th", "10th", "15th", "20th", "27th")) +
-  labs(title = "Country rankings in robot acceptance across waves (rob2item)",
-       subtitle = "Rank 1 = most favourable. Grey lines = all EU27 countries.",
-       x = "Survey year", y = "Country rank (1 = most favourable)") +
-  theme_minimal(base_size = 13) +
+  labs(title    = "Country rankings in robot acceptance across waves (rob2item)",
+       subtitle = "Rank 1 = most favourable. Grey lines = all EU27. Highlighted countries labelled at 2024.",
+       x        = "Survey year",
+       y        = "Country rank (1 = most favourable)",
+       caption  = "Croatia (HR) absent in wave 1 (2012).") +
+  theme_academic(base_size = 12) +
   theme(panel.grid.minor = element_blank())
 
 ggsave("./plots/Figure_9_country_rank_bumpchart.png", p9,
        width = 11, height = 8, dpi = 150)
 cat("Saved: Figure_9_country_rank_bumpchart.png\n")
-rm(country_means, p9)
+rm(country_means, p9, highlight, hl_colors)
 
 
 
 
 #' ===================================================================
-#' # 10. Attitude distribution by wave — density plot [EXTENSION]
+#' # 10. Attitude distribution by wave — bar chart [EXTENSION]
 #' ===================================================================
-#' Visualises the full distribution of rob2item across all four waves,
-#' capturing not only mean shifts but changes in distributional shape.
-#' A universal leftward shift would confirm the rising scepticism finding.
+#' Weighted proportion of respondents at each rob2item value (0-6) by wave.
 
 cat("\n=== FIGURE 10: ATTITUDE DISTRIBUTION BY WAVE ===\n")
 
@@ -874,7 +1018,6 @@ dist_data <- dat[!is.na(dat$rob2item) & !is.na(dat$wgt2), ]
 dist_data$Year <- factor(c("2012", "2014", "2017", "2024")[dist_data$wave],
                          levels = c("2012", "2014", "2017", "2024"))
 
-# Weighted proportion per score x wave (for interpretable bar chart overlay)
 prop_tab <- dist_data %>%
   group_by(Year, rob2item) %>%
   summarise(sum_wgt = sum(wgt2), .groups = "drop") %>%
@@ -882,19 +1025,22 @@ prop_tab <- dist_data %>%
   mutate(prop = sum_wgt / sum(sum_wgt)) %>%
   ungroup()
 
-p10 <- ggplot(prop_tab, aes(x = rob2item, y = prop, fill = Year, colour = Year)) +
-  geom_col(position = "dodge", alpha = 0.7, width = 0.7) +
-  scale_fill_manual(values   = col_waves, name = "Wave") +
-  scale_colour_manual(values = col_waves, name = "Wave") +
-  scale_x_continuous(breaks = 0:6,
-                     labels = c("0\n(very neg.)", "1", "2", "3",
-                                "4", "5", "6\n(very pos.)")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(title = "Distribution of robot attitudes across waves (rob2item, 0\u20136)",
-       subtitle = "Weighted proportions by score value, EU27",
-       x = "Composite score (rob2item)", y = "Proportion of respondents") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position   = "bottom",
+p10 <- ggplot(prop_tab, aes(x = factor(rob2item), y = prop,
+                             fill = Year, colour = Year)) +
+  geom_col(position = position_dodge(0.85), alpha = 0.85,
+           width = 0.8, colour = "white") +
+  scale_fill_manual(values   = col_waves, name = "Survey year") +
+  scale_y_continuous(labels  = scales::percent_format(accuracy = 1),
+                     expand  = expansion(mult = c(0, 0.04))) +
+  scale_x_discrete(labels = c("0\n(very neg.)", "1", "2", "3",
+                               "4", "5", "6\n(very pos.)")) +
+  labs(title    = "Distribution of robot attitudes across waves (rob2item, 0–6)",
+       subtitle = "Weighted proportions by score value, EU27.",
+       x        = "Composite score (rob2item)",
+       y        = "Proportion of respondents",
+       caption  = "Leftward shift over time indicates rising scepticism.") +
+  theme_academic(base_size = 12) +
+  theme(legend.position    = "bottom",
         panel.grid.major.x = element_blank())
 
 ggsave("./plots/Figure_10_attitude_distribution.png", p10,
@@ -908,11 +1054,9 @@ rm(dist_data, prop_tab, p10)
 #' ===================================================================
 #' # 11. Italy vs. EU27 by demographic subgroup — wave 4 [EXTENSION]
 #' ===================================================================
-#' Tests whether Italy's attitude deficit is uniform across all
-#' sociodemographic groups or concentrated in specific subgroups.
-#' If the deficit is disproportionately large among, for example,
-#' educated women or white-collar workers, this points to mechanisms
-#' that operate differently within Italy than in the rest of the EU.
+#' Three independent dimensions (Gender, Education, Employment) in separate
+#' facet panels, each with its own x-axis. Subgroup factor levels are
+#' explicitly ordered after rbind to prevent alphabetical resorting.
 
 cat("\n=== FIGURE 11: ITALY VS. EU27 BY SUBGROUP (wave 4) ===\n")
 
@@ -920,66 +1064,73 @@ sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) &
               !is.na(dat$sex) & !is.na(dat$educ) &
               !is.na(dat$white) & !is.na(dat$wgt2), ]
 
-# Education tertiles: ntile() avoids the duplicate-breaks error that arises
-# when many respondents share the same ordinal education value (as with the
-# Eurobarometer education scale). ntile() assigns groups by rank, always
-# producing three roughly equal groups regardless of ties.
+# Education tertiles via ntile() — avoids duplicate-breaks errors on ordinal scale
 sub4$educ_tert <- factor(
   ntile(sub4$educ, 3),
   labels = c("Low\neducation", "Medium\neducation", "High\neducation")
 )
-sub4$sex_label <- factor(ifelse(sub4$sex == 0, "Male", "Female"),
-                         levels = c("Male", "Female"))
+sub4$sex_label <- factor(
+  ifelse(sub4$sex == 0, "Male", "Female"),
+  levels = c("Male", "Female")
+)
 sub4$empl_label <- factor(
   c("White-collar", "Blue-collar", "Non-employed")[as.integer(sub4$white)],
-  levels = c("White-collar", "Blue-collar", "Non-employed"))
+  levels = c("White-collar", "Blue-collar", "Non-employed")
+)
 sub4$group <- ifelse(sub4$cntry == "IT", "Italy", "EU27")
-
-# Three separate dimensions \u2014 each aggregated independently, then stacked.
-# This avoids mixing a two-way interaction (sex x education) with a one-way
-# dimension (employment), which made the earlier version visually incoherent.
 
 sg_sex <- sub4 %>%
   group_by(group, subgroup = sex_label) %>%
   summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
             .groups = "drop") %>%
-  mutate(dimension = "Gender")
+  mutate(dimension = "Gender", subgroup = as.character(subgroup))
 
 sg_educ <- sub4 %>%
   filter(!is.na(educ_tert)) %>%
   group_by(group, subgroup = educ_tert) %>%
   summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
             .groups = "drop") %>%
-  mutate(dimension = "Education")
+  mutate(dimension = "Education", subgroup = as.character(subgroup))
 
 sg_empl <- sub4 %>%
   filter(!is.na(empl_label)) %>%
   group_by(group, subgroup = empl_label) %>%
   summarise(mean_rob = weighted.mean(rob2item, wgt2, na.rm = TRUE),
             .groups = "drop") %>%
-  mutate(dimension = "Employment")
+  mutate(dimension = "Employment", subgroup = as.character(subgroup))
 
 sg_all <- rbind(sg_sex, sg_educ, sg_empl)
+
+# Explicit factor level ordering per dimension — prevents alphabetical resorting
+# that occurs when rbind converts different factors to character.
+sg_all$subgroup <- factor(
+  sg_all$subgroup,
+  levels = c(
+    "Male", "Female",
+    "Low\neducation", "Medium\neducation", "High\neducation",
+    "White-collar", "Blue-collar", "Non-employed"
+  )
+)
 sg_all$group     <- factor(sg_all$group,     levels = c("EU27", "Italy"))
-sg_all$dimension <- factor(sg_all$dimension,
-                            levels = c("Gender", "Education", "Employment"))
+sg_all$dimension <- factor(sg_all$dimension, levels = c("Gender", "Education", "Employment"))
 
 p11 <- ggplot(sg_all, aes(x = subgroup, y = mean_rob,
-                           colour = group, group = group)) +
-  geom_line(linewidth = 0.9, alpha = 0.8) +
-  geom_point(aes(shape = group), size = 3) +
+                            colour = group, group = group)) +
+  geom_line(linewidth = 1.0, alpha = 0.85) +
+  geom_point(aes(shape = group), size = 3.5) +
   scale_colour_manual(values = c("EU27" = col_eu, "Italy" = col_italy),
                       name = NULL) +
   scale_shape_manual(values = c("EU27" = 16, "Italy" = 17), name = NULL) +
   facet_wrap(~ dimension, scales = "free_x", nrow = 1) +
-  labs(title = "Italy vs. EU27: robot attitudes by demographic subgroup (wave 4, 2024)",
-       subtitle = "Weighted mean rob2item (0\u20136) by dimension. Each panel is independent.",
-       x = NULL, y = "Mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 12) +
+  labs(title    = "Italy vs. EU27: robot attitudes by demographic subgroup (wave 4, 2024)",
+       subtitle = "Weighted mean rob2item (0–6). Each panel is an independent dimension.",
+       x        = NULL,
+       y        = "Mean composite score (rob2item, 0–6)",
+       caption  = "Education: tertiles via ntile() on the pooled wave-4 sample. Employment: white-collar / blue-collar / non-employed.") +
+  theme_academic(base_size = 12) +
   theme(legend.position  = "top",
-        axis.text.x      = element_text(size = 9, angle = 30, hjust = 1),
-        panel.grid.minor = element_blank(),
-        strip.text       = element_text(size = 12, face = "bold"))
+        axis.text.x      = element_text(size = 9, angle = 25, hjust = 1),
+        panel.grid.minor = element_blank())
 
 ggsave("./plots/Figure_11_italy_subgroup_profile.png", p11,
        width = 13, height = 6, dpi = 150)
@@ -992,25 +1143,18 @@ rm(sub4, sg_sex, sg_educ, sg_empl, sg_all, p11)
 #' ===================================================================
 #' # 13. Age gradient across waves: EU27 and Italy [EXTENSION]
 #' ===================================================================
-#' Tests whether Italy's 2024 finding — age as the only robust predictor —
-#' reflects a broader EU trend or an Italy-specific feature.
-#' Age tertiles are defined globally (pooled across all waves and countries)
-#' to ensure comparability of the gradient over time.
+#' Age tertiles defined globally (pooled across all waves and countries)
+#' to ensure temporal comparability of the gradient.
 
 cat("\n=== FIGURE 13: AGE GRADIENT ACROSS WAVES ===\n")
 
 age_q <- quantile(dat$age, probs = c(1/3, 2/3), na.rm = TRUE)
-cat(sprintf("  Age tertile boundaries (approx.): <=%.0f | %.0f-%.0f | >%.0f\n",
-            age_q[1], age_q[1], age_q[2], age_q[2]))
+cat(sprintf("  Age tertile boundaries: ≤44 | 45–57 | ≥58 (approx.)\n"))
 
-# ntile() used for the same reason as in Figure 11: avoids duplicate-breaks
-# errors that occur when many respondents share boundary age values.
 dat$age_tert <- factor(
   ntile(dat$age, 3),
   labels = c("Young", "Middle-aged", "Older")
 )
-
-anni <- c(2012, 2014, 2017, 2024)
 
 age_data <- do.call(rbind, lapply(c("EU27", "IT"), function(grp) {
   do.call(rbind, lapply(1:4, function(w) {
@@ -1037,47 +1181,45 @@ age_data$group     <- factor(age_data$group,
 age_data$age_group <- factor(age_data$age_group,
                               levels = c("Young", "Middle-aged", "Older"))
 
+# Okabe-Ito colors: blue (young), orange (middle), vermilion (older)
+col_age <- c(Young         = "#56B4E9",
+             "Middle-aged" = "#E69F00",
+             Older         = "#D55E00")
+
 p13 <- ggplot(age_data, aes(x = anno, y = mean,
-                             colour   = age_group,
-                             linetype = age_group)) +
-  geom_line(linewidth = 1.1) +
+                              colour   = age_group,
+                              linetype = age_group)) +
+  geom_line(linewidth = 1.2) +
   geom_point(size = 3) +
   facet_wrap(~ group, ncol = 2) +
   scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  scale_colour_manual(
-    values = c(Young = "#4575b4", "Middle-aged" = "#fdae61", Older = "#d73027"),
-    name   = "Age group") +
+  scale_colour_manual(values = col_age, name = "Age group") +
   scale_linetype_manual(
     values = c(Young = "solid", "Middle-aged" = "dashed", Older = "dotted"),
     name   = "Age group") +
-  labs(
-    title    = "Age gradient in robot attitudes across waves: EU27 and Italy",
-    subtitle = paste("Weighted mean rob2item (0\u20136) by age tertile.",
-                     "Tertiles defined on the pooled EU27 sample."),
-    x = "Survey year",
-    y = "Mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position  = "bottom",
-        panel.grid.minor = element_blank(),
-        strip.text       = element_text(size = 13, face = "bold"))
+  labs(title    = "Age gradient in robot attitudes across waves: EU27 and Italy",
+       subtitle = "Weighted mean rob2item (0–6) by age tertile (pooled global definition).",
+       x        = "Survey year",
+       y        = "Mean composite score (rob2item, 0–6)",
+       caption  = "Tertiles computed on the pooled EU27 sample across all four waves.") +
+  theme_academic(base_size = 12) +
+  theme(legend.position = "bottom")
 
 ggsave("./plots/Figure_13_age_gradient.png", p13,
        width = 12, height = 6, dpi = 150)
 cat("Saved: Figure_13_age_gradient.png\n")
-rm(age_q, age_data, p13)
+rm(age_q, age_data, p13, col_age)
 
 
 
 
 #' ===================================================================
-#' # 15. Latitude vs. composite score by country [EXTENSION]
+#' # 14. Latitude vs. composite score by country [EXTENSION]
 #' ===================================================================
-#' Visualises the North-South gradient in robot acceptance that emerges
-#' as a significant country-level predictor in Model A2 (b = +0.045***,
-#' d = +0.32). Presented side-by-side for waves 3 and 4 to examine
-#' whether the geographic gradient persists into the AI-debate era.
+#' Two panels (2017, 2024) with fixed y-axis for direct comparison.
+#' Regression line fitted over all countries in each panel.
 
-cat("\n=== FIGURE 15: LATITUDE vs. COMPOSITE SCORE ===\n")
+cat("\n=== FIGURE 14: LATITUDE vs. COMPOSITE SCORE ===\n")
 
 lat_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
   lat_val <- dat$LAT[dat$cntry == cc][1]
@@ -1103,58 +1245,60 @@ r_lat <- tapply(seq_len(nrow(lat_data)), lat_data$wave_label, function(idx) {
 cat(sprintf("  r(LAT, rob2item_2017) = %.3f\n", r_lat["2017"]))
 cat(sprintf("  r(LAT, rob2item_2024) = %.3f\n", r_lat["2024"]))
 
-r_labels15 <- data.frame(
-  wave_label = c("2017", "2024"),
-  label      = c(sprintf("r = %.3f", r_lat["2017"]),
-                 sprintf("r = %.3f", r_lat["2024"])),
-  LAT        = min(lat_data$LAT, na.rm = TRUE) + 1,
-  mean_rob   = max(lat_data$mean_rob, na.rm = TRUE) * 0.985
+r_labels14 <- data.frame(
+  wave_label = factor(c("2017", "2024"), levels = c("2017", "2024")),
+  label      = c(sprintf("italic(r) == %.3f", r_lat["2017"]),
+                 sprintf("italic(r) == %.3f", r_lat["2024"])),
+  LAT        = min(lat_data$LAT, na.rm = TRUE) + 0.5,
+  mean_rob   = max(lat_data$mean_rob, na.rm = TRUE) * 0.992
 )
 
-p15 <- ggplot(lat_data, aes(x = LAT, y = mean_rob)) +
-  geom_smooth(method = "lm", se = TRUE,
-              inherit.aes = FALSE,
+p14 <- ggplot(lat_data, aes(x = LAT, y = mean_rob)) +
+  geom_smooth(inherit.aes = FALSE,
               mapping      = aes(x = LAT, y = mean_rob),
-              colour = "grey50", fill = "grey85",
-              linewidth = 0.8, linetype = "dashed") +
+              method       = "lm", se = TRUE,
+              colour       = "grey40", fill = "grey80",
+              linewidth    = 0.8, linetype = "dashed") +
   geom_point(aes(colour = is_italy, size = is_italy)) +
   geom_text_repel(aes(label = cntry, colour = is_italy),
-                  size = 2.8, max.overlaps = 20, segment.size = 0.2) +
-  geom_text(data        = r_labels15,
-            mapping      = aes(x = LAT, y = mean_rob, label = label),
+                  size = 2.8, max.overlaps = 20,
+                  segment.size = 0.2, segment.color = "grey60") +
+  geom_text(data        = r_labels14,
+            aes(x = LAT, y = mean_rob, label = label),
             inherit.aes = FALSE,
-            hjust = 0, size = 4, fontface = "italic", colour = "grey30") +
+            parse       = TRUE,
+            hjust = 0, size = 4, fontface = "italic", colour = "grey25") +
   scale_colour_manual(
     values = c("FALSE" = col_neutral, "TRUE" = col_italy),
     labels = c("EU countries", "Italy"), name = NULL) +
-  scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4), guide = "none") +
-  facet_wrap(~ wave_label, ncol = 2) +
-  labs(
-    title    = "North-South gradient in robot acceptance: latitude vs. country mean",
-    subtitle = "Weighted mean rob2item (0\u20136) by country; dashed line = OLS fit with 95% CI",
-    x        = "Country latitude (degrees North)",
-    y        = "Weighted mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position = "bottom",
-        strip.text      = element_text(size = 13, face = "bold"))
+  scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4.5), guide = "none") +
+  facet_wrap(~ wave_label, ncol = 2,
+             labeller = labeller(wave_label = c("2017" = "2017 (rob2item)",
+                                                "2024" = "2024 (rob2item)"))) +
+  labs(title    = "North-South gradient in robot acceptance (latitude vs. country mean)",
+       subtitle = "Weighted mean rob2item (0–6) per country. Dashed line = OLS fit (95% CI) over all countries.",
+       x        = "Country latitude (degrees North)",
+       y        = "Weighted mean score (rob2item, 0–6)",
+       caption  = "Fixed y-axis enables visual comparison of gradient strength across waves.") +
+  theme_academic(base_size = 12) +
+  theme(legend.position = "bottom")
 
-ggsave("./plots/Figure_15_latitude_gradient.png", p15,
+ggsave("./plots/Figure_14_latitude_gradient.png", p14,
        width = 12, height = 6, dpi = 150)
-cat("Saved: Figure_15_latitude_gradient.png\n")
-rm(lat_data, r_lat, r_labels15, p15)
+cat("Saved: Figure_14_latitude_gradient.png\n")
+rm(lat_data, r_lat, r_labels14, p14)
 
 
 
 
 #' ===================================================================
-#' # 16. Gender gap across waves: EU27 and Italy [EXTENSION]
+#' # 15. Gender gap across waves: EU27 and Italy [EXTENSION]
 #' ===================================================================
-#' Places the wave 4 finding — gender gap absent in Italy (b = +0.033 ns)
-#' versus a persistent EU gap (b = -0.326***) — in longitudinal perspective.
-#' Shows whether Italy's pattern is a recent reversal or a long-standing
-#' feature of its attitude structure. sex = 1: female; sex = 0: male.
+#' Longitudinal perspective on the wave-4 finding: gender gap absent
+#' in Italy (b = +0.033 ns) vs. persistent EU gap (b = -0.326***).
+#' CI bands use weighted SD; n is unweighted (conservative approximation).
 
-cat("\n=== FIGURE 16: GENDER GAP ACROSS WAVES (EU27 and Italy) ===\n")
+cat("\n=== FIGURE 15: GENDER GAP ACROSS WAVES ===\n")
 
 compute_gender_means <- function(data_sub, group_label) {
   do.call(rbind, lapply(1:4, function(w) {
@@ -1180,14 +1324,14 @@ compute_gender_means <- function(data_sub, group_label) {
   }))
 }
 
-gend_eu <- compute_gender_means(dat, "EU27")
-gend_it <- compute_gender_means(dat[dat$cntry == "IT", ], "Italy")
+gend_eu  <- compute_gender_means(dat, "EU27")
+gend_it  <- compute_gender_means(dat[dat$cntry == "IT", ], "Italy")
 gend_all <- rbind(gend_eu, gend_it)
 gend_all$sex   <- factor(gend_all$sex,   levels = c("Male", "Female"))
 gend_all$group <- factor(gend_all$group, levels = c("EU27", "Italy"))
 
 for (grp in c("EU27", "Italy")) {
-  cat(sprintf("\n  %s gender gap (Female - Male) by wave:\n", grp))
+  cat(sprintf("\n  %s gender gap (Female − Male) by wave:\n", grp))
   sub_g <- gend_all[gend_all$group == grp, ]
   for (yr in c(2012, 2014, 2017, 2024)) {
     mf <- sub_g$mean[sub_g$anno == yr & sub_g$sex == "Female"]
@@ -1197,40 +1341,38 @@ for (grp in c("EU27", "Italy")) {
   }
 }
 
-p16 <- ggplot(gend_all,
-              aes(x     = anno,
-                  y     = mean,
-                  colour = sex,
+# Colour: blue = male, vermilion = female (Okabe-Ito)
+col_sex <- c(Male = "#0072B2", Female = "#D55E00")
+
+p15 <- ggplot(gend_all,
+              aes(x        = anno,
+                  y        = mean,
+                  colour   = sex,
                   linetype = group,
-                  group  = interaction(sex, group))) +
+                  group    = interaction(sex, group))) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex),
-              alpha = 0.08, colour = NA) +
+              alpha = 0.10, colour = NA) +
   geom_line(linewidth = 1.1) +
   geom_point(aes(shape = group), size = 3) +
-  scale_colour_manual(
-    values = c(Male = "#4575b4", Female = "#d73027"), name = "Gender") +
-  scale_fill_manual(
-    values = c(Male = "#4575b4", Female = "#d73027"), name = "Gender") +
-  scale_linetype_manual(
-    values = c(EU27 = "solid", Italy = "dashed"),  name = "Group") +
-  scale_shape_manual(
-    values = c(EU27 = 16, Italy = 17), name = "Group") +
-  scale_x_continuous(breaks = c(2012, 2014, 2017, 2024)) +
-  labs(
-    title    = "Gender gap in robot attitudes across waves: EU27 and Italy",
-    subtitle = paste("Weighted mean rob2item (0\u20136) by sex.",
-                     "Shaded bands = 95% CI. Solid = EU27; dashed = Italy."),
-    x = "Survey year",
-    y = "Mean composite score (rob2item, 0\u20136)") +
-  theme_minimal(base_size = 13) +
-  theme(legend.position  = "bottom",
-        legend.box       = "horizontal",
-        panel.grid.minor = element_blank())
+  scale_colour_manual(values = col_sex, name = "Gender") +
+  scale_fill_manual(values   = col_sex, name = "Gender") +
+  scale_linetype_manual(values = c(EU27 = "solid", Italy = "dashed"),
+                        name  = "Group") +
+  scale_shape_manual(values  = c(EU27 = 16, Italy = 17), name = "Group") +
+  scale_x_continuous(breaks  = c(2012, 2014, 2017, 2024)) +
+  labs(title    = "Gender gap in robot attitudes across waves: EU27 and Italy",
+       subtitle = "Weighted mean rob2item (0–6) by sex. Shaded bands = 95% CI. Solid = EU27; dashed = Italy.",
+       x        = "Survey year",
+       y        = "Mean composite score (rob2item, 0–6)",
+       caption  = "CI bands use weighted SD; unweighted n as denominator (conservative). sex: 0 = male, 1 = female.") +
+  theme_academic(base_size = 12) +
+  theme(legend.position = "bottom",
+        legend.box      = "horizontal")
 
-ggsave("./plots/Figure_16_gender_gap_waves.png", p16,
+ggsave("./plots/Figure_15_gender_gap_waves.png", p15,
        width = 11, height = 6, dpi = 150)
-cat("Saved: Figure_16_gender_gap_waves.png\n")
-rm(gend_eu, gend_it, gend_all, sub_g, p16, compute_gender_means)
+cat("Saved: Figure_15_gender_gap_waves.png\n")
+rm(gend_eu, gend_it, gend_all, p15, compute_gender_means, col_sex)
 
 
 cat("\n=== ALL FIGURES COMPLETE ===\n")

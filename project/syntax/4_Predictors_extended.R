@@ -471,6 +471,9 @@ lmer.imp(feel1 ~ wave + sex + age + educ + white +
          control = lmerControl(optimizer = "nloptwrap"))
 
 cat("\n--- feel2: robots at work ---\n")
+#' feel2 (qa8_3 wave 1 / qa7_2 wave 2 / qd13_2 wave 3) is available and
+#' comparably labelled as "Assisting at work" across all three waves.
+#' The G&A original script includes all three waves without restriction.
 lmer.imp(feel2 ~ wave + sex + age + educ + white +
            AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
            (1 | cid),
@@ -478,7 +481,7 @@ lmer.imp(feel2 ~ wave + sex + age + educ + white +
          weights = "wgt2",
          stdy    = TRUE,
          stdx    = FALSE,
-         subset  = (dati[[1]]$wave %in% c(2, 3)),  # feel2 absent in wave 1
+         subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
          control = lmerControl(optimizer = "nloptwrap"))
 
 cat("\n--- feel3: assisting elderly ---\n")
