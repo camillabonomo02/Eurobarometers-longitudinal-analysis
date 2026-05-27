@@ -470,84 +470,98 @@ print(table(dat$wave[dat$cntry == "IT"]))
 #'   Both composites are also excluded from the predictor matrix (column = 0)
 #'   to prevent circularity in the imputation model.
 
-#' **Select variables for imputation** [G&A; rob2item added]
-#' Passive composites (rob, rob2item) are placed last in items_imp
-#' to ensure that the component items are visited before the composites
-#' within each MICE iteration.
-items_imp <- c("pid", "cid",
-               paste0("rob", 1:3),
-               paste0("feel", 1:4),
-               "sex", "age", "educ",
-               "white", "wave", "wgt1", "wgt2",
-               "rob", "rob2item")   # passive composites — visited last
+dat_rdata_path <- file.path(DATA_DIR, "dat.Rdata")
 
-d <- dat[, items_imp]
-d$white <- as.factor(d$white)
-d$sex   <- as.factor(d$sex)
+if (file.exists(dat_rdata_path)) {
 
-#' **Initialise imputation** [G&A]
-ini <- mice(d[, items_imp], maxit = 0, seed = 2352398)
-cat("\nProportion missing per variable:\n")
-print(round(ini$nmis / nrow(d), 3))
+  cat("\ndat.Rdata found — loading existing imputed data, skipping MICE.\n")
+  load(dat_rdata_path)
+  cat("  dat:        ", nrow(dat), "rows (raw data)\n")
+  cat("  dati:       ", length(dati), "imputed datasets\n")
+  cat("  dati_mice:  mice object\n")
 
-#' **Predictor matrix** [G&A; composites excluded as predictors]
-#' Administrative/design variables (pid, cid, wave, weights) and
-#' derived composites (rob, rob2item) are excluded from the predictor
-#' matrix: they are neither imputed actively nor used as predictors.
-ini$predictorMatrix[c("pid", "cid", "wave", "wgt1", "wgt2",
-                       "rob", "rob2item"), items_imp] <- 0
-ini$predictorMatrix[items_imp, c("pid", "cid", "wave", "wgt1", "wgt2",
-                                   "rob", "rob2item")] <- 0
+} else {
 
-#' **Imputation methods** [G&A; passive method for composites]
-ini$method[c(paste0("rob", 1:3), paste0("feel", 1:4), "educ")] <- "cart"
-ini$method["rob"]      <- "~ I(rob1 + rob2 + rob3)"  # passive: sum of items
-ini$method["rob2item"] <- "~ I(rob1 + rob2)"          # passive: 2-item comparable composite
+  #' **Select variables for imputation** [G&A; rob2item added]
+  #' Passive composites (rob, rob2item) are placed last in items_imp
+  #' to ensure that the component items are visited before the composites
+  #' within each MICE iteration.
+  items_imp <- c("pid", "cid",
+                 paste0("rob", 1:3),
+                 paste0("feel", 1:4),
+                 "sex", "age", "educ",
+                 "white", "wave", "wgt1", "wgt2",
+                 "rob", "rob2item")   # passive composites — visited last
 
-#' **Run imputation** [G&A]
-cat("\nRunning MICE (m = 20; this may take several minutes)...\n")
-dati_mice <- mice(d[, items_imp],
-                  m               = 20,
-                  print           = TRUE,
-                  seed            = 42,
-                  predictorMatrix = ini$predictorMatrix,
-                  method          = ini$method,
-                  visitSequence   = ini$visitSequence)
-rm(ini, d)
+  d <- dat[, items_imp]
+  d$white <- as.factor(d$white)
+  d$sex   <- as.factor(d$sex)
 
-#' **Convert to list of completed datasets** [G&A; extended]
-dati <- list()
-for (i in seq_len(dati_mice$m)) {
-    dati[[i]] <- complete(dati_mice, i)
+  #' **Initialise imputation** [G&A]
+  ini <- mice(d[, items_imp], maxit = 0, seed = 2352398)
+  cat("\nProportion missing per variable:\n")
+  print(round(ini$nmis / nrow(d), 3))
 
-    # feel3 and feel4 are structurally absent in wave 1 [G&A]
-    dati[[i]]$feel3[dati[[i]]$wave == 1] <- NA
-    dati[[i]]$feel4[dati[[i]]$wave == 1] <- NA
+  #' **Predictor matrix** [G&A; composites excluded as predictors]
+  #' Administrative/design variables (pid, cid, wave, weights) and
+  #' derived composites (rob, rob2item) are excluded from the predictor
+  #' matrix: they are neither imputed actively nor used as predictors.
+  ini$predictorMatrix[c("pid", "cid", "wave", "wgt1", "wgt2",
+                         "rob", "rob2item"), items_imp] <- 0
+  ini$predictorMatrix[items_imp, c("pid", "cid", "wave", "wgt1", "wgt2",
+                                     "rob", "rob2item")] <- 0
 
-    # feel items are not available as a comparable scale in wave 4 [EXTENSION]
-    dati[[i]]$feel1[dati[[i]]$wave == 4] <- NA
-    dati[[i]]$feel2[dati[[i]]$wave == 4] <- NA
-    dati[[i]]$feel3[dati[[i]]$wave == 4] <- NA
-    dati[[i]]$feel4[dati[[i]]$wave == 4] <- NA
+  #' **Imputation methods** [G&A; passive method for composites]
+  ini$method[c(paste0("rob", 1:3), paste0("feel", 1:4), "educ")] <- "cart"
+  ini$method["rob"]      <- "~ I(rob1 + rob2 + rob3)"  # passive: sum of items
+  ini$method["rob2item"] <- "~ I(rob1 + rob2)"          # passive: 2-item comparable composite
 
-    # Merge country-level data
-    dati[[i]] <- merge(dati[[i]], cntry_long, by = c("cid", "wave"), all.x = TRUE)
+  #' **Run imputation** [G&A]
+  cat("\nRunning MICE (m = 20; this may take several minutes)...\n")
+  dati_mice <- mice(d[, items_imp],
+                    m               = 20,
+                    print           = TRUE,
+                    seed            = 42,
+                    predictorMatrix = ini$predictorMatrix,
+                    method          = ini$method,
+                    visitSequence   = ini$visitSequence)
+  rm(ini, d)
+
+  #' **Convert to list of completed datasets** [G&A; extended]
+  dati <- list()
+  for (i in seq_len(dati_mice$m)) {
+      dati[[i]] <- complete(dati_mice, i)
+
+      # feel3 and feel4 are structurally absent in wave 1 [G&A]
+      dati[[i]]$feel3[dati[[i]]$wave == 1] <- NA
+      dati[[i]]$feel4[dati[[i]]$wave == 1] <- NA
+
+      # feel items are not available as a comparable scale in wave 4 [EXTENSION]
+      dati[[i]]$feel1[dati[[i]]$wave == 4] <- NA
+      dati[[i]]$feel2[dati[[i]]$wave == 4] <- NA
+      dati[[i]]$feel3[dati[[i]]$wave == 4] <- NA
+      dati[[i]]$feel4[dati[[i]]$wave == 4] <- NA
+
+      # Merge country-level data
+      dati[[i]] <- merge(dati[[i]], cntry_long, by = c("cid", "wave"), all.x = TRUE)
+  }
+  dati <- as.mitml.list(dati)
+  rm(i, cntry_long)
+
+
+  #' ===================================================================
+  #' # 7. Save data
+  #' ===================================================================
+
+  save(dat, dati, dati_mice, file = dat_rdata_path)
+  cat("\nSaved:", dat_rdata_path, "\n")
+  cat("  dat:        ", nrow(dat), "rows (raw data)\n")
+  cat("  dati:       ", length(dati), "imputed datasets\n")
+  cat("  dati_mice:  mice object\n")
+
 }
-dati <- as.mitml.list(dati)
-rm(i, cntry_long)
 
-
-
-
-#' ===================================================================
-#' # 7. Save data
-#' ===================================================================
-
-save(dat, dati, dati_mice, file = file.path(DATA_DIR, "dat.Rdata"))
-cat("\nSaved:", file.path(DATA_DIR, "dat.Rdata"), "\n")
-cat("  dat:        ", nrow(dat), "rows (raw data)\n")
-cat("  dati:       ", length(dati), "imputed datasets\n")
-cat("  dati_mice:  mice object\n")
+rm(dat_rdata_path)
 
 
 
