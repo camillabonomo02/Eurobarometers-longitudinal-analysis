@@ -353,7 +353,7 @@ display: none;
 2012-2024)</h1>
 <h4 class="author">Camilla Bonomo [extends Gnambs &amp; Appel 2019 —
 lavaan instead of Mplus]</h4>
-<h4 class="date">2026-05-27 09:59:23.727701</h4>
+<h4 class="date">2026-05-28 14:59:29.485198</h4>
 
 </div>
 
@@ -376,32 +376,10 @@ non-invariance (replicates G&amp;A) Section 4 — Summary and
 methodological decision <strong>Clear workspace</strong></p>
 <pre class="r"><code>rm(list = ls())</code></pre>
 <p><strong>Load packages</strong></p>
-<pre class="r"><code>library(lavaan)</code></pre>
-<pre><code>## This is lavaan 0.6-21
-## lavaan is FREE software! Please report any bugs.</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lavaan&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:psych&#39;:
-## 
-##     cor2cov</code></pre>
-<pre class="r"><code>library(semTools)</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ###############################################################################</code></pre>
-<pre><code>## This is semTools 0.5-8</code></pre>
-<pre><code>## All users of R (or SEM) are invited to submit functions or ideas for functions.</code></pre>
-<pre><code>## ###############################################################################</code></pre>
-<pre><code>## 
-## Attaching package: &#39;semTools&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:psych&#39;:
-## 
-##     reliability, skew</code></pre>
-<pre class="r"><code>library(polycor)     # polychoric correlations for Section 2</code></pre>
-<pre><code>## 
-## Attaching package: &#39;polycor&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:psych&#39;:
-## 
-##     polyserial</code></pre>
-<pre class="r"><code>library(doBy)
+<pre class="r"><code>library(lavaan)
+library(semTools)
+library(polycor)     # polychoric correlations for Section 2
+library(doBy)
 source(&quot;./syntax/0_Start.R&quot;)</code></pre>
 <p><strong>Load data</strong></p>
 <pre class="r"><code>load(&quot;./data/dat.Rdata&quot;)

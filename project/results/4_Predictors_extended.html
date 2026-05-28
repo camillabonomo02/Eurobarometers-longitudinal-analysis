@@ -352,7 +352,7 @@ display: none;
 <h1 class="title toc-ignore">Predictors of attitudes — Extended (4
 waves, 2012-2024)</h1>
 <h4 class="author">Camilla Bonomo [extends Gnambs &amp; Appel 2019]</h4>
-<h4 class="date">2026-05-27 09:59:47.791246</h4>
+<h4 class="date">2026-05-28 15:00:06.043123</h4>
 
 </div>
 
@@ -362,10 +362,14 @@ waves, 2012-2024)</h1>
 replication)</a></li>
 <li><a href="#a.-model-b2-on-waves-1-3" id="toc-a.-model-b2-on-waves-1-3"><span class="toc-section-number">2</span> ## 5a. Model B2 on waves
 1-3</a></li>
-<li><a href="#c.-cross-level-interactions-extension-testing-moderation-by-uai" id="toc-c.-cross-level-interactions-extension-testing-moderation-by-uai"><span class="toc-section-number">3</span> ## 5c. Cross-level interactions
-[EXTENSION — testing moderation by UAI]</a></li>
-<li><a href="#c.-italian-residuals-waves-1-4" id="toc-c.-italian-residuals-waves-1-4"><span class="toc-section-number">4</span> ## 6c. Italian residuals — waves
+<li><a href="#c.-model-b2_multi-a2-all-hofstede-dimensions-extension-full-h1" id="toc-c.-model-b2_multi-a2-all-hofstede-dimensions-extension-full-h1"><span class="toc-section-number">3</span> ## 5c. Model B2_multi: A2 + all
+Hofstede dimensions [EXTENSION — full H1]</a></li>
+<li><a href="#a.-variance-reduction-waves-1-3" id="toc-a.-variance-reduction-waves-1-3"><span class="toc-section-number">4</span> ## 6a. Variance reduction — waves
+1-3</a></li>
+<li><a href="#c.-italian-residuals-waves-1-4" id="toc-c.-italian-residuals-waves-1-4"><span class="toc-section-number">5</span> ## 6c. Italian residuals — waves
 1-4</a></li>
+<li><a href="#a.-block-1-sociodemographic-predictors" id="toc-a.-block-1-sociodemographic-predictors"><span class="toc-section-number">6</span> ## 8a. Block 1: sociodemographic
+predictors</a></li>
 </ul>
 </div>
 
@@ -377,9 +381,18 @@ Model B2: A2 + UAI [EXTENSION — H1 and H2] Section 6 — A2 vs. B2
 comparison and Italian residuals Section 7 — Feel items (G&amp;A
 replication, waves 1-3) Section 8 — Italy focus, wave 4: within-country
 regression</p>
-<p>Hypotheses tested: H1: UAI is negatively associated with robot
-acceptance (high uncertainty avoidance -&gt; more negative attitudes),
-controlling for all G&amp;A predictors. H2 (mediation): the effect of
+<p>Hypotheses tested: H1 (multidimensional cultural hypothesis):
+National cultural orientations jointly predict robot acceptance, net of
+the structural L2 predictors from Model A2. Specifically: H1a: UAI_z
+&lt; 0 — uncertainty avoidance -&gt; negative attitudes H1b: IDV_z &gt;
+0 — individualism -&gt; positive attitudes H1c: LTO_z &gt; 0 — long-term
+orientation -&gt; positive attitudes H1d: PDI_z — exploratory (power
+distance, sign unclear) H1e: MAS_z — exploratory (performance
+vs. quality-of-life) H1f: IVR_z &gt; 0 — indulgence -&gt; openness to
+new technology H1a is tested in isolation in Model B2 (UAI only). The
+full hypothesis is tested in Model B2_multi (all six dimensions). Note:
+with N = 27 L2 units, the full model has limited df at L2; results
+should be interpreted as exploratory. H2 (mediation): the effect of
 latitude is attenuated when UAI is added to the model, indicating that
 UAI partially mediates the geographic North-South gradient.</p>
 <p>Dependent variable note: Waves 1-3 analyses use rob (three-item
@@ -391,16 +404,8 @@ workspace</strong></p>
 <pre class="r"><code>rm(list = ls())</code></pre>
 <p><strong>Load packages</strong></p>
 <pre class="r"><code>library(lme4)
-library(lmerTest)   # Satterthwaite p-values for lmer</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lmerTest&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:lme4&#39;:
-## 
-##     lmer</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     step</code></pre>
-<pre class="r"><code>library(mitml)
+library(lmerTest)   # Satterthwaite p-values for lmer
+library(mitml)
 library(weights)
 source(&quot;./syntax/0_Start.R&quot;)</code></pre>
 <p><strong>Load data</strong></p>
@@ -442,6 +447,31 @@ cat(sprintf(&quot;UAI: M = %.1f  SD = %.1f  (N countries = %d)\n&quot;,
 <pre><code>## UAI: M = 71.7  SD = 20.8  (N countries = 23)</code></pre>
 <pre class="r"><code>cat(&quot;Italy UAI_z:&quot;, round((75 - uai_mean) / uai_sd, 3), &quot;\n\n&quot;)</code></pre>
 <pre><code>## Italy UAI_z: 0.158</code></pre>
+<p><strong>Standardise remaining Hofstede dimensions at the country
+level</strong> [EXTENSION] Same procedure as UAI_z: z-score over the 27
+unique country values.</p>
+<pre class="r"><code>hof_dims &lt;- c(&quot;PDI&quot;, &quot;IDV&quot;, &quot;MAS&quot;, &quot;LTO&quot;, &quot;IVR&quot;)
+for (dim in hof_dims) {
+  dim_vals &lt;- unique(dati[[1]][, c(&quot;cid&quot;, dim)])[[dim]]
+  m &lt;- mean(dim_vals, na.rm = TRUE)
+  s &lt;- sd(dim_vals,   na.rm = TRUE)
+  zname &lt;- paste0(dim, &quot;_z&quot;)
+  dati &lt;- lapply(dati, function(x) {
+    x[[zname]] &lt;- (x[[dim]] - m) / s
+    x
+  })
+  dati &lt;- as.mitml.list(dati)
+  cat(sprintf(&quot;%s: M = %.1f  SD = %.1f  Italy_%s = %.3f\n&quot;,
+              dim, m, s, zname,
+              (dati[[1]][dati[[1]]$cntry == &quot;IT&quot;, dim][1] - m) / s))
+}</code></pre>
+<pre><code>## PDI: M = 52.3  SD = 20.6  Italy_PDI_z = -0.110
+## IDV: M = 65.3  SD = 15.5  Italy_IDV_z = -0.793
+## MAS: M = 45.7  SD = 24.4  Italy_MAS_z = 0.999
+## LTO: M = 52.3  SD = 9.5  Italy_LTO_z = -1.393
+## IVR: M = 43.5  SD = 19.7  Italy_IVR_z = -0.683</code></pre>
+<pre class="r"><code>cat(&quot;\n&quot;)</code></pre>
+<pre class="r"><code>rm(hof_dims, dim, dim_vals, m, s, zname)</code></pre>
 <p>=================================================================== #
 2. Model A0: null model — ICC by wave [G&amp;A + EXTENSION]
 =================================================================== Null
@@ -737,16 +767,21 @@ comparability.</td>
 </tr>
 <tr class="even">
 <td align="left">===================================================================
-# 5. Model B2: A2 + UAI [EXTENSION — testing H1 and H2]
-=================================================================== H1:
-UAI_z negatively associated with robot acceptance (beta &lt; 0) H2: the
-effect of LAT diminishes or becomes non-significant when UAI is added —
-latitude as a proxy for cultural uncertainty avoidance.</td>
+# 5. Model B2 / B2_multi [EXTENSION — testing H1 and H2]
+===================================================================
+Model B2 = A2 + UAI_z (tests H1a and H2 in isolation) Model B2_multi =
+A2 + all six Hofstede z-scores (tests full H1)</td>
 </tr>
 <tr class="odd">
-<td align="left">If H2 is confirmed: the geographic North-South pattern
-is partially mediated by national differences in uncertainty
-avoidance.</td>
+<td align="left">H1a: UAI_z &lt; 0 — uncertainty avoidance -&gt;
+negative attitudes toward robots H2: the effect of LAT diminishes when
+UAI is added (cultural mediation).</td>
+</tr>
+<tr class="even">
+<td align="left">Caution for B2_multi: with N = 27 L2 units and 12 L2
+predictors total (6 G&amp;A + 6 Hofstede), df at Level 2 is very low.
+Treat as exploratory; focus interpretation on effect signs and relative
+magnitudes.</td>
 </tr>
 </tbody>
 </table>
@@ -843,24 +878,82 @@ comparability.</td>
 </tbody>
 </table>
 </div>
-<div id="c.-cross-level-interactions-extension-testing-moderation-by-uai" class="section level2" number="3">
-<h2><span class="header-section-number">3</span> ## 5c. Cross-level
-interactions [EXTENSION — testing moderation by UAI]</h2>
-<p>H3a: Does UAI_z moderate the effect of education? (Education
-compensates cultural anxiety more strongly in high-UAI countries) H3b:
-Does UAI_z moderate the effect of blue-collar status? (The negative
-effect of manual labour amplified by high UAI)</p>
-<p>rob2item used as dependent variable for cross-wave comparability.</p>
-<pre class="r"><code>cat(&quot;\n=== MODEL B3: CROSS-LEVEL INTERACTIONS (waves 1-4) ===\n&quot;)</code></pre>
+<div id="c.-model-b2_multi-a2-all-hofstede-dimensions-extension-full-h1" class="section level2" number="3">
+<h2><span class="header-section-number">3</span> ## 5c. Model B2_multi:
+A2 + all Hofstede dimensions [EXTENSION — full H1]</h2>
+<p>Tests H1 as a multidimensional cultural hypothesis. Expected signs:
+UAI_z(-), IDV_z(+), LTO_z(+), IVR_z(+); PDI/MAS exploratory.</p>
+<pre class="r"><code>cat(&quot;\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-3) ===\n&quot;)</code></pre>
 <pre><code>## 
-## === MODEL B3: CROSS-LEVEL INTERACTIONS (waves 1-4) ===</code></pre>
-<pre class="r"><code>cat(&quot;[EXTENSION] UAI x education and UAI x employment moderation\n\n&quot;)</code></pre>
-<pre><code>## [EXTENSION] UAI x education and UAI x employment moderation</code></pre>
-<pre class="r"><code>fit_B3_1234 &lt;- lmer.imp(
+## === MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-3) ===</code></pre>
+<pre class="r"><code>cat(&quot;[EXTENSION] Tests multidimensional H1; exploratory due to N=27 L2 units\n\n&quot;)</code></pre>
+<pre><code>## [EXTENSION] Tests multidimensional H1; exploratory due to N=27 L2 units</code></pre>
+<pre class="r"><code>fit_B2multi_123 &lt;- lmer.imp(
+  rob ~ wave + sex + age + educ + white +
+    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
+    (1 | cid),
+  data    = dati,
+  weights = &quot;wgt2&quot;,
+  stdy    = TRUE,
+  stdx    = FALSE,
+  subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
+  control = lmerControl(optimizer = &quot;nloptwrap&quot;)
+)</code></pre>
+<pre><code>## 
+## Call:
+## 
+## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, 
+##     ])
+## 
+## Final parameter estimates and inferences obtained from 20 imputed data sets.
+## 
+##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
+## (Intercept)     3.325     1.327     2.505 9.657e+04     0.012     0.014     0.014 
+## wave2          -0.291     0.024   -12.108 5.375e+03     0.000     0.063     0.060 
+## wave3          -0.532     0.048   -11.117 2.590e+03     0.000     0.094     0.086 
+## sex1           -0.396     0.014   -28.812 3.761e+03     0.000     0.077     0.072 
+## age            -0.014     0.004    -3.207 1.746e+03     0.001     0.116     0.105 
+## educ            0.128     0.003    41.838 5.528e+02     0.000     0.228     0.188 
+## white2         -0.165     0.021    -7.881 1.432e+03     0.000     0.130     0.116 
+## white3         -0.136     0.018    -7.733 3.925e+03     0.000     0.075     0.070 
+## AGEOLD          0.086     0.025     3.398 3.149e+03     0.001     0.084     0.078 
+## TECHEXP         0.021     0.007     2.869 2.558e+04     0.004     0.028     0.027 
+## INVEST         -0.062     0.074    -0.839 2.730e+04     0.401     0.027     0.026 
+## UNEMP           0.012     0.006     2.109 5.183e+03     0.035     0.064     0.061 
+## LAT             0.029     0.026     1.148 4.170e+06     0.251     0.002     0.002 
+## LONG           -0.000     0.010    -0.026 2.155e+07     0.979     0.001     0.001 
+## PDI_z           0.225     0.132     1.704 1.028e+06     0.088     0.004     0.004 
+## IDV_z           0.027     0.162     0.163 2.501e+05     0.870     0.009     0.009 
+## MAS_z          -0.049     0.107    -0.456 4.553e+06     0.649     0.002     0.002 
+## UAI_z          -0.312     0.151    -2.070 9.611e+06     0.038     0.001     0.001 
+## LTO_z          -0.074     0.134    -0.555 6.451e+06     0.579     0.002     0.002 
+## IVR_z          -0.078     0.142    -0.551 4.786e+05     0.582     0.006     0.006 
+## 
+## Unadjusted hypothesis test as appropriate in larger samples.
+## 
+## Standardized estimates:
+## (Intercept)       wave2       wave3        sex1         age        educ 
+##    1.714500   -0.150115   -0.274302   -0.204309   -0.007255    0.065793 
+##      white2      white3      AGEOLD     TECHEXP      INVEST       UNEMP 
+##   -0.084938   -0.070060    0.044114    0.010893   -0.032028    0.006072 
+##         LAT        LONG       PDI_z       IDV_z       MAS_z       UAI_z 
+##    0.015099   -0.000135    0.116001    0.013666   -0.025174   -0.160736 
+##       LTO_z       IVR_z 
+##   -0.038351   -0.040395 
+## 
+## Variance components:
+## Intercept  Residual       ICC 
+##    0.2222    3.0268    0.0684</code></pre>
+<pre class="r"><code>cat(&quot;\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-4) ===\n&quot;)</code></pre>
+<pre><code>## 
+## === MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-4) ===</code></pre>
+<pre class="r"><code>cat(&quot;[EXTENSION] Dependent variable = rob2item\n\n&quot;)</code></pre>
+<pre><code>## [EXTENSION] Dependent variable = rob2item</code></pre>
+<pre class="r"><code>fit_B2multi_1234 &lt;- lmer.imp(
   rob2item ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-    UAI_z:educ +   # H3a: UAI moderates the education effect
-    UAI_z:white +  # H3b: UAI moderates the employment effect
+    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
     (1 | cid),
   data    = dati,
   weights = &quot;wgt2&quot;,
@@ -876,71 +969,125 @@ effect of manual labour amplified by high UAI)</p>
 ## 
 ## Final parameter estimates and inferences obtained from 20 imputed data sets.
 ## 
-##               Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
-## (Intercept)      3.422     0.592     5.777 2.839e+06     0.000     0.003     0.003 
-## wave2           -0.166     0.014   -11.821 4.805e+03     0.000     0.067     0.063 
-## wave3           -0.291     0.020   -14.473 2.236e+03     0.000     0.102     0.093 
-## wave4           -0.366     0.039    -9.293 1.758e+03     0.000     0.116     0.105 
-## sex1            -0.270     0.009   -29.806 8.500e+02     0.000     0.176     0.152 
-## age             -0.040     0.003   -14.714 1.677e+03     0.000     0.119     0.108 
-## educ             0.085     0.002    43.097 1.086e+03     0.000     0.152     0.134 
-## white2          -0.171     0.013   -12.730 1.677e+03     0.000     0.119     0.108 
-## white3          -0.107     0.011    -9.464 2.828e+03     0.000     0.089     0.083 
-## AGEOLD          -0.017     0.010    -1.715 3.065e+03     0.086     0.085     0.079 
-## TECHEXP         -0.002     0.002    -0.984 5.046e+03     0.325     0.065     0.062 
-## INVEST          -0.059     0.033    -1.811 2.745e+04     0.070     0.027     0.026 
-## UNEMP           -0.001     0.002    -0.497 3.392e+03     0.620     0.081     0.075 
-## LAT              0.022     0.012     1.853 4.101e+06     0.064     0.002     0.002 
-## LONG            -0.000     0.006    -0.012 1.972e+07     0.991     0.001     0.001 
-## UAI_z           -0.089     0.084    -1.061 4.767e+06     0.289     0.002     0.002 
-## educ:UAI_z       0.017     0.002     7.385 2.910e+03     0.000     0.088     0.081 
-## white2:UAI_z    -0.017     0.016    -1.055 8.078e+03     0.291     0.051     0.049 
-## white3:UAI_z    -0.009     0.013    -0.662 1.522e+04     0.508     0.037     0.035 
+##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
+## (Intercept)     3.992     0.822     4.855 1.621e+06     0.000     0.003     0.003 
+## wave2          -0.166     0.014   -11.705 4.562e+03     0.000     0.069     0.065 
+## wave3          -0.293     0.020   -14.355 2.115e+03     0.000     0.105     0.096 
+## wave4          -0.368     0.040    -9.160 1.673e+03     0.000     0.119     0.108 
+## sex1           -0.270     0.009   -29.796 8.405e+02     0.000     0.177     0.152 
+## age            -0.042     0.003   -15.109 1.685e+03     0.000     0.119     0.107 
+## educ            0.090     0.002    46.694 6.973e+02     0.000     0.198     0.167 
+## white2         -0.175     0.013   -13.474 1.479e+03     0.000     0.128     0.115 
+## white3         -0.109     0.011    -9.860 2.796e+03     0.000     0.090     0.083 
+## AGEOLD         -0.018     0.010    -1.771 2.848e+03     0.077     0.089     0.082 
+## TECHEXP        -0.002     0.002    -0.947 5.107e+03     0.343     0.065     0.061 
+## INVEST         -0.054     0.034    -1.588 2.388e+04     0.112     0.029     0.028 
+## UNEMP          -0.002     0.002    -0.840 3.458e+03     0.401     0.080     0.075 
+## LAT             0.010     0.016     0.625 1.561e+07     0.532     0.001     0.001 
+## LONG            0.001     0.007     0.139 1.546e+08     0.889     0.000     0.000 
+## PDI_z           0.041     0.085     0.486 1.443e+07     0.627     0.001     0.001 
+## IDV_z           0.144     0.099     1.449 1.883e+06     0.147     0.003     0.003 
+## MAS_z          -0.046     0.069    -0.668 6.442e+06     0.504     0.002     0.002 
+## UAI_z          -0.166     0.099    -1.677 2.163e+07     0.093     0.001     0.001 
+## LTO_z          -0.069     0.086    -0.803 3.149e+06     0.422     0.002     0.002 
+## IVR_z          -0.126     0.091    -1.384 5.380e+06     0.166     0.002     0.002 
 ## 
 ## Unadjusted hypothesis test as appropriate in larger samples.
 ## 
 ## Standardized estimates:
-##  (Intercept)        wave2        wave3        wave4         sex1          age 
-##     2.39e+00    -1.16e-01    -2.04e-01    -2.56e-01    -1.89e-01    -2.83e-02 
-##         educ       white2       white3       AGEOLD      TECHEXP       INVEST 
-##     5.97e-02    -1.20e-01    -7.46e-02    -1.16e-02    -1.60e-03    -4.16e-02 
-##        UNEMP          LAT         LONG        UAI_z   educ:UAI_z white2:UAI_z 
-##    -8.48e-04     1.54e-02    -4.98e-05    -6.20e-02     1.20e-02    -1.19e-02 
-## white3:UAI_z 
-##    -6.25e-03 
+## (Intercept)       wave2       wave3       wave4        sex1         age 
+##    2.792485   -0.115840   -0.205037   -0.257410   -0.188997   -0.029045 
+##        educ      white2      white3      AGEOLD     TECHEXP      INVEST 
+##    0.062866   -0.122286   -0.076400   -0.012292   -0.001541   -0.038066 
+##       UNEMP         LAT        LONG       PDI_z       IDV_z       MAS_z 
+##   -0.001435    0.007200    0.000645    0.028986    0.100548   -0.032360 
+##       UAI_z       LTO_z       IVR_z 
+##   -0.116037   -0.048300   -0.088084 
 ## 
 ## Variance components:
 ## Intercept  Residual       ICC 
-##    0.0978    1.6537    0.0559</code></pre>
-<p>=================================================================== #
-6. A2 vs. B2 comparison and Italian residuals
-===================================================================</p>
-<pre class="r"><code>cat(&quot;\n\n=== A2 vs. B2 COMPARISON: L2 VARIANCE EXPLAINED ===\n&quot;)</code></pre>
-<pre><code>## 
-## 
-## === A2 vs. B2 COMPARISON: L2 VARIANCE EXPLAINED ===</code></pre>
-<p>Extract variance components for comparison. Note: AIC/BIC = Inf in
-lme4 with large weighted samples — a known overflow issue in
-log-likelihood computation. Variance reduction (pseudo-R2 at the country
-level) is used as an alternative.</p>
-<p>The residual analysis below uses the first imputed dataset (m=1).
-This approximation is documented as a limitation: a fully pooled
-estimate of BLUPs across all 20 imputed datasets is not feasible with
-standard lme4 infrastructure and is therefore not computed here.</p>
-<pre class="r"><code>d1 &lt;- dati[[1]]
-d1$wave_num &lt;- as.numeric(as.character(d1$wave))
-d1_123 &lt;- d1[d1$wave_num %in% 1:3, ]
-
-# Normalised weights to avoid AIC/BIC overflow with large absolute weights
-d1_123$wgt2_norm &lt;- d1_123$wgt2 / mean(d1_123$wgt2, na.rm = TRUE)
-d1$wgt2_norm     &lt;- d1$wgt2     / mean(d1$wgt2,     na.rm = TRUE)</code></pre>
-<table>
+##    0.0979    1.6547    0.0559</code></pre>
+<table style="width:94%;">
+<colgroup>
+<col width="94%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>## 5d. Cross-level interactions [EXTENSION — testing moderation by
+UAI]</th>
+</tr>
+</thead>
 <tbody>
 <tr class="odd">
-<td align="left">## 6a. Variance reduction — waves 1-3</td>
+<td>H3a: Does UAI_z moderate the effect of education? (Education
+compensates cultural anxiety more strongly in high-UAI countries) H3b:
+Does UAI_z moderate the effect of blue-collar status? (The negative
+effect of manual labour amplified by high UAI)</td>
+</tr>
+<tr class="even">
+<td>rob2item used as dependent variable for cross-wave
+comparability.</td>
+</tr>
+<tr class="odd">
+<td><code>r cat(&quot;\n=== MODEL B3: CROSS-LEVEL INTERACTIONS (waves 1-4) ===\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td><code>## ## === MODEL B3: CROSS-LEVEL INTERACTIONS (waves 1-4) ===</code></td>
+</tr>
+<tr class="odd">
+<td><code>r cat(&quot;[EXTENSION] UAI x education and UAI x employment moderation\n\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td><code>## [EXTENSION] UAI x education and UAI x employment moderation</code></td>
+</tr>
+<tr class="odd">
+<td><code>r fit_B3_1234 &lt;- lmer.imp( rob2item ~ wave + sex + age + educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z + UAI_z:educ +   # H3a: UAI moderates the education effect UAI_z:white +  # H3b: UAI moderates the employment effect (1 | cid), data    = dati, weights = &quot;wgt2&quot;, stdy    = TRUE, stdx    = FALSE, control = lmerControl(optimizer = &quot;nloptwrap&quot;) )</code></td>
+</tr>
+<tr class="even">
+<td><code>## ## Call: ## ## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, ##     ]) ## ## Final parameter estimates and inferences obtained from 20 imputed data sets. ## ##               Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI ## (Intercept)      3.422     0.592     5.777 2.839e+06     0.000     0.003     0.003 ## wave2           -0.166     0.014   -11.821 4.805e+03     0.000     0.067     0.063 ## wave3           -0.291     0.020   -14.473 2.236e+03     0.000     0.102     0.093 ## wave4           -0.366     0.039    -9.293 1.758e+03     0.000     0.116     0.105 ## sex1            -0.270     0.009   -29.806 8.500e+02     0.000     0.176     0.152 ## age             -0.040     0.003   -14.714 1.677e+03     0.000     0.119     0.108 ## educ             0.085     0.002    43.097 1.086e+03     0.000     0.152     0.134 ## white2          -0.171     0.013   -12.730 1.677e+03     0.000     0.119     0.108 ## white3          -0.107     0.011    -9.464 2.828e+03     0.000     0.089     0.083 ## AGEOLD          -0.017     0.010    -1.715 3.065e+03     0.086     0.085     0.079 ## TECHEXP         -0.002     0.002    -0.984 5.046e+03     0.325     0.065     0.062 ## INVEST          -0.059     0.033    -1.811 2.745e+04     0.070     0.027     0.026 ## UNEMP           -0.001     0.002    -0.497 3.392e+03     0.620     0.081     0.075 ## LAT              0.022     0.012     1.853 4.101e+06     0.064     0.002     0.002 ## LONG            -0.000     0.006    -0.012 1.972e+07     0.991     0.001     0.001 ## UAI_z           -0.089     0.084    -1.061 4.767e+06     0.289     0.002     0.002 ## educ:UAI_z       0.017     0.002     7.385 2.910e+03     0.000     0.088     0.081 ## white2:UAI_z    -0.017     0.016    -1.055 8.078e+03     0.291     0.051     0.049 ## white3:UAI_z    -0.009     0.013    -0.662 1.522e+04     0.508     0.037     0.035 ## ## Unadjusted hypothesis test as appropriate in larger samples. ## ## Standardized estimates: ##  (Intercept)        wave2        wave3        wave4         sex1          age ##     2.39e+00    -1.16e-01    -2.04e-01    -2.56e-01    -1.89e-01    -2.83e-02 ##         educ       white2       white3       AGEOLD      TECHEXP       INVEST ##     5.97e-02    -1.20e-01    -7.46e-02    -1.16e-02    -1.60e-03    -4.16e-02 ##        UNEMP          LAT         LONG        UAI_z   educ:UAI_z white2:UAI_z ##    -8.48e-04     1.54e-02    -4.98e-05    -6.20e-02     1.20e-02    -1.19e-02 ## white3:UAI_z ##    -6.25e-03 ## ## Variance components: ## Intercept  Residual       ICC ##    0.0978    1.6537    0.0559</code></td>
+</tr>
+<tr class="odd">
+<td>===================================================================
+# 6. A2 vs. B2 comparison and Italian residuals
+===================================================================</td>
+</tr>
+<tr class="even">
+<td><code>r cat(&quot;\n\n=== A2 vs. B2 COMPARISON: L2 VARIANCE EXPLAINED ===\n&quot;)</code></td>
+</tr>
+<tr class="odd">
+<td><code>## ## ## === A2 vs. B2 COMPARISON: L2 VARIANCE EXPLAINED ===</code></td>
+</tr>
+<tr class="even">
+<td>Extract variance components for comparison. Note: AIC/BIC = Inf in
+lme4 with large weighted samples — a known overflow issue in
+log-likelihood computation. Variance reduction (pseudo-R2 at the country
+level) is used as an alternative.</td>
+</tr>
+<tr class="odd">
+<td>The residual analysis below uses the first imputed dataset (m=1).
+This approximation is documented as a limitation: a fully pooled
+estimate of BLUPs across all 20 imputed datasets is not feasible with
+standard lme4 infrastructure and is therefore not computed here.</td>
+</tr>
+<tr class="even">
+<td>``` r d1 &lt;- dati[[1]] d1<span class="math inline">\(wave_num
+&lt;- as.numeric(as.character(d1\)</span>wave)) d1_123 &lt;-
+d1[d1$wave_num %in% 1:3, ]</td>
+</tr>
+<tr class="odd">
+<td># Normalised weights to avoid AIC/BIC overflow with large absolute
+weights d1_123<span class="math inline">\(wgt2_norm &lt;-
+d1_123\)</span>wgt2 / mean(d1_123<span class="math inline">\(wgt2, na.rm
+= TRUE)
+d1\)</span>wgt2_norm &lt;- d1<span class="math inline">\(wgt2     /
+mean(d1\)</span>wgt2, na.rm = TRUE) ```</td>
 </tr>
 </tbody>
 </table>
+</div>
+<div id="a.-variance-reduction-waves-1-3" class="section level2" number="4">
+<h2><span class="header-section-number">4</span> ## 6a. Variance
+reduction — waves 1-3</h2>
 <pre class="r"><code>m_A2 &lt;- lmer(rob ~ wave + sex + age + educ + white +
                AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
                (1 | cid),
@@ -1063,8 +1210,8 @@ re_compare &lt;- re_compare[order(re_compare\)</span>re_A2), ]</td>
 </tbody>
 </table>
 </div>
-<div id="c.-italian-residuals-waves-1-4" class="section level2" number="4">
-<h2><span class="header-section-number">4</span> ## 6c. Italian
+<div id="c.-italian-residuals-waves-1-4" class="section level2" number="5">
+<h2><span class="header-section-number">5</span> ## 6c. Italian
 residuals — waves 1-4</h2>
 <p>rob2item used as dependent variable for cross-wave comparability.</p>
 <pre class="r"><code>cat(&quot;\n--- Italian residuals — waves 1-4 (rob2item) ---\n&quot;)</code></pre>
@@ -1113,259 +1260,175 @@ cat(sprintf(&quot;\n*** ITALY (waves 1-4, rob2item) ***\n&quot;))</code></pre>
               abs(it_re4$change / it_re4$re_A2) * 100))
 }</code></pre>
 <pre><code>##   UAI accounts for 51.1% of the Italian residual</code></pre>
-<pre class="r"><code>rm(m_A2, m_B2, m_A2_4, m_B2_4)</code></pre>
-<p>=================================================================== #
-7. Feel items — Model A2 [G&amp;A replication, waves 1-3]
+<table style="width:94%;">
+<colgroup>
+<col width="94%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">## 6d. Variance reduction — A2 vs. B2_multi (waves
+1-3)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">How much additional L2 variance do all six Hofstede
+dimensions explain beyond the structural G&amp;A predictors?</td>
+</tr>
+<tr class="even">
+<td align="left">``` r m_B2multi &lt;- lmer(rob ~ wave + sex + age +
+educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + PDI_z +
+IDV_z + MAS_z + UAI_z + LTO_z + IVR_z + (1 | cid), data = d1_123,
+weights = wgt2_norm, REML = FALSE, control = lmerControl(optimizer =
+“nloptwrap”))</td>
+</tr>
+<tr class="odd">
+<td align="left">vc_Bm &lt;- as.data.frame(VarCorr(m_B2multi)) var_Bm
+&lt;- vc_Bm<span class="math inline">\(vcov[vc_Bm\)</span>grp == “cid”]
+res_Bm &lt;- vc_Bm<span class="math inline">\(vcov[vc_Bm\)</span>grp ==
+“Residual”] cat(“ variance comparison A2 vs. B2_multi (waves 1-3):”)
+```</td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## L2 variance comparison A2 vs. B2_multi (waves 1-3):</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(sprintf(&quot;  Intercept variance B2_multi: %.4f   ICC: %.4f\n&quot;, var_Bm, var_Bm / (var_Bm + res_Bm)))</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>##   Intercept variance B2_multi: 0.2477   ICC: 0.0683</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(sprintf(&quot;  Variance reduction vs. A2: %.1f%%  (vs. B2 UAI-only: %.1f%%)\n&quot;, (var_A2 - var_Bm) / var_A2 * 100, (var_B2 - var_Bm) / var_A2 * 100))</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>##   Variance reduction vs. A2: 0.0%  (vs. B2 UAI-only: 0.0%)</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r rm(m_A2, m_B2, m_B2multi, m_A2_4, m_B2_4)</code></td>
+</tr>
+<tr class="even">
+<td align="left">===================================================================
+# 7. Feel items — Model A2 [G&amp;A replication, waves 1-3]
 ===================================================================
 Model A2 replicated for each feel item (G&amp;A Table 4). Feel items are
-not available with a comparable scale in wave 4.</p>
-<pre class="r"><code>cat(&quot;\n\n=== MODEL A2 FEEL ITEMS (waves 1-3, G&amp;A replication) ===\n&quot;)</code></pre>
-<pre><code>## 
-## 
-## === MODEL A2 FEEL ITEMS (waves 1-3, G&amp;A replication) ===</code></pre>
-<pre class="r"><code>cat(&quot;\n--- feel1: medical operation ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- feel1: medical operation ---</code></pre>
-<pre class="r"><code>lmer.imp(feel1 ~ wave + sex + age + educ + white +
-           AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-           (1 | cid),
-         data    = dati,
-         weights = &quot;wgt2&quot;,
-         stdy    = TRUE,
-         stdx    = FALSE,
-         subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
-         control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></pre>
-<pre><code>## 
-## Call:
-## 
-## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, 
-##     ])
-## 
-## Final parameter estimates and inferences obtained from 20 imputed data sets.
-## 
-##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
-## (Intercept)     3.168     1.278     2.479 4.143e+04     0.013     0.022     0.021 
-## wave2           0.072     0.037     1.969 2.111e+03     0.049     0.105     0.096 
-## wave3           0.224     0.070     3.207 1.611e+03     0.001     0.122     0.110 
-## sex1           -0.751     0.022   -34.470 2.836e+03     0.000     0.089     0.082 
-## age             0.063     0.007     8.843 8.441e+02     0.000     0.177     0.152 
-## educ            0.164     0.005    35.087 1.052e+03     0.000     0.155     0.136 
-## white2         -0.333     0.033   -10.107 1.435e+03     0.000     0.130     0.116 
-## white3         -0.447     0.029   -15.387 7.998e+02     0.000     0.182     0.156 
-## AGEOLD         -0.026     0.036    -0.716 3.427e+03     0.474     0.080     0.075 
-## TECHEXP        -0.002     0.011    -0.157 1.432e+04     0.875     0.038     0.037 
-## INVEST          0.040     0.107     0.370 2.401e+04     0.711     0.029     0.028 
-## UNEMP          -0.014     0.009    -1.590 2.953e+03     0.112     0.087     0.081 
-## LAT             0.023     0.023     0.974 6.599e+05     0.330     0.005     0.005 
-## LONG           -0.010     0.015    -0.655 3.039e+06     0.513     0.003     0.003 
-## 
-## Unadjusted hypothesis test as appropriate in larger samples.
-## 
-## Standardized estimates:
-## (Intercept)       wave2       wave3        sex1         age        educ 
-##    1.025767    0.023432    0.072614   -0.243307    0.020317    0.052968 
-##      white2      white3      AGEOLD     TECHEXP      INVEST       UNEMP 
-##   -0.107794   -0.144686   -0.008295   -0.000574    0.012833   -0.004558 
-##         LAT        LONG 
-##    0.007376   -0.003108 
-## 
-## Variance components:
-## Intercept  Residual       ICC 
-##    0.5674    7.5199    0.0702</code></pre>
-<pre class="r"><code>cat(&quot;\n--- feel2: robots at work ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- feel2: robots at work ---</code></pre>
-<p>feel2 (qa8_3 wave 1 / qa7_2 wave 2 / qd13_2 wave 3) is available and
-comparably labelled as “Assisting at work” across all three waves. The
-G&amp;A original script includes all three waves without
-restriction.</p>
-<pre class="r"><code>lmer.imp(feel2 ~ wave + sex + age + educ + white +
-           AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-           (1 | cid),
-         data    = dati,
-         weights = &quot;wgt2&quot;,
-         stdy    = TRUE,
-         stdx    = FALSE,
-         subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
-         control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></pre>
-<pre><code>## 
-## Call:
-## 
-## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, 
-##     ])
-## 
-## Final parameter estimates and inferences obtained from 20 imputed data sets.
-## 
-##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
-## (Intercept)     0.688     1.294     0.532 1.236e+04     0.595     0.041     0.039 
-## wave2          -0.131     0.037    -3.581 1.302e+03     0.000     0.137     0.122 
-## wave3          -0.766     0.070   -10.971 1.192e+03     0.000     0.145     0.128 
-## sex1           -0.646     0.021   -30.719 6.686e+03     0.000     0.056     0.054 
-## age            -0.103     0.007   -15.325 2.581e+03     0.000     0.094     0.087 
-## educ            0.177     0.005    38.383 8.707e+02     0.000     0.173     0.150 
-## white2         -0.198     0.032    -6.187 1.989e+03     0.000     0.108     0.099 
-## white3          0.017     0.028     0.591 8.270e+02     0.554     0.179     0.154 
-## AGEOLD         -0.026     0.036    -0.722 1.482e+03     0.470     0.128     0.114 
-## TECHEXP         0.093     0.011     8.353 2.379e+04     0.000     0.029     0.028 
-## INVEST         -0.140     0.107    -1.310 6.176e+03     0.190     0.059     0.056 
-## UNEMP           0.025     0.009     2.925 7.223e+03     0.003     0.054     0.052 
-## LAT             0.075     0.024     3.170 2.540e+05     0.002     0.009     0.009 
-## LONG            0.008     0.015     0.521 2.118e+06     0.602     0.003     0.003 
-## 
-## Unadjusted hypothesis test as appropriate in larger samples.
-## 
-## Standardized estimates:
-## (Intercept)       wave2       wave3        sex1         age        educ 
-##     0.21970    -0.04194    -0.24444    -0.20612    -0.03277     0.05636 
-##      white2      white3      AGEOLD     TECHEXP      INVEST       UNEMP 
-##    -0.06307     0.00536    -0.00833     0.02957    -0.04479     0.00798 
-##         LAT        LONG 
-##     0.02387     0.00246 
-## 
-## Variance components:
-## Intercept  Residual       ICC 
-##    0.5822    7.2120    0.0747</code></pre>
-<pre class="r"><code>cat(&quot;\n--- feel3: assisting elderly ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- feel3: assisting elderly ---</code></pre>
-<pre class="r"><code>lmer.imp(feel3 ~ wave + sex + age + educ + white +
-           AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-           (1 | cid),
-         data    = dati,
-         weights = &quot;wgt2&quot;,
-         stdy    = TRUE,
-         stdx    = FALSE,
-         subset  = (dati[[1]]$wave %in% c(2, 3)),
-         control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></pre>
-<pre><code>## 
-## Call:
-## 
-## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, 
-##     ])
-## 
-## Final parameter estimates and inferences obtained from 20 imputed data sets.
-## 
-##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
-## (Intercept)    -4.164     1.396    -2.984 7.465e+03     0.003     0.053     0.051 
-## wave3           0.113     0.064     1.783 1.722e+03     0.075     0.117     0.106 
-## sex1           -0.665     0.027   -24.886 3.719e+03     0.000     0.077     0.072 
-## age            -0.184     0.008   -21.761 1.802e+03     0.000     0.114     0.104 
-## educ            0.092     0.006    16.081 1.003e+03     0.000     0.160     0.139 
-## white2         -0.251     0.040    -6.308 3.933e+03     0.000     0.075     0.070 
-## white3         -0.026     0.035    -0.749 1.328e+03     0.454     0.136     0.121 
-## AGEOLD          0.021     0.044     0.476 2.870e+03     0.634     0.089     0.082 
-## TECHEXP         0.013     0.017     0.760 2.718e+04     0.447     0.027     0.027 
-## INVEST         -1.054     0.143    -7.349 8.607e+03     0.000     0.049     0.047 
-## UNEMP           0.045     0.014     3.198 7.249e+02     0.001     0.193     0.164 
-## LAT             0.151     0.023     6.430 2.053e+05     0.000     0.010     0.010 
-## LONG           -0.028     0.014    -1.994 4.479e+05     0.046     0.007     0.007 
-## 
-## Unadjusted hypothesis test as appropriate in larger samples.
-## 
-## Standardized estimates:
-## (Intercept)       wave3        sex1         age        educ      white2 
-##    -1.32204     0.03597    -0.21120    -0.05849     0.02936    -0.07956 
-##      white3      AGEOLD     TECHEXP      INVEST       UNEMP         LAT 
-##    -0.00835     0.00669     0.00399    -0.33455     0.01420     0.04782 
-##        LONG 
-##    -0.00891 
-## 
-## Variance components:
-## Intercept  Residual       ICC 
-##    0.4673    7.6409    0.0576</code></pre>
-<pre class="r"><code>cat(&quot;\n--- feel4: driverless cars ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- feel4: driverless cars ---</code></pre>
-<pre class="r"><code>lmer.imp(feel4 ~ wave + sex + age + educ + white +
-           AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-           (1 | cid),
-         data    = dati,
-         weights = &quot;wgt2&quot;,
-         stdy    = TRUE,
-         stdx    = FALSE,
-         subset  = (dati[[1]]$wave %in% c(2, 3)),
-         control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></pre>
-<pre><code>## 
-## Call:
-## 
-## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, 
-##     ])
-## 
-## Final parameter estimates and inferences obtained from 20 imputed data sets.
-## 
-##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI 
-## (Intercept)    -0.215     1.135    -0.189 2.655e+04     0.850     0.027     0.027 
-## wave3           0.333     0.054     6.222 1.428e+04     0.000     0.038     0.037 
-## sex1           -0.809     0.026   -31.025 2.433e+03     0.000     0.097     0.089 
-## age            -0.187     0.008   -22.550 1.197e+03     0.000     0.144     0.127 
-## educ            0.132     0.006    23.099 5.508e+02     0.000     0.228     0.189 
-## white2         -0.509     0.040   -12.700 8.971e+02     0.000     0.170     0.147 
-## white3         -0.444     0.035   -12.846 8.506e+02     0.000     0.176     0.151 
-## AGEOLD          0.031     0.036     0.869 1.479e+04     0.385     0.037     0.036 
-## TECHEXP         0.032     0.014     2.312 1.213e+05     0.021     0.013     0.013 
-## INVEST         -0.144     0.120    -1.206 1.950e+04     0.228     0.032     0.031 
-## UNEMP           0.039     0.012     3.276 6.470e+03     0.001     0.057     0.054 
-## LAT             0.046     0.019     2.502 8.781e+04     0.012     0.015     0.015 
-## LONG           -0.005     0.011    -0.468 8.575e+05     0.640     0.005     0.005 
-## 
-## Unadjusted hypothesis test as appropriate in larger samples.
-## 
-## Standardized estimates:
-## (Intercept)       wave3        sex1         age        educ      white2 
-##    -0.07039     0.10930    -0.26555    -0.06137     0.04336    -0.16702 
-##      white3      AGEOLD     TECHEXP      INVEST       UNEMP         LAT 
-##    -0.14567     0.01027     0.01037    -0.04731     0.01295     0.01521 
-##        LONG 
-##    -0.00166 
-## 
-## Variance components:
-## Intercept  Residual       ICC 
-##    0.2559    7.1469    0.0346</code></pre>
-<p>=================================================================== #
-8. Italy focus — within-country regression, wave 4 [EXTENSION]
+not available with a comparable scale in wave 4.</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;\n\n=== MODEL A2 FEEL ITEMS (waves 1-3, G&amp;A replication) ===\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## ## === MODEL A2 FEEL ITEMS (waves 1-3, G&amp;A replication) ===</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;\n--- feel1: medical operation ---\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## --- feel1: medical operation ---</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r lmer.imp(feel1 ~ wave + sex + age + educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + (1 | cid), data    = dati, weights = &quot;wgt2&quot;, stdy    = TRUE, stdx    = FALSE, subset  = (dati[[1]]$wave %in% c(1, 2, 3)), control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## Call: ## ## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, ##     ]) ## ## Final parameter estimates and inferences obtained from 20 imputed data sets. ## ##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI ## (Intercept)     3.168     1.278     2.479 4.143e+04     0.013     0.022     0.021 ## wave2           0.072     0.037     1.969 2.111e+03     0.049     0.105     0.096 ## wave3           0.224     0.070     3.207 1.611e+03     0.001     0.122     0.110 ## sex1           -0.751     0.022   -34.470 2.836e+03     0.000     0.089     0.082 ## age             0.063     0.007     8.843 8.441e+02     0.000     0.177     0.152 ## educ            0.164     0.005    35.087 1.052e+03     0.000     0.155     0.136 ## white2         -0.333     0.033   -10.107 1.435e+03     0.000     0.130     0.116 ## white3         -0.447     0.029   -15.387 7.998e+02     0.000     0.182     0.156 ## AGEOLD         -0.026     0.036    -0.716 3.427e+03     0.474     0.080     0.075 ## TECHEXP        -0.002     0.011    -0.157 1.432e+04     0.875     0.038     0.037 ## INVEST          0.040     0.107     0.370 2.401e+04     0.711     0.029     0.028 ## UNEMP          -0.014     0.009    -1.590 2.953e+03     0.112     0.087     0.081 ## LAT             0.023     0.023     0.974 6.599e+05     0.330     0.005     0.005 ## LONG           -0.010     0.015    -0.655 3.039e+06     0.513     0.003     0.003 ## ## Unadjusted hypothesis test as appropriate in larger samples. ## ## Standardized estimates: ## (Intercept)       wave2       wave3        sex1         age        educ ##    1.025767    0.023432    0.072614   -0.243307    0.020317    0.052968 ##      white2      white3      AGEOLD     TECHEXP      INVEST       UNEMP ##   -0.107794   -0.144686   -0.008295   -0.000574    0.012833   -0.004558 ##         LAT        LONG ##    0.007376   -0.003108 ## ## Variance components: ## Intercept  Residual       ICC ##    0.5674    7.5199    0.0702</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;\n--- feel2: robots at work ---\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## --- feel2: robots at work ---</code></td>
+</tr>
+<tr class="odd">
+<td align="left">feel2 (qa8_3 wave 1 / qa7_2 wave 2 / qd13_2 wave 3) is
+available and comparably labelled as “Assisting at work” across all
+three waves. The G&amp;A original script includes all three waves
+without restriction.</td>
+</tr>
+<tr class="even">
+<td align="left"><code>r lmer.imp(feel2 ~ wave + sex + age + educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + (1 | cid), data    = dati, weights = &quot;wgt2&quot;, stdy    = TRUE, stdx    = FALSE, subset  = (dati[[1]]$wave %in% c(1, 2, 3)), control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## Call: ## ## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, ##     ]) ## ## Final parameter estimates and inferences obtained from 20 imputed data sets. ## ##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI ## (Intercept)     0.688     1.294     0.532 1.236e+04     0.595     0.041     0.039 ## wave2          -0.131     0.037    -3.581 1.302e+03     0.000     0.137     0.122 ## wave3          -0.766     0.070   -10.971 1.192e+03     0.000     0.145     0.128 ## sex1           -0.646     0.021   -30.719 6.686e+03     0.000     0.056     0.054 ## age            -0.103     0.007   -15.325 2.581e+03     0.000     0.094     0.087 ## educ            0.177     0.005    38.383 8.707e+02     0.000     0.173     0.150 ## white2         -0.198     0.032    -6.187 1.989e+03     0.000     0.108     0.099 ## white3          0.017     0.028     0.591 8.270e+02     0.554     0.179     0.154 ## AGEOLD         -0.026     0.036    -0.722 1.482e+03     0.470     0.128     0.114 ## TECHEXP         0.093     0.011     8.353 2.379e+04     0.000     0.029     0.028 ## INVEST         -0.140     0.107    -1.310 6.176e+03     0.190     0.059     0.056 ## UNEMP           0.025     0.009     2.925 7.223e+03     0.003     0.054     0.052 ## LAT             0.075     0.024     3.170 2.540e+05     0.002     0.009     0.009 ## LONG            0.008     0.015     0.521 2.118e+06     0.602     0.003     0.003 ## ## Unadjusted hypothesis test as appropriate in larger samples. ## ## Standardized estimates: ## (Intercept)       wave2       wave3        sex1         age        educ ##     0.21970    -0.04194    -0.24444    -0.20612    -0.03277     0.05636 ##      white2      white3      AGEOLD     TECHEXP      INVEST       UNEMP ##    -0.06307     0.00536    -0.00833     0.02957    -0.04479     0.00798 ##         LAT        LONG ##     0.02387     0.00246 ## ## Variance components: ## Intercept  Residual       ICC ##    0.5822    7.2120    0.0747</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;\n--- feel3: assisting elderly ---\n&quot;)</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## --- feel3: assisting elderly ---</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r lmer.imp(feel3 ~ wave + sex + age + educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + (1 | cid), data    = dati, weights = &quot;wgt2&quot;, stdy    = TRUE, stdx    = FALSE, subset  = (dati[[1]]$wave %in% c(2, 3)), control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## Call: ## ## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, ##     ]) ## ## Final parameter estimates and inferences obtained from 20 imputed data sets. ## ##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI ## (Intercept)    -4.164     1.396    -2.984 7.465e+03     0.003     0.053     0.051 ## wave3           0.113     0.064     1.783 1.722e+03     0.075     0.117     0.106 ## sex1           -0.665     0.027   -24.886 3.719e+03     0.000     0.077     0.072 ## age            -0.184     0.008   -21.761 1.802e+03     0.000     0.114     0.104 ## educ            0.092     0.006    16.081 1.003e+03     0.000     0.160     0.139 ## white2         -0.251     0.040    -6.308 3.933e+03     0.000     0.075     0.070 ## white3         -0.026     0.035    -0.749 1.328e+03     0.454     0.136     0.121 ## AGEOLD          0.021     0.044     0.476 2.870e+03     0.634     0.089     0.082 ## TECHEXP         0.013     0.017     0.760 2.718e+04     0.447     0.027     0.027 ## INVEST         -1.054     0.143    -7.349 8.607e+03     0.000     0.049     0.047 ## UNEMP           0.045     0.014     3.198 7.249e+02     0.001     0.193     0.164 ## LAT             0.151     0.023     6.430 2.053e+05     0.000     0.010     0.010 ## LONG           -0.028     0.014    -1.994 4.479e+05     0.046     0.007     0.007 ## ## Unadjusted hypothesis test as appropriate in larger samples. ## ## Standardized estimates: ## (Intercept)       wave3        sex1         age        educ      white2 ##    -1.32204     0.03597    -0.21120    -0.05849     0.02936    -0.07956 ##      white3      AGEOLD     TECHEXP      INVEST       UNEMP         LAT ##    -0.00835     0.00669     0.00399    -0.33455     0.01420     0.04782 ##        LONG ##    -0.00891 ## ## Variance components: ## Intercept  Residual       ICC ##    0.4673    7.6409    0.0576</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;\n--- feel4: driverless cars ---\n&quot;)</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## --- feel4: driverless cars ---</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r lmer.imp(feel4 ~ wave + sex + age + educ + white + AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + (1 | cid), data    = dati, weights = &quot;wgt2&quot;, stdy    = TRUE, stdx    = FALSE, subset  = (dati[[1]]$wave %in% c(2, 3)), control = lmerControl(optimizer = &quot;nloptwrap&quot;))</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## Call: ## ## testEstimates(qhat = d[seq_len(k), ], uhat = d[seq_len(k) + k, ##     ]) ## ## Final parameter estimates and inferences obtained from 20 imputed data sets. ## ##              Estimate Std.Error   t.value        df   P(&gt;|t|)       RIV       FMI ## (Intercept)    -0.215     1.135    -0.189 2.655e+04     0.850     0.027     0.027 ## wave3           0.333     0.054     6.222 1.428e+04     0.000     0.038     0.037 ## sex1           -0.809     0.026   -31.025 2.433e+03     0.000     0.097     0.089 ## age            -0.187     0.008   -22.550 1.197e+03     0.000     0.144     0.127 ## educ            0.132     0.006    23.099 5.508e+02     0.000     0.228     0.189 ## white2         -0.509     0.040   -12.700 8.971e+02     0.000     0.170     0.147 ## white3         -0.444     0.035   -12.846 8.506e+02     0.000     0.176     0.151 ## AGEOLD          0.031     0.036     0.869 1.479e+04     0.385     0.037     0.036 ## TECHEXP         0.032     0.014     2.312 1.213e+05     0.021     0.013     0.013 ## INVEST         -0.144     0.120    -1.206 1.950e+04     0.228     0.032     0.031 ## UNEMP           0.039     0.012     3.276 6.470e+03     0.001     0.057     0.054 ## LAT             0.046     0.019     2.502 8.781e+04     0.012     0.015     0.015 ## LONG           -0.005     0.011    -0.468 8.575e+05     0.640     0.005     0.005 ## ## Unadjusted hypothesis test as appropriate in larger samples. ## ## Standardized estimates: ## (Intercept)       wave3        sex1         age        educ      white2 ##    -0.07039     0.10930    -0.26555    -0.06137     0.04336    -0.16702 ##      white3      AGEOLD     TECHEXP      INVEST       UNEMP         LAT ##    -0.14567     0.01027     0.01037    -0.04731     0.01295     0.01521 ##        LONG ##    -0.00166 ## ## Variance components: ## Intercept  Residual       ICC ##    0.2559    7.1469    0.0346</code></td>
+</tr>
+<tr class="even">
+<td align="left">===================================================================
+# 8. Italy focus — within-country regression, wave 4 [EXTENSION]
 ===================================================================
 Single-country subsample (N ~ 1,037, wave 4). lmer is not applicable for
 a single country (L2 = 1 unit). Weighted linear regression with Rubin’s
-pooling across m = 20 imputed datasets.</p>
-<p>rob2item used as dependent variable (two-item comparable composite,
-range 0-6) for both descriptive comparability and internal
-consistency.</p>
-<p>Progressive block structure: Block 1 — sociodemographic (sex, age,
-educ) Block 2 — + employment type (white) Block 3 — EU vs. Italy
-comparison (wave 4)</p>
-<pre class="r"><code>cat(&quot;\n\n=== ITALY FOCUS — WITHIN-COUNTRY REGRESSION (wave 4) ===\n&quot;)</code></pre>
-<pre><code>## 
-## 
-## === ITALY FOCUS — WITHIN-COUNTRY REGRESSION (wave 4) ===</code></pre>
-<pre class="r"><code>cat(&quot;[EXTENSION] Italian subsample, wave 4 (N ~ 1,037)\n\n&quot;)</code></pre>
-<pre><code>## [EXTENSION] Italian subsample, wave 4 (N ~ 1,037)</code></pre>
-<pre class="r"><code>cat(&quot;lmer not applicable for a single-country subsample (L2 = 1 unit).\n&quot;)</code></pre>
-<pre><code>## lmer not applicable for a single-country subsample (L2 = 1 unit).</code></pre>
-<pre class="r"><code>cat(&quot;Weighted lm with Rubin pooling across 20 imputed datasets.\n\n&quot;)</code></pre>
-<pre><code>## Weighted lm with Rubin pooling across 20 imputed datasets.</code></pre>
-<p>Helper: pool weighted lm results across a list of imputed
-datasets</p>
-<pre class="r"><code>pool_lm &lt;- function(dati_list, formula_str, subset_expr, weight_var = &quot;wgt2&quot;) {
-  results &lt;- lapply(dati_list, function(x) {
-    sub &lt;- x[eval(parse(text = subset_expr), envir = x), ]
-    sub &lt;- sub[complete.cases(sub[, all.vars(as.formula(formula_str))]), ]
-    fit &lt;- lm(as.formula(formula_str), data = sub,
-              weights = sub[[weight_var]])
-    list(coef = coef(fit), vcov = diag(vcov(fit)), n = nrow(sub))
-  })
-  qhat &lt;- sapply(results, `[[`, &quot;coef&quot;)
-  uhat &lt;- sapply(results, `[[`, &quot;vcov&quot;)
-  n    &lt;- mean(sapply(results, `[[`, &quot;n&quot;))
-  cat(sprintf(&quot;Mean N per imputed dataset: %.0f\n\n&quot;, n))
-  testEstimates(qhat = qhat, uhat = uhat)
-}</code></pre>
-<table>
-<tbody>
+pooling across m = 20 imputed datasets.</td>
+</tr>
 <tr class="odd">
-<td align="left">## 8a. Block 1: sociodemographic predictors</td>
+<td align="left">rob2item used as dependent variable (two-item
+comparable composite, range 0-6) for both descriptive comparability and
+internal consistency.</td>
+</tr>
+<tr class="even">
+<td align="left">Progressive block structure: Block 1 — sociodemographic
+(sex, age, educ) Block 2 — + employment type (white) Block 3 — EU
+vs. Italy comparison (wave 4)</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;\n\n=== ITALY FOCUS — WITHIN-COUNTRY REGRESSION (wave 4) ===\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## ## ## === ITALY FOCUS — WITHIN-COUNTRY REGRESSION (wave 4) ===</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;[EXTENSION] Italian subsample, wave 4 (N ~ 1,037)\n\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## [EXTENSION] Italian subsample, wave 4 (N ~ 1,037)</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;lmer not applicable for a single-country subsample (L2 = 1 unit).\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## lmer not applicable for a single-country subsample (L2 = 1 unit).</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r cat(&quot;Weighted lm with Rubin pooling across 20 imputed datasets.\n\n&quot;)</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>## Weighted lm with Rubin pooling across 20 imputed datasets.</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Helper: pool weighted lm results across a list of
+imputed datasets</td>
+</tr>
+<tr class="even">
+<td align="left"><code>r pool_lm &lt;- function(dati_list, formula_str, subset_expr, weight_var = &quot;wgt2&quot;) { results &lt;- lapply(dati_list, function(x) { sub &lt;- x[eval(parse(text = subset_expr), envir = x), ] sub &lt;- sub[complete.cases(sub[, all.vars(as.formula(formula_str))]), ] fit &lt;- lm(as.formula(formula_str), data = sub, weights = sub[[weight_var]]) list(coef = coef(fit), vcov = diag(vcov(fit)), n = nrow(sub)) }) qhat &lt;- sapply(results, `[[`, &quot;coef&quot;) uhat &lt;- sapply(results, `[[`, &quot;vcov&quot;) n    &lt;- mean(sapply(results, `[[`, &quot;n&quot;)) cat(sprintf(&quot;Mean N per imputed dataset: %.0f\n\n&quot;, n)) testEstimates(qhat = qhat, uhat = uhat) }</code></td>
 </tr>
 </tbody>
 </table>
+</div>
+<div id="a.-block-1-sociodemographic-predictors" class="section level2" number="6">
+<h2><span class="header-section-number">6</span> ## 8a. Block 1:
+sociodemographic predictors</h2>
 <pre class="r"><code>cat(&quot;--- Block 1: Sociodemographic (sex, age, educ) ---\n&quot;)</code></pre>
 <pre><code>## --- Block 1: Sociodemographic (sex, age, educ) ---</code></pre>
 <pre class="r"><code>pool_lm(dati,

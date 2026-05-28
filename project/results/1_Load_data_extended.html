@@ -352,7 +352,7 @@ display: none;
 <h1 class="title toc-ignore">Prepare data for analyses — Replication and
 extension of Gnambs &amp; Appel (2019)</h1>
 <h4 class="author">Camilla Bonomo</h4>
-<h4 class="date">2026-05-27 09:58:16.668406</h4>
+<h4 class="date">2026-05-28 14:58:24.282549</h4>
 
 </div>
 
@@ -384,34 +384,11 @@ from the predictor matrix (column = 0) to prevent circularity.
 <pre class="r"><code>rm(list = ls())</code></pre>
 <p><strong>Load packages</strong></p>
 <pre class="r"><code>library(haven)       # [G&amp;A] for read_dta
-library(dplyr)       # [G&amp;A]</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(doBy)        # [G&amp;A] for recodeVar</code></pre>
-<pre><code>## 
-## Attaching package: &#39;doBy&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     order_by</code></pre>
-<pre class="r"><code>library(mice)        # [G&amp;A] for multiple imputation</code></pre>
-<pre><code>## 
-## Attaching package: &#39;mice&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     cbind, rbind</code></pre>
-<pre class="r"><code>library(mitml)       # [G&amp;A] for pooling results</code></pre>
-<pre><code>## *** This is beta software. Please report any bugs!
-## *** See the NEWS file for recent changes.</code></pre>
-<pre class="r"><code>library(readxl)      # [EXTENSION] for contextual data
+library(dplyr)       # [G&amp;A]
+library(doBy)        # [G&amp;A] for recodeVar
+library(mice)        # [G&amp;A] for multiple imputation
+library(mitml)       # [G&amp;A] for pooling results
+library(readxl)      # [EXTENSION] for contextual data
 
 
 # [G&amp;A] Suppress automatic string-to-factor conversion
@@ -590,57 +567,48 @@ cntry_data &lt;- merge(cntry_data, geo, by = &quot;cntry&quot;, all.x = TRUE)</c
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">## 2c. Hofstede Uncertainty Avoidance Index (UAI)
-[EXTENSION]</th>
+<th align="left">## 2c. Hofstede cultural dimensions [EXTENSION]</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">UAI is treated as a time-invariant country-level
-predictor. It operationalises national tolerance for ambiguity and
-uncertainty, which is hypothesised to moderate acceptance of robotic
-technology (H1) and to mediate the geographic latitude effect (H2).
-Cyprus is absent from standard Hofstede datasets; the value (UAI=65) is
-sourced directly from the Hofstede Insights online tool.</td>
+<td align="left">All six Hofstede dimensions are treated as
+time-invariant L2 predictors: PDI — Power Distance Index IDV —
+Individualism MAS — Masculinity UAI — Uncertainty Avoidance Index LTO —
+Long-Term Orientation IVR — Indulgence vs. Restraint</td>
 </tr>
 <tr class="even">
+<td align="left">Source: Hofstede (2010) / hofstede-insights.com.
+hofstede_eu27.csv is a pre-cleaned file keyed by ISO2 country code,
+covering all 27 EU countries in the sample. Cyprus (CY) is absent from
+the Hofstede (2010) print edition; all six dimension scores (PDI=57,
+IDV=35, MAS=57, UAI=65, LTO=45, IVR=70) are sourced from the Hofstede
+Insights online tool (hofstede-insights.com).</td>
+</tr>
+<tr class="odd">
 <td align="left">``` r hof &lt;- read.csv(file.path(CONTEXTDATA_DIR,
-“hofstede_country_scores.csv”), stringsAsFactors = FALSE)</td>
-</tr>
-<tr class="odd">
-<td align="left">hof_map &lt;- c(Austria=“AT”, Belgium=“BE”,
-Bulgaria=“BG”, Croatia=“HR”, <code>Czech republic</code>=“CZ”,
-Denmark=“DK”, Estonia=“EE”, Finland=“FI”, France=“FR”, Germany=“DE”,
-Greece=“GR”, Hungary=“HU”, Ireland=“IE”, Italy=“IT”, Latvia=“LV”,
-Lithuania=“LT”, Luxembourg=“LU”, Malta=“MT”, Netherlands=“NL”,
-Poland=“PL”, Portugal=“PT”, Romania=“RO”, Slovakia=“SK”, Slovenia=“SI”,
-Spain=“ES”, Sweden=“SE”) hof<span class="math inline">\(cntry &lt;-
-hof_map[hof\)</span>country] hof &lt;- hof[!is.na(hof$cntry), c(“cntry”,
-“uai”)] names(hof)[2] &lt;- “UAI”</td>
+“hofstede_eu27.csv”), stringsAsFactors = FALSE) names(hof) &lt;-
+c(“cntry”, “PDI”, “IDV”, “MAS”, “UAI”, “LTO”, “IVR”)</td>
 </tr>
 <tr class="even">
-<td align="left">if (!“CY” %in% hof$cntry) { hof &lt;- rbind(hof,
-data.frame(cntry = “CY”, UAI = 65)) }</td>
-</tr>
-<tr class="odd">
 <td align="left">cntry_data &lt;- merge(cntry_data, hof, by = “cntry”,
 all.x = TRUE) ```</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><strong>Numeric country identifier</strong>
 [G&amp;A]</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>r cntry_data$cid &lt;- recodeVar(cntry_data$cntry, isocntry, cid_seq, default = NA) cntry_data$cid &lt;- as.numeric(cntry_data$cid)</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><strong>Reshape to long format</strong> [G&amp;A;
 extended to 4 waves]</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>r cntry_long &lt;- reshape(cntry_data, varying = list( c(&quot;AGEOLD12&quot;,  &quot;AGEOLD14&quot;,  &quot;AGEOLD17&quot;,  &quot;AGEOLD24&quot;), c(&quot;TECHEXP12&quot;, &quot;TECHEXP14&quot;, &quot;TECHEXP17&quot;, &quot;TECHEXP24&quot;), c(&quot;INVEST12&quot;,  &quot;INVEST14&quot;,  &quot;INVEST17&quot;,  &quot;INVEST24&quot;), c(&quot;UNEMP12&quot;,   &quot;UNEMP14&quot;,   &quot;UNEMP17&quot;,   &quot;UNEMP24&quot;)), v.names  = c(&quot;AGEOLD&quot;, &quot;TECHEXP&quot;, &quot;INVEST&quot;, &quot;UNEMP&quot;), timevar  = &quot;wave&quot;, idvar    = &quot;cid&quot;, drop     = c(&quot;RESEXP12&quot;, &quot;RESEXP14&quot;, &quot;RESEXP17&quot;, &quot;RESEXP24&quot;, &quot;RESEAR12&quot;, &quot;RESEAR14&quot;, &quot;RESEAR17&quot;, &quot;RESEAR24&quot;, &quot;RESEAR22&quot;, &quot;RESEXP22&quot;, &quot;AGEOLD22&quot;, &quot;TECHEXP22&quot;, &quot;UNEMP22&quot;), direction = &quot;long&quot;) # UAI, LAT, and LONG are time-invariant and are already present in long format</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">===================================================================
 # 3. Recode individual-level variables
 ===================================================================</td>
@@ -1022,7 +990,7 @@ cat(sprintf(&quot;  Consistent: %s\n&quot;, ok))</code></pre>
                c(&quot;cntry&quot;, &quot;UAI&quot;, &quot;AGEOLD&quot;, &quot;TECHEXP&quot;, &quot;INVEST&quot;, &quot;UNEMP&quot;, &quot;LAT&quot;, &quot;LONG&quot;)], 5))</code></pre>
 <pre><code>## # A tibble: 5 × 8
 ##   cntry   UAI AGEOLD TECHEXP INVEST UNEMP   LAT  LONG
-##   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##   &lt;chr&gt; &lt;int&gt;  &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 ## 1 DE       65   23.2    18.0   1.03   3.4  51.2  10.5
 ## 2 LV       63   21.7    17.5  -1.12   6.9  56.9  24.1
 ## 3 LV       63   21.7    17.5  -1.12   6.9  56.9  24.1

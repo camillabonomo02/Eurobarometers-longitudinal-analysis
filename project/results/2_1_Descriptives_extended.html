@@ -352,7 +352,7 @@ display: none;
 <h1 class="title toc-ignore">Descriptive results — Extended (4 waves,
 2012-2024)</h1>
 <h4 class="author">Camilla Bonomo [extends Gnambs &amp; Appel 2019]</h4>
-<h4 class="date">2026-05-27 09:58:24.325127</h4>
+<h4 class="date">2026-05-28 14:58:30.552406</h4>
 
 </div>
 
@@ -371,18 +371,6 @@ library(psych)
 library(doBy)
 library(mitml)
 source(&quot;./syntax/0_Start.R&quot;)   # helper functions: describe.imp, cor.imp, omg.imp</code></pre>
-<pre><code>## 
-## Attaching package: &#39;Hmisc&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:psych&#39;:
-## 
-##     describe</code></pre>
-<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     src, summarize</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     format.pval, units</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
 <p><strong>Load data</strong></p>
 <pre class="r"><code>load(&quot;./data/dat.Rdata&quot;)
 rm(dati_mice)   # dati_mice is not required for descriptive analyses
@@ -436,13 +424,10 @@ excluded post-Brexit]</p>
 ##   SI 1017 1035 1027 1003
 ##   SK 1000 1031 1014 1023</code></pre>
 <pre class="r"><code>describe(c(table(dat$cntry, dat$wave)))</code></pre>
-<pre><code>## c(table(dat$cntry, dat$wave)) 
-##        n  missing distinct     Info     Mean  pMedian      Gmd      .05 
-##      108        0       54    0.999      971     1012    171.2    501.0 
-##      .10      .25      .50      .75      .90      .95 
-##    506.7   1003.0   1010.0   1024.0   1045.2   1058.7 
-## 
-## lowest :    0  500  501  502  504, highest: 1061 1537 1552 1572 1603</code></pre>
+<pre><code>##    vars   n mean     sd median trimmed   mad min  max range  skew kurtosis
+## X1    1 108  971 220.63   1010  997.19 14.83   0 1603  1603 -1.11     4.71
+##       se
+## X1 21.23</code></pre>
 <p><strong>Total N</strong></p>
 <pre class="r"><code>nrow(dat)</code></pre>
 <pre><code>## [1] 104868</code></pre>
@@ -475,27 +460,17 @@ non-binary option (N = 49), recoded as NA.</p>
 ##   1 0.5410307 0.5515119 0.5520241 0.5333333</code></pre>
 <p><strong>Age</strong></p>
 <pre class="r"><code>describe(dat$age)</code></pre>
-<pre><code>## dat$age 
-##        n  missing distinct     Info     Mean  pMedian      Gmd      .05 
-##   104868        0       85        1    50.46     50.5    20.95       20 
-##      .10      .25      .50      .75      .90      .95 
-##       25       36       51       65       74       79 
-## 
-## lowest : 15 16 17 18 19, highest: 95 96 97 98 99</code></pre>
+<pre><code>##    vars      n  mean    sd median trimmed   mad min max range  skew kurtosis
+## X1    1 104868 50.46 18.21     51   50.61 22.24  15  99    84 -0.06    -0.95
+##      se
+## X1 0.06</code></pre>
 <pre class="r"><code>tapply(dat$age, dat$wave, mean, na.rm = TRUE)   # [EXTENSION] mean age by wave</code></pre>
 <pre><code>##        1        2        3        4 
 ## 48.61400 50.16112 51.28356 51.70542</code></pre>
 <p><strong>Education</strong> (age at end of full-time education)</p>
 <pre class="r"><code>describe(dat$educ)</code></pre>
-<pre><code>## dat$educ 
-##        n  missing distinct     Info     Mean  pMedian      Gmd      .05 
-##   103321     1547       10    0.957    5.868        6    3.065        1 
-##      .10      .25      .50      .75      .90      .95 
-##        2        4        6        9        9        9 
-##                                                                       
-## Value          0     1     2     3     4     5     6     7     8     9
-## Frequency    740  9504  5189  6683  6664 20569 11063  5640  4420 32849
-## Proportion 0.007 0.092 0.050 0.065 0.064 0.199 0.107 0.055 0.043 0.318</code></pre>
+<pre><code>##    vars      n mean   sd median trimmed  mad min max range  skew kurtosis   se
+## X1    1 103321 5.87 2.73      6    6.09 4.45   0   9     9 -0.33    -1.06 0.01</code></pre>
 <pre class="r"><code>tapply(dat$educ, dat$wave, mean, na.rm = TRUE)</code></pre>
 <pre><code>##        1        2        3        4 
 ## 5.590009 5.779398 5.853354 6.240105</code></pre>
@@ -1047,7 +1022,7 @@ Italian country-level values across waves. <strong>Contextual variables
 print(it_ctx[order(it_ctx$wave), ])</code></pre>
 <pre><code>## # A tibble: 4 × 9
 ##   cntry  wave AGEOLD UNEMP TECHEXP INVEST   LAT  LONG   UAI
-##   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
 ## 1 IT        1   21.0  10.7    7.60 -0.636  41.9  12.6    75
 ## 2 IT        2   21.7  12.7    7.74 -0.593  41.9  12.6    75
 ## 3 IT        3   22.6  11.2    7.81 -0.533  41.9  12.6    75
@@ -1060,7 +1035,7 @@ print(it_ctx[order(it_ctx$wave), ])</code></pre>
 print(uai_tab[order(uai_tab$UAI, decreasing = TRUE), ])</code></pre>
 <pre><code>## # A tibble: 27 × 2
 ##    cntry   UAI
-##    &lt;chr&gt; &lt;dbl&gt;
+##    &lt;chr&gt; &lt;int&gt;
 ##  1 GR      100
 ##  2 PT       99
 ##  3 MT       96
