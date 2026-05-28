@@ -200,32 +200,26 @@ geo <- data.frame(
 cntry_data <- merge(cntry_data, geo, by = "cntry", all.x = TRUE)
 
 #' -------------------------------------------------------------------
-#' ## 2c. Hofstede Uncertainty Avoidance Index (UAI) [EXTENSION]
+#' ## 2c. Hofstede cultural dimensions [EXTENSION]
 #' -------------------------------------------------------------------
-#' UAI is treated as a time-invariant country-level predictor.
-#' It operationalises national tolerance for ambiguity and uncertainty,
-#' which is hypothesised to moderate acceptance of robotic technology
-#' (H1) and to mediate the geographic latitude effect (H2).
-#' Cyprus is absent from standard Hofstede datasets; the value (UAI=65)
-#' is sourced directly from the Hofstede Insights online tool.
+#' All six Hofstede dimensions are treated as time-invariant L2 predictors:
+#'   PDI  — Power Distance Index
+#'   IDV  — Individualism
+#'   MAS  — Masculinity
+#'   UAI  — Uncertainty Avoidance Index
+#'   LTO  — Long-Term Orientation
+#'   IVR  — Indulgence vs. Restraint
+#'
+#' Source: Hofstede (2010) / hofstede-insights.com.
+#' hofstede_eu27.csv is a pre-cleaned file keyed by ISO2 country code,
+#' covering all 27 EU countries in the sample.
+#' Cyprus (CY) is absent from the Hofstede (2010) print edition; all six
+#' dimension scores (PDI=57, IDV=35, MAS=57, UAI=65, LTO=45, IVR=70) are
+#' sourced from the Hofstede Insights online tool (hofstede-insights.com).
 
-hof <- read.csv(file.path(CONTEXTDATA_DIR, "hofstede_country_scores.csv"),
+hof <- read.csv(file.path(CONTEXTDATA_DIR, "hofstede_eu27.csv"),
                 stringsAsFactors = FALSE)
-
-hof_map <- c(Austria="AT", Belgium="BE", Bulgaria="BG", Croatia="HR",
-             `Czech republic`="CZ", Denmark="DK", Estonia="EE",
-             Finland="FI", France="FR", Germany="DE", Greece="GR",
-             Hungary="HU", Ireland="IE", Italy="IT", Latvia="LV",
-             Lithuania="LT", Luxembourg="LU", Malta="MT", Netherlands="NL",
-             Poland="PL", Portugal="PT", Romania="RO", Slovakia="SK",
-             Slovenia="SI", Spain="ES", Sweden="SE")
-hof$cntry <- hof_map[hof$country]
-hof <- hof[!is.na(hof$cntry), c("cntry", "uai")]
-names(hof)[2] <- "UAI"
-
-if (!"CY" %in% hof$cntry) {
-    hof <- rbind(hof, data.frame(cntry = "CY", UAI = 65))
-}
+names(hof) <- c("cntry", "PDI", "IDV", "MAS", "UAI", "LTO", "IVR")
 
 cntry_data <- merge(cntry_data, hof, by = "cntry", all.x = TRUE)
 

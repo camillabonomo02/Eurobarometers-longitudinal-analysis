@@ -19,9 +19,19 @@
 #'   Section 8 — Italy focus, wave 4: within-country regression
 #'
 #' Hypotheses tested:
-#'   H1: UAI is negatively associated with robot acceptance
-#'       (high uncertainty avoidance -> more negative attitudes),
-#'       controlling for all G&A predictors.
+#'   H1 (multidimensional cultural hypothesis):
+#'       National cultural orientations jointly predict robot acceptance,
+#'       net of the structural L2 predictors from Model A2. Specifically:
+#'         H1a: UAI_z < 0  — uncertainty avoidance -> negative attitudes
+#'         H1b: IDV_z > 0  — individualism -> positive attitudes
+#'         H1c: LTO_z > 0  — long-term orientation -> positive attitudes
+#'         H1d: PDI_z      — exploratory (power distance, sign unclear)
+#'         H1e: MAS_z      — exploratory (performance vs. quality-of-life)
+#'         H1f: IVR_z > 0  — indulgence -> openness to new technology
+#'       H1a is tested in isolation in Model B2 (UAI only).
+#'       The full hypothesis is tested in Model B2_multi (all six dimensions).
+#'       Note: with N = 27 L2 units, the full model has limited df at L2;
+#'       results should be interpreted as exploratory.
 #'   H2 (mediation): the effect of latitude is attenuated when UAI
 #'       is added to the model, indicating that UAI partially mediates
 #'       the geographic North-South gradient.
@@ -87,6 +97,26 @@ cat(sprintf("UAI: M = %.1f  SD = %.1f  (N countries = %d)\n",
             uai_mean, uai_sd,
             length(unique(dati[[1]]$UAI[!is.na(dati[[1]]$UAI)]))))
 cat("Italy UAI_z:", round((75 - uai_mean) / uai_sd, 3), "\n\n")
+
+#' **Standardise remaining Hofstede dimensions at the country level** [EXTENSION]
+#' Same procedure as UAI_z: z-score over the 27 unique country values.
+hof_dims <- c("PDI", "IDV", "MAS", "LTO", "IVR")
+for (dim in hof_dims) {
+  dim_vals <- unique(dati[[1]][, c("cid", dim)])[[dim]]
+  m <- mean(dim_vals, na.rm = TRUE)
+  s <- sd(dim_vals,   na.rm = TRUE)
+  zname <- paste0(dim, "_z")
+  dati <- lapply(dati, function(x) {
+    x[[zname]] <- (x[[dim]] - m) / s
+    x
+  })
+  dati <- as.mitml.list(dati)
+  cat(sprintf("%s: M = %.1f  SD = %.1f  Italy_%s = %.3f\n",
+              dim, m, s, zname,
+              (dati[[1]][dati[[1]]$cntry == "IT", dim][1] - m) / s))
+}
+cat("\n")
+rm(hof_dims, dim, dim_vals, m, s, zname)
 
 
 
@@ -225,14 +255,17 @@ fit_A2_1234 <- lmer.imp(
 
 
 #' ===================================================================
-#' # 5. Model B2: A2 + UAI [EXTENSION — testing H1 and H2]
+#' # 5. Model B2 / B2_multi [EXTENSION — testing H1 and H2]
 #' ===================================================================
-#' H1: UAI_z negatively associated with robot acceptance (beta < 0)
-#' H2: the effect of LAT diminishes or becomes non-significant when
-#'     UAI is added — latitude as a proxy for cultural uncertainty avoidance.
+#' Model B2      = A2 + UAI_z          (tests H1a and H2 in isolation)
+#' Model B2_multi = A2 + all six Hofstede z-scores (tests full H1)
 #'
-#' If H2 is confirmed: the geographic North-South pattern is partially
-#' mediated by national differences in uncertainty avoidance.
+#' H1a: UAI_z < 0 — uncertainty avoidance -> negative attitudes toward robots
+#' H2:  the effect of LAT diminishes when UAI is added (cultural mediation).
+#'
+#' Caution for B2_multi: with N = 27 L2 units and 12 L2 predictors total
+#' (6 G&A + 6 Hofstede), df at Level 2 is very low. Treat as exploratory;
+#' focus interpretation on effect signs and relative magnitudes.
 
 #' -------------------------------------------------------------------
 #' ## 5a. Model B2 on waves 1-3
@@ -273,7 +306,45 @@ fit_B2_1234 <- lmer.imp(
 
 
 #' -------------------------------------------------------------------
-#' ## 5c. Cross-level interactions [EXTENSION — testing moderation by UAI]
+#' ## 5c. Model B2_multi: A2 + all Hofstede dimensions [EXTENSION — full H1]
+#' -------------------------------------------------------------------
+#' Tests H1 as a multidimensional cultural hypothesis.
+#' Expected signs: UAI_z(-), IDV_z(+), LTO_z(+), IVR_z(+); PDI/MAS exploratory.
+
+cat("\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-3) ===\n")
+cat("[EXTENSION] Tests multidimensional H1; exploratory due to N=27 L2 units\n\n")
+
+fit_B2multi_123 <- lmer.imp(
+  rob ~ wave + sex + age + educ + white +
+    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
+    (1 | cid),
+  data    = dati,
+  weights = "wgt2",
+  stdy    = TRUE,
+  stdx    = FALSE,
+  subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
+  control = lmerControl(optimizer = "nloptwrap")
+)
+
+cat("\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-4) ===\n")
+cat("[EXTENSION] Dependent variable = rob2item\n\n")
+
+fit_B2multi_1234 <- lmer.imp(
+  rob2item ~ wave + sex + age + educ + white +
+    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
+    (1 | cid),
+  data    = dati,
+  weights = "wgt2",
+  stdy    = TRUE,
+  stdx    = FALSE,
+  control = lmerControl(optimizer = "nloptwrap")
+)
+
+
+#' -------------------------------------------------------------------
+#' ## 5d. Cross-level interactions [EXTENSION — testing moderation by UAI]
 #' -------------------------------------------------------------------
 #' H3a: Does UAI_z moderate the effect of education?
 #'      (Education compensates cultural anxiety more strongly in high-UAI countries)
@@ -446,7 +517,32 @@ if (it_re4$re_A2 != 0) {
               abs(it_re4$change / it_re4$re_A2) * 100))
 }
 
-rm(m_A2, m_B2, m_A2_4, m_B2_4)
+#' -------------------------------------------------------------------
+#' ## 6d. Variance reduction — A2 vs. B2_multi (waves 1-3)
+#' -------------------------------------------------------------------
+#' How much additional L2 variance do all six Hofstede dimensions explain
+#' beyond the structural G&A predictors?
+
+m_B2multi <- lmer(rob ~ wave + sex + age + educ + white +
+                    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
+                    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
+                    (1 | cid),
+                  data    = d1_123,
+                  weights = wgt2_norm,
+                  REML    = FALSE,
+                  control = lmerControl(optimizer = "nloptwrap"))
+
+vc_Bm <- as.data.frame(VarCorr(m_B2multi))
+var_Bm <- vc_Bm$vcov[vc_Bm$grp == "cid"]
+res_Bm <- vc_Bm$vcov[vc_Bm$grp == "Residual"]
+cat("\nL2 variance comparison A2 vs. B2_multi (waves 1-3):\n")
+cat(sprintf("  Intercept variance B2_multi: %.4f   ICC: %.4f\n",
+            var_Bm, var_Bm / (var_Bm + res_Bm)))
+cat(sprintf("  Variance reduction vs. A2: %.1f%%  (vs. B2 UAI-only: %.1f%%)\n",
+            (var_A2 - var_Bm) / var_A2 * 100,
+            (var_B2 - var_Bm) / var_A2 * 100))
+
+rm(m_A2, m_B2, m_B2multi, m_A2_4, m_B2_4)
 
 
 
