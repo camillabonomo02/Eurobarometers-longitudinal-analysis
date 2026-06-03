@@ -352,11 +352,27 @@ display: none;
 <h1 class="title toc-ignore">Figures — Extended (4 waves,
 2012-2024)</h1>
 <h4 class="author">Camilla Bonomo [extends Gnambs &amp; Appel 2019]</h4>
-<h4 class="date">2026-05-27 10:04:16.931415</h4>
+<h4 class="date">2026-06-03 10:30:20.155461</h4>
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#figures-5-and-6-archived-in-.syntaxarchivehofstede_explorations.r" id="toc-figures-5-and-6-archived-in-.syntaxarchivehofstede_explorations.r"><span class="toc-section-number">1</span> (Figures 5 and 6 archived in
+./syntax/archive/Hofstede_explorations.R)</a></li>
+<li><a href="#icc-decline-across-waves-convergence-extension" id="toc-icc-decline-across-waves-convergence-extension"><span class="toc-section-number">2</span> # 7. ICC decline across waves —
+convergence [EXTENSION]</a></li>
+<li><a href="#figures-16-19-hofstede-archived-in-.syntaxarchivehofstede_explorations.r" id="toc-figures-16-19-hofstede-archived-in-.syntaxarchivehofstede_explorations.r"><span class="toc-section-number">3</span> (Figures 16-19 Hofstede archived in
+./syntax/archive/Hofstede_explorations.R)</a></li>
+<li><a href="#bidimensionality-wave-4-rob2024_pos-vs.-rob2024_neg-extension" id="toc-bidimensionality-wave-4-rob2024_pos-vs.-rob2024_neg-extension"><span class="toc-section-number">4</span> # 16. Bidimensionality wave 4:
+rob2024_pos vs. rob2024_neg [EXTENSION]</a></li>
+</ul>
+</div>
 
+<p>NOTE: Figures 5 and 6 archived in
+./syntax/archive/Hofstede_explorations.R (deprecated — UAI p = 0.304,
+0.0% L2 variance reduction vs. Model A2). Numbering gaps (4 then 7) are
+intentional to preserve cross-references.</p>
 <p>Figures produced: Figure 1a — EU map: mean composite score by country
 (wave 3; G&amp;A replication) Figure 1b — EU map: attitude change wave 1
 -&gt; 3 (G&amp;A replication) Figure 1c — EU map: mean composite score
@@ -365,17 +381,18 @@ wave and application domain (waves 1-3) Figure 3a — Quantile regression:
 individual predictors, waves 1-3 (G&amp;A replication) Figure 3b —
 Quantile regression: individual predictors, waves 1-4 (EXTENSION,
 rob2item) Figure 4 — Longitudinal trajectory: Italy vs. EU benchmark
-(rob2item) Figure 5 — Scatter plot: UAI vs. composite score by country
-(rob2item) Figure 6 — Country random effects with Italy highlighted
-(rob2item) Figure 7 — ICC decline across waves: convergence of national
-attitudes (rob2item) Figure 8 — Gender gap by country (wave 4): dot plot
-Figure 9 — Country rank bump chart across all four waves (rob2item)
-Figure 10 — Attitude distribution by wave: bar chart (rob2item) Figure
-11 — Italy vs. EU27 by demographic subgroup (wave 4) Figure 12 — EU map:
-attitude change wave 3 -&gt; 4 (EXTENSION) Figure 13 — Age gradient
-across waves: EU27 and Italy (rob2item) Figure 14 — Latitude
-vs. composite score by country (North-South divide) Figure 15 — Gender
-gap across waves: EU27 and Italy (rob2item)</p>
+(rob2item) [Fig 5 archived — UAI scatter; Fig 6 archived — random
+effects A2 vs B2] Figure 7 — ICC decline across waves: convergence of
+national attitudes (rob2item) Figure 8 — Gender gap by country (wave 4):
+dot plot Figure 9 — Country rank bump chart across all four waves
+(rob2item) Figure 10 — Attitude distribution by wave: bar chart
+(rob2item) Figure 11 — Italy vs. EU27 by demographic subgroup (wave 4)
+Figure 12 — EU map: attitude change wave 3 -&gt; 4 (EXTENSION) Figure 13
+— Age gradient across waves: EU27 and Italy (rob2item) Figure 14 —
+Latitude vs. composite score by country (North-South divide) Figure 15 —
+Gender gap across waves: EU27 and Italy (rob2item) Figure 16 —
+Bidimensionality wave 4: rob2024_pos vs. rob2024_neg by country
+(EXTENSION)</p>
 <p>Dependent variable note: rob = three-item composite (rob1+rob2+rob3,
 range 0-9), waves 1-3 only. rob2item = two-item comparable composite
 (rob1+rob2, range 0-6), waves 1-4. All figures including wave 4 use
@@ -388,29 +405,13 @@ workspace</strong></p>
 <pre class="r"><code>rm(list = ls())</code></pre>
 <p><strong>Load packages</strong></p>
 <pre class="r"><code>library(doBy)
-library(ggplot2)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;ggplot2&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:psych&#39;:
-## 
-##     %+%, alpha</code></pre>
-<pre class="r"><code>library(ggrepel)
+library(ggplot2)
+library(ggrepel)
 library(mitml)
 library(weights)
 library(grid)
-library(quantreg)</code></pre>
-<pre><code>## Loading required package: SparseM</code></pre>
-<pre><code>## 
-## Attaching package: &#39;SparseM&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:Matrix&#39;:
-## 
-##     det</code></pre>
-<pre><code>## 
-## Attaching package: &#39;quantreg&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:Hmisc&#39;:
-## 
-##     latex</code></pre>
-<pre class="r"><code>library(dplyr)
+library(quantreg)
+library(dplyr)
 library(lme4)
 library(lmerTest)
 
@@ -665,9 +666,6 @@ if (maps_available) {
 } else {
   cat(&quot;rworldmap not available — Figures 1a/1b/1c/12 skipped.\n&quot;)
 }</code></pre>
-<pre><code>## Loading required package: sp</code></pre>
-<pre><code>## ### Welcome to rworldmap ###</code></pre>
-<pre><code>## For a short introduction type :   vignette(&#39;rworldmap&#39;)</code></pre>
 <pre><code>## Warning in wtd.var(x, weight, na.rm = TRUE): only one effective observation;
 ## variance estimate undefined</code></pre>
 <pre><code>## Warning in wtd.var(grp1, weights = wgt1): only one effective observation;
@@ -919,19 +917,19 @@ predictors, draws figure</p>
 })
 
 qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2100 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2165 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2095 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2376 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2121 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2098 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2839 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2833 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2229 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2235 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5069 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5273 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2098 non-positive
 ## fis
@@ -939,27 +937,27 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2427 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2163 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2143 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2540 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2098 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2163 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2322 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2375 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2387 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2386 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2563 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2237 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2446 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5161 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5152 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2935 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2936 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2111 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2098 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2388 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2387 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3550 non-positive
 ## fis</code></pre>
@@ -967,35 +965,35 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2124 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2944 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2125 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2389 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2387 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2384 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3453 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2188 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2389 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2386 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2432 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2296 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2408 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3870 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3031 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2125 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2948 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2141 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3209 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2385 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2292 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2390 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2482 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2411 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2385 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2124 non-positive
 ## fis</code></pre>
@@ -1004,20 +1002,20 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2260 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5456 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5497 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5545 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7126 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5475 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
@@ -1032,102 +1030,102 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7909 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2284 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3903 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7246 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2074 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14295 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3443 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3900 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2058 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3902 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7631 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5685 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2735 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2058 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3901 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6180 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3335 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6629 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3906 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8377 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4225 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3496 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5062 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7603 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7593 non-positive
 ## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6938 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3495 non-positive
+## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3491 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3495 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3489 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3490 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6998 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7585 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3498 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3497 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7595 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4792 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7598 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3495 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3494 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6264 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3493 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3494 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5040 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4668 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7608 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3494 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3497 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7170 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6430 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7002 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7593 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3496 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5053 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3500 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3494 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4016 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4015 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4022 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5981 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4892 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4013 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6088 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4025 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
@@ -1135,41 +1133,41 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7184 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5003 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2099 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4019 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5780 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8343 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 10698 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9897 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14549 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4018 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14537 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8345 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14540 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12158 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5917 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4016 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4749 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5497 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5213 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4021 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4085 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5986 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6082 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8619 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7133 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5647 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5617 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3944 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7120 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7205 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7756 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2074 non-positive
 ## fis</code></pre>
@@ -1177,19 +1175,7 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3655 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3967 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2060 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6183 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5676 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3879 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
@@ -1197,17 +1183,29 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3867 non-positive
 ## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5421 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2509 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3867 non-positive
+## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9912 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8930 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8926 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4630 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4633 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2058 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5636 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5571 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2781 non-positive
 ## fis</code></pre>
@@ -1215,7 +1213,7 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2428 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2389 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5324 non-positive
 ## fis</code></pre>
@@ -1235,47 +1233,47 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5669 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5667 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4277 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4224 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7385 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2157 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7422 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3386 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5350 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2427 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7298 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7400 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5289 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5195 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4525 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6488 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2105 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8076 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8076 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7334 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6760 non-positive
 ## fis</code></pre>
@@ -1295,7 +1293,7 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2114 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2311 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
@@ -1307,7 +1305,7 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2141 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2163 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2140 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
@@ -1319,67 +1317,45 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11115 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 10558 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7151 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4620 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9294 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9303 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 10607 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9304 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5343 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4090 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6780 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11520 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11551 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11189 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9300 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9298 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11047 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6783 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6785 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 10935 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11138 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11054 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6791 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9103 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8670 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4822 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6258 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11230 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11185 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9310 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9311 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 10272 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8676 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4099 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2062 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4360 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
@@ -1392,212 +1368,234 @@ qr_3a &lt;- pool_qr(imp_123, zrob ~ wave + sex + age_s + educ + white)</code></p
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2059 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20365 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13707 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17210 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12801 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11715 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7173 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17219 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20306 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6824 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2072 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19303 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18018 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2094 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21757 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3806 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2448 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3221 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21888 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14504 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11905 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15232 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21888 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19178 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3406 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11913 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19277 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20802 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13629 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9056 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2514 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2091 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21798 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17912 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5457 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5448 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8179 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2493 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4920 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5455 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2431 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5671 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2475 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5460 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6092 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2873 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5673 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5667 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5455 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4195 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5458 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5447 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12309 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2087 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5458 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14493 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18355 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11301 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3112 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12307 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5581 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9682 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14616 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18351 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12307 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5647 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14616 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12295 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12949 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12950 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9677 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15391 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12848 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9681 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5581 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5581 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14366 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12952 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5581 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12589 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9679 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12294 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 3141 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14616 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 9676 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20713 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 25484 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 26187 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 28246 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 28179 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19039 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19632 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19905 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 28738 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29971 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29187 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18991 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17924 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17914 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17931 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 23227 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 24914 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18189 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17794 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17913 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29193 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22651 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29546 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18068 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18909 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18465 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17932 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18304 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18855 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19118 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17931 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29175 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 27108 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29179 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 27742 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 26704 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21250 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 23271 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20176 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 25111 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20748 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20085 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20039 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18738 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20527 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22458 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20450 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18733 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19784 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22376 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22693 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20238 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18732 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20333 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18734 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22634 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20616 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22695 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21593 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22472 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22402 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19126 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21128 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19702 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18955 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19876 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18739 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22478 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19251 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22699 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20129 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18715 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20164 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18745 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22683 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21981 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21487 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19640 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20033 non-positive
 ## fis</code></pre>
 <pre class="r"><code>p3a &lt;- plot_qr(
   qr_3a,
@@ -1892,7 +1890,7 @@ qr_3b &lt;- pool_qr(imp_1234, zrob2item ~ wave + sex + age_s + educ + white)</co
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4222 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6367 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 6368 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5253 non-positive
 ## fis</code></pre>
@@ -1904,334 +1902,85 @@ qr_3b &lt;- pool_qr(imp_1234, zrob2item ~ wave + sex + age_s + educ + white)</co
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 5456 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18035 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17980 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18002 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18261 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17808 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18038 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18249 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17840 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18049 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17930 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18066 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18079 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18208 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17949 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18002 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17976 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18037 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18026 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18090 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18144 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17788 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17878 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18248 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18007 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17784 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17713 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18339 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18055 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17947 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 52998 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18003 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 37914 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17935 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18054 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 63707 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17970 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 50071 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17771 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18167 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 70881 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18041 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 86522 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18083 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 27330 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17722 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 73736 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 49360 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 7262 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 61647 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 41107 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18255 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 11890 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 100134 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 69724 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in rq.fit.br(x, y, tau = tau, ...): Solution may be nonunique</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 90506 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13574 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2069 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2545 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2058 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 68436 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 85967 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 70022 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2086 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2354 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 76019 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2329 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 53768 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104743 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104779 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 68871 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2110 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2123 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2137 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 8880 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 84366 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 45098 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 53706 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 92721 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 69715 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 55855 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22084 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 101099 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14705 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12637 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15743 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15250 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15037 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15615 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15395 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 16310 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17767 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15823 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15419 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15172 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15084 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15700 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15232 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15375 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15912 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 17550 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13550 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12788 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 85598 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 4254 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 103472 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 63146 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 102773 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
-## fis
-## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 101954 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 29842 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18263 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 70894 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 100602 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 102615 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 94099 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis
@@ -2241,69 +1990,317 @@ qr_3b &lt;- pool_qr(imp_1234, zrob2item ~ wave + sex + age_s + educ + white)</co
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 27962 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2825 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 93849 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104862 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 45469 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2066 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 25508 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104862 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 47456 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis
 ## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 81525 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 34637 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2206 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13958 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 82785 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 96502 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 75975 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104370 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 102608 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104268 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 37697 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 101268 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 99975 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12859 non-positive
-## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 100712 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 24976 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22623 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22214 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 23053 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 100369 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22196 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 95429 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22462 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22834 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22320 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 48312 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22891 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22811 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 14314 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22708 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12736 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22776 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15521 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22070 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15302 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22359 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15048 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22792 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15564 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22262 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 12147 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 18609 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15292 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15808 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15303 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15213 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 16076 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15548 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15287 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15323 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15024 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 13113 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 15134 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 19640 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2246 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis
+## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 51848 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 39766 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 20873 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104868 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 30595 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 59457 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 75490 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2269 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104843 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 32741 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 94993 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2306 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 2057 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 104801 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 97100 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21937 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 72597 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 34295 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 27025 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22496 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22072 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 23061 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 21997 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22507 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22702 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22265 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22952 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22720 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22531 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22631 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22257 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22407 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22787 non-positive
+## fis</code></pre>
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22388 non-positive
 ## fis</code></pre>
 <pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22333 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22149 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22396 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22627 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22643 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22208 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22209 non-positive
 ## fis</code></pre>
-<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22566 non-positive
+<pre><code>## Warning in summary.rq(fit, se = &quot;nid&quot;, covariance = TRUE): 22592 non-positive
 ## fis</code></pre>
 <pre class="r"><code>p3b &lt;- plot_qr(
   qr_3b,
@@ -2393,216 +2390,14 @@ cat(&quot;Saved: Figure_4_italy_trajectory.png\n&quot;)</code></pre>
 <pre><code>## Saved: Figure_4_italy_trajectory.png</code></pre>
 <pre class="r"><code>rm(traj_data, eu_traj, p4, labels_2024, benchmark_countries,
    paese_sizes, paese_types)</code></pre>
-<p>=================================================================== #
-5. UAI scatter — by country [EXTENSION]
-===================================================================
-rob2item used for both panels (waves 3 and 4). FIX: geom_smooth uses
-inherit.aes = FALSE to fit ONE line over ALL countries (not grouped by
-is_italy). r computed and displayed over all countries. Fixed y-axis
-enables direct comparison of association strength across waves.</p>
-<pre class="r"><code>cat(&quot;\n=== FIGURE 5: UAI vs. COMPOSITE SCORE (rob2item) ===\n&quot;)</code></pre>
-<pre><code>## 
-## === FIGURE 5: UAI vs. COMPOSITE SCORE (rob2item) ===</code></pre>
-<pre class="r"><code>scatter_data &lt;- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
-  uai_val &lt;- dat$UAI[dat$cntry == cc][1]
-  m3 &lt;- {
-    sub &lt;- dat[dat$cntry == cc &amp; dat$wave == 3 &amp;
-                 !is.na(dat$rob2item) &amp; !is.na(dat$wgt2), ]
-    if (nrow(sub) &gt; 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
-  }
-  m4 &lt;- {
-    sub &lt;- dat[dat$cntry == cc &amp; dat$wave == 4 &amp;
-                 !is.na(dat$rob2item) &amp; !is.na(dat$wgt2), ]
-    if (nrow(sub) &gt; 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
-  }
-  data.frame(cntry = cc, UAI = uai_val, score_w3 = m3, score_w4 = m4)
-}))
-scatter_data$is_italy &lt;- scatter_data$cntry == &quot;IT&quot;
-
-r_2017 &lt;- cor(scatter_data$UAI, scatter_data$score_w3, use = &quot;complete.obs&quot;)
-r_2024 &lt;- cor(scatter_data$UAI, scatter_data$score_w4, use = &quot;complete.obs&quot;)
-cat(sprintf(&quot;  r(UAI, rob2item_2017) = %.3f\n&quot;, r_2017))</code></pre>
-<pre><code>##   r(UAI, rob2item_2017) = -0.537</code></pre>
-<pre class="r"><code>cat(sprintf(&quot;  r(UAI, rob2item_2024) = %.3f\n&quot;, r_2024))</code></pre>
-<pre><code>##   r(UAI, rob2item_2024) = -0.744</code></pre>
-<pre class="r"><code>scatter_long &lt;- rbind(
-  data.frame(cntry    = scatter_data$cntry,
-             UAI      = scatter_data$UAI,
-             score    = scatter_data$score_w3,
-             wave     = &quot;2017&quot;,
-             is_italy = scatter_data$is_italy),
-  data.frame(cntry    = scatter_data$cntry,
-             UAI      = scatter_data$UAI,
-             score    = scatter_data$score_w4,
-             wave     = &quot;2024&quot;,
-             is_italy = scatter_data$is_italy)
-)
-scatter_long &lt;- scatter_long[!is.na(scatter_long$score) &amp;
-                               !is.na(scatter_long$UAI), ]
-scatter_long$wave &lt;- factor(scatter_long$wave, levels = c(&quot;2017&quot;, &quot;2024&quot;))
-
-y_max &lt;- max(scatter_long$score, na.rm = TRUE)
-y_min &lt;- min(scatter_long$score, na.rm = TRUE)
-uai_max &lt;- max(scatter_long$UAI, na.rm = TRUE)
-
-r_labels &lt;- data.frame(
-  wave  = factor(c(&quot;2017&quot;, &quot;2024&quot;), levels = c(&quot;2017&quot;, &quot;2024&quot;)),
-  label = c(sprintf(&quot;italic(r) == %.3f&quot;, r_2017),
-            sprintf(&quot;italic(r) == %.3f&quot;, r_2024)),
-  UAI   = uai_max,
-  score = y_max - 0.05 * (y_max - y_min)
-)
-
-p5 &lt;- ggplot(scatter_long, aes(x = UAI, y = score)) +
-  # Regression line over ALL countries (inherit.aes = FALSE prevents grouping by is_italy)
-  geom_smooth(inherit.aes = FALSE,
-              mapping      = aes(x = UAI, y = score),
-              method       = &quot;lm&quot;, se = TRUE,
-              colour       = &quot;grey40&quot;, fill = &quot;grey80&quot;,
-              linewidth    = 0.8, linetype = &quot;dashed&quot;) +
-  geom_point(aes(colour = is_italy, size = is_italy)) +
-  geom_text_repel(aes(label = cntry, colour = is_italy),
-                  size = 2.8, max.overlaps = 20,
-                  segment.size = 0.2, segment.color = &quot;grey60&quot;) +
-  geom_text(data        = r_labels,
-            aes(x = UAI, y = score, label = label),
-            inherit.aes = FALSE,
-            parse       = TRUE,
-            hjust = 1, vjust = 1,
-            size = 4, fontface = &quot;italic&quot;, colour = &quot;grey25&quot;) +
-  scale_colour_manual(values = c(&quot;FALSE&quot; = col_neutral, &quot;TRUE&quot; = col_italy),
-                      labels = c(&quot;EU countries&quot;, &quot;Italy&quot;), name = NULL) +
-  scale_size_manual(values = c(&quot;FALSE&quot; = 2, &quot;TRUE&quot; = 4), guide = &quot;none&quot;) +
-  facet_wrap(~ wave, scales = &quot;fixed&quot;,
-             labeller = labeller(wave = c(&quot;2017&quot; = &quot;2017 (rob2item)&quot;,
-                                          &quot;2024&quot; = &quot;2024 (rob2item)&quot;))) +
-  labs(title    = &quot;Uncertainty Avoidance Index and robot attitudes by EU country&quot;,
-       subtitle = &quot;Each point = one country; dashed line = OLS fit (95% CI) over all 27 countries.&quot;,
-       x        = &quot;Hofstede Uncertainty Avoidance Index (UAI)&quot;,
-       y        = &quot;Weighted mean score (rob2item, 0–6)&quot;,
-       caption  = &quot;Fixed y-axis enables direct comparison of association strength across waves.&quot;) +
-  theme_academic(base_size = 12) +
-  theme(legend.position = &quot;bottom&quot;)
-
-ggsave(&quot;./plots/Figure_5_UAI_scatter.png&quot;, p5,
-       width = 12, height = 6, dpi = 150)</code></pre>
-<pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
-<pre class="r"><code>cat(&quot;Saved: Figure_5_UAI_scatter.png\n&quot;)</code></pre>
-<pre><code>## Saved: Figure_5_UAI_scatter.png</code></pre>
-<pre class="r"><code>rm(scatter_data, scatter_long, r_labels, r_2017, r_2024, p5,
-   y_max, y_min, uai_max)</code></pre>
-<p>=================================================================== #
-6. Country random effects with Italy highlighted [EXTENSION]
-===================================================================
-Models A2 and B2 fitted on rob2item (waves 1-4). Random effects (BLUPs)
-averaged across all m=20 imputed datasets.</p>
-<pre class="r"><code>cat(&quot;\n=== FIGURE 6: COUNTRY RANDOM EFFECTS ===\n&quot;)</code></pre>
-<pre><code>## 
-## === FIGURE 6: COUNTRY RANDOM EFFECTS ===</code></pre>
-<pre class="r"><code>load(&quot;./data/dat.Rdata&quot;)
-rm(dati_mice)
-dati &lt;- lapply(dati, function(x) {
-  x$rob2item &lt;- x$rob1 + x$rob2
-  x
-})
-dati &lt;- as.mitml.list(dati)
-
-dati &lt;- within(dati, {
-  white &lt;- as.factor(white)
-  sex   &lt;- as.factor(sex)
-  wave  &lt;- as.factor(wave)
-  age   &lt;- scale(age,  scale = FALSE) / 10
-  educ  &lt;- scale(educ, scale = FALSE)
-})
-
-uai_mean &lt;- mean(unique(dati[[1]][, c(&quot;cid&quot;, &quot;UAI&quot;)])$UAI, na.rm = TRUE)
-uai_sd   &lt;- sd(unique(dati[[1]][,  c(&quot;cid&quot;, &quot;UAI&quot;)])$UAI,  na.rm = TRUE)
-dati &lt;- lapply(dati, function(x) { x$UAI_z &lt;- (x$UAI - uai_mean) / uai_sd; x })
-dati &lt;- as.mitml.list(dati)
-
-m_A2_list &lt;- lapply(dati, function(x) {
-  lmer(rob2item ~ wave + sex + age + educ + white +
-         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-         (1 | cid),
-       data = x, weights = x$wgt2,
-       control = lmerControl(optimizer = &quot;nloptwrap&quot;))
-})
-
-m_B2_list &lt;- lapply(dati, function(x) {
-  lmer(rob2item ~ wave + sex + age + educ + white +
-         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-         (1 | cid),
-       data = x, weights = x$wgt2,
-       control = lmerControl(optimizer = &quot;nloptwrap&quot;))
-})
-
-re_A2 &lt;- Reduce(&quot;+&quot;, lapply(m_A2_list, function(m) ranef(m)$cid)) /
-  length(m_A2_list)
-re_B2 &lt;- Reduce(&quot;+&quot;, lapply(m_B2_list, function(m) ranef(m)$cid)) /
-  length(m_B2_list)
-
-re_A2$cid &lt;- as.integer(rownames(re_A2))
-re_B2$cid &lt;- as.integer(rownames(re_B2))
-cid_cntry &lt;- unique(dati[[1]][, c(&quot;cid&quot;, &quot;cntry&quot;)])
-re_A2 &lt;- merge(re_A2, cid_cntry, by = &quot;cid&quot;)
-re_B2 &lt;- merge(re_B2, cid_cntry, by = &quot;cid&quot;)
-names(re_A2)[2] &lt;- &quot;re_A2&quot;
-names(re_B2)[2] &lt;- &quot;re_B2&quot;
-
-re_long &lt;- rbind(
-  data.frame(cntry = re_A2$cntry, re = re_A2$re_A2, model = &quot;A2 (without UAI)&quot;),
-  data.frame(cntry = re_B2$cntry, re = re_B2$re_B2, model = &quot;B2 (with UAI)&quot;)
-)
-re_long$is_italy &lt;- re_long$cntry == &quot;IT&quot;
-
-ord &lt;- re_A2$cntry[order(re_A2$re_A2)]
-re_long$cntry &lt;- factor(re_long$cntry, levels = ord)
-
-it_pos  &lt;- which(levels(re_long$cntry) == &quot;IT&quot;)
-re_range &lt;- range(re_long$re, na.rm = TRUE)
-
-p6 &lt;- ggplot(re_long, aes(x = cntry, y = re)) +
-  geom_hline(yintercept = 0, colour = &quot;grey40&quot;, linetype = &quot;dashed&quot;,
-             linewidth = 0.5) +
-  geom_line(aes(group = cntry, colour = is_italy),
-            linewidth = 0.6, alpha = 0.5) +
-  geom_point(aes(colour = is_italy, shape = model), size = 2.5) +
-  annotate(&quot;text&quot;, x = it_pos, y = re_range[1] - 0.05,
-           label = &quot;Italy&quot;, colour = col_italy,
-           size = 3.5, fontface = &quot;bold&quot;) +
-  annotate(&quot;text&quot;, x = length(levels(re_long$cntry)) - 1,
-           y = re_range[2] + 0.03,
-           label = &quot;Above prediction&quot;, colour = col_eu,
-           size = 2.8, fontface = &quot;italic&quot;, hjust = 0.5) +
-  annotate(&quot;text&quot;, x = 2, y = re_range[1] + 0.03,
-           label = &quot;Below prediction&quot;, colour = col_italy,
-           size = 2.8, fontface = &quot;italic&quot;, hjust = 0.5) +
-  scale_colour_manual(values = c(&quot;FALSE&quot; = col_neutral, &quot;TRUE&quot; = col_italy),
-                      labels = c(&quot;Other EU countries&quot;, &quot;Italy&quot;), name = NULL) +
-  scale_shape_manual(values = c(&quot;A2 (without UAI)&quot; = 16, &quot;B2 (with UAI)&quot; = 17),
-                     name = &quot;Model&quot;) +
-  coord_cartesian(clip = &quot;off&quot;) +
-  labs(title    = &quot;Country random effects: Model A2 vs. B2 (waves 1–4, rob2item)&quot;,
-       subtitle = &quot;Lines connect A2 → B2 per country. Negative = below structural prediction.&quot;,
-       x        = &quot;Country (ordered by A2 random intercept)&quot;,
-       y        = &quot;Random intercept&quot;,
-       caption  = &quot;Models fitted on rob2item across m = 20 imputed datasets; BLUPs averaged.&quot;) +
-  theme_academic(base_size = 11) +
-  theme(axis.text.x    = element_text(angle = 45, hjust = 1, size = 8.5),
-        legend.position = &quot;bottom&quot;,
-        legend.box      = &quot;horizontal&quot;,
-        plot.margin     = margin(10, 12, 15, 10))
-
-ggsave(&quot;./plots/Figure_6_random_effects.png&quot;, p6,
-       width = 13, height = 6.5, dpi = 150)
-cat(&quot;Saved: Figure_6_random_effects.png\n&quot;)</code></pre>
-<pre><code>## Saved: Figure_6_random_effects.png</code></pre>
-<pre class="r"><code>rm(m_A2_list, m_B2_list, re_A2, re_B2, re_long, ord, p6,
-   uai_mean, uai_sd, cid_cntry, it_pos, re_range)</code></pre>
-<p>=================================================================== #
-7. ICC decline across waves — convergence [EXTENSION]
-===================================================================
-rob2item used for all four waves: same construct across time, so the
+<div id="figures-5-and-6-archived-in-.syntaxarchivehofstede_explorations.r" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> (Figures 5 and 6
+archived in ./syntax/archive/Hofstede_explorations.R)</h1>
+</div>
+<div id="icc-decline-across-waves-convergence-extension" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> # 7. ICC decline across
+waves — convergence [EXTENSION]</h1>
+<p>rob2item used for all four waves: same construct across time, so the
 declining ICC reflects genuine convergence of national attitudes rather
 than a change in measurement instrument.</p>
 <pre class="r"><code>cat(&quot;\n=== FIGURE 7: ICC DECLINE ACROSS WAVES ===\n&quot;)</code></pre>
@@ -3147,7 +2942,62 @@ ggsave(&quot;./plots/Figure_15_gender_gap_waves.png&quot;, p15,
        width = 11, height = 6, dpi = 150)
 cat(&quot;Saved: Figure_15_gender_gap_waves.png\n&quot;)</code></pre>
 <pre><code>## Saved: Figure_15_gender_gap_waves.png</code></pre>
-<pre class="r"><code>rm(gend_eu, gend_it, gend_all, p15, compute_gender_means, col_sex)
+<pre class="r"><code>rm(gend_eu, gend_it, gend_all, p15, compute_gender_means, col_sex)</code></pre>
+</div>
+<div id="figures-16-19-hofstede-archived-in-.syntaxarchivehofstede_explorations.r" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> (Figures 16-19 Hofstede
+archived in ./syntax/archive/Hofstede_explorations.R)</h1>
+</div>
+<div id="bidimensionality-wave-4-rob2024_pos-vs.-rob2024_neg-extension" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> # 16. Bidimensionality
+wave 4: rob2024_pos vs. rob2024_neg [EXTENSION]</h1>
+<p>rob2024_pos (benefit/utility) on x-axis; rob2024_neg
+(absence-of-threat) on y-axis. Each point = one EU27 country; size
+proportional to wave-4 sample size. Italy highlighted in col_italy.
+Dashed y = x reference line.</p>
+<pre class="r"><code>cat(&quot;\n=== FIGURE 16: BIDIMENSIONALITY WAVE 4 (rob2024_pos vs. rob2024_neg) ===\n&quot;)</code></pre>
+<pre><code>## 
+## === FIGURE 16: BIDIMENSIONALITY WAVE 4 (rob2024_pos vs. rob2024_neg) ===</code></pre>
+<pre class="r"><code>fig16_data &lt;- do.call(rbind, lapply(unique(dat$cntry), function(cc) { # [EXTENSION]
+  sub &lt;- dat[dat$cntry == cc &amp; dat$wave == 4 &amp;                        # [EXTENSION]
+               !is.na(dat$rob2024_pos) &amp; !is.na(dat$rob2024_neg) &amp;   # [EXTENSION]
+               !is.na(dat$wgt2), ]                                    # [EXTENSION]
+  if (nrow(sub) &lt; 10) return(NULL)                                    # [EXTENSION]
+  data.frame(                                                          # [EXTENSION]
+    cntry    = cc,                                                     # [EXTENSION]
+    pos      = weighted.mean(sub$rob2024_pos, sub$wgt2),              # [EXTENSION]
+    neg      = weighted.mean(sub$rob2024_neg, sub$wgt2),              # [EXTENSION]
+    n        = nrow(sub),                                              # [EXTENSION]
+    is_italy = cc == &quot;IT&quot;                                              # [EXTENSION]
+  )                                                                    # [EXTENSION]
+}))                                                                    # [EXTENSION]
+
+p16 &lt;- ggplot(fig16_data, aes(x = pos, y = neg)) +                   # [EXTENSION]
+  geom_abline(slope = 1, intercept = 0, linetype = &quot;dashed&quot;,         # [EXTENSION]
+              colour = &quot;grey55&quot;, linewidth = 0.6) +                  # [EXTENSION]
+  geom_point(aes(colour = is_italy, size = n), alpha = 0.85) +       # [EXTENSION]
+  geom_text_repel(aes(label = cntry, colour = is_italy),              # [EXTENSION]
+                  size = 2.8, max.overlaps = 20,                      # [EXTENSION]
+                  segment.size = 0.2, segment.color = &quot;grey60&quot;) +    # [EXTENSION]
+  scale_colour_manual(                                                 # [EXTENSION]
+    values = c(&quot;FALSE&quot; = col_neutral, &quot;TRUE&quot; = col_italy),            # [EXTENSION]
+    labels = c(&quot;EU countries&quot;, &quot;Italy&quot;), name = NULL) +               # [EXTENSION]
+  scale_size_continuous(range = c(2, 7), name = &quot;N (wave 4)&quot;) +      # [EXTENSION]
+  scale_x_continuous(breaks = seq(2, 5, 0.5)) +                      # [EXTENSION]
+  scale_y_continuous(breaks = seq(2, 5, 0.5)) +                      # [EXTENSION]
+  labs(title    = &quot;Bidimensionality of robot attitudes by EU country (wave 4, 2024)&quot;,  # [EXTENSION]
+       subtitle = &quot;Each point = one country; size proportional to sample. Dashed: equal scores (pos = neg).&quot;, # [EXTENSION]
+       x        = &quot;rob2024_pos — benefit/utility (0-6)&quot;,              # [EXTENSION]
+       y        = &quot;rob2024_neg — absence of threat (0-6)&quot;,            # [EXTENSION]
+       caption  = &quot;rob2024_pos = rob2 + rob3; rob2024_neg = r24_c + r24_d (inverted). Weighted country means.&quot;) + # [EXTENSION]
+  theme_academic(base_size = 12) +                                    # [EXTENSION]
+  theme(legend.position = &quot;bottom&quot;)                                   # [EXTENSION]
+
+ggsave(&quot;./plots/Figure_16_bidimensionality_pos_neg.png&quot;, p16,        # [EXTENSION]
+       width = 10, height = 8, dpi = 150)                            # [EXTENSION]
+cat(&quot;Saved: Figure_16_bidimensionality_pos_neg.png\n&quot;)               # [EXTENSION]</code></pre>
+<pre><code>## Saved: Figure_16_bidimensionality_pos_neg.png</code></pre>
+<pre class="r"><code>rm(fig16_data, p16)                                                   # [EXTENSION]
 
 
 cat(&quot;\n=== ALL FIGURES COMPLETE ===\n&quot;)</code></pre>
@@ -3162,10 +3012,15 @@ cat(&quot;\n=== ALL FIGURES COMPLETE ===\n&quot;)</code></pre>
 ## Figure_13_age_gradient.png
 ## Figure_14_latitude_gradient.png
 ## Figure_15_gender_gap_waves.png
+## Figure_16_bidimensionality_pos_neg.png
+## Figure_17_ai_exposure_distribution.png
+## Figure_18_subscales_by_exposure.png
+## Figure_19_correlation_heatmap_italy.png
 ## Figure_1a_map_wave3.png
 ## Figure_1b_map_change13.png
 ## Figure_1c_map_wave4.png
 ## Figure_2_attitudes_by_wave.png
+## Figure_20_mediation_forest.png
 ## Figure_3a_quantreg_wave123.png
 ## Figure_3b_quantreg_wave1234.png
 ## Figure_4_italy_trajectory.png
@@ -3177,6 +3032,7 @@ cat(&quot;\n=== ALL FIGURES COMPLETE ===\n&quot;)</code></pre>
 <pre class="r"><code>cat(&quot;\nScript 5 complete. Proceed to 6_Document_results_extended.R\n&quot;)</code></pre>
 <pre><code>## 
 ## Script 5 complete. Proceed to 6_Document_results_extended.R</code></pre>
+</div>
 
 
 

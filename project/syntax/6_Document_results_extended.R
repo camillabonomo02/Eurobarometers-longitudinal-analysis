@@ -59,9 +59,15 @@ scripts <- list(
   list(input  = "./syntax/4_Predictors_extended.R",
        output = "4_Predictors_extended.html",
        label  = "4. Predictors of attitudes"),
+  list(input  = "./syntax/4b_Italy_2024_focus.R",
+       output = "4b_Italy_2024_focus.html",
+       label  = "4b. Italy 2024 SP554 focus analyses"),
   list(input  = "./syntax/5_Plots_extended.R",
        output = "5_Plots_extended.html",
-       label  = "5. Plots")
+       label  = "5. Plots"),
+  list(input  = "./syntax/5b_Italy_2024_plots.R",
+       output = "5b_Italy_2024_plots.html",
+       label  = "5b. Italy 2024 SP554 focus plots")
 )
 
 for (s in scripts) {
@@ -114,7 +120,9 @@ all_scripts <- c(
   "./syntax/2_2_Measurement_invariance_extended.R",
   "./syntax/3_Current_and_changes_extended.R",
   "./syntax/4_Predictors_extended.R",
-  "./syntax/5_Plots_extended.R"
+  "./syntax/4b_Italy_2024_focus.R",
+  "./syntax/5_Plots_extended.R",
+  "./syntax/5b_Italy_2024_plots.R"
 )
 
 all_libs <- sort(unique(unlist(lapply(all_scripts, extract_libs))))

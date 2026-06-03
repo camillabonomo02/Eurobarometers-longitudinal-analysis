@@ -16,16 +16,23 @@ library(weights)
 library(psych)
 library(doBy)
 library(mitml)
+library(lavaan)   # [EXTENSION] CFA for rob2024 measurement validation
 source("./syntax/0_Start.R")   # helper functions: describe.imp, cor.imp, omg.imp
 
 #' **Load data**
 load("./data/dat.Rdata")
 rm(dati_mice)   # dati_mice is not required for descriptive analyses
 
-# rob2item is available as a passive-imputed variable in dati;
-# the line below recomputes it from components as a consistency safeguard.
+# rob2item and rob2024 are available as passive-imputed variables in dati;
+# the block below recomputes them from components as a consistency safeguard.
 dati <- lapply(dati, function(x) {
   x$rob2item <- x$rob1 + x$rob2
+  if ("r24_c" %in% names(x)) {                  # [EXTENSION] guard for legacy dat.Rdata
+    x$rob2024 <- ifelse(x$wave == 4,             # [EXTENSION]
+                        x$rob2 + x$rob3 +        # [EXTENSION]
+                        x$r24_c + x$r24_d,       # [EXTENSION]
+                        NA_real_)                # [EXTENSION]
+  }
   x
 })
 dati <- as.mitml.list(dati)
@@ -126,6 +133,184 @@ omg.imp(dati, items = paste0("rob", 1:2), poly = TRUE,
 
 
 #' ===================================================================
+#' # 3b. rob2024 measurement structure — justification for two-subscale solution [EXTENSION]
+#' ===================================================================
+#' Wave 4 extends attitude measurement with four items intended to form rob2024.
+#' Psychometric validation demonstrates that a single-factor structure is untenable.
+#' The evidence is organised in four stages:
+#'   Stage 1: 1-factor omega and CFA — basis for rejection
+#'   Stage 2: internal consistency of each subscale (polychoric r, 2 items)
+#'   Stage 3: 2-factor CFA — confirmatory test of the bidimensional structure
+#'   Stage 4: convergent validity of both subscales with rob1 (QB5 global appraisal)
+#'
+#' Items:
+#'   rob2  = qb6_2  "robots/AI help people at work"         (positive, -> rob2024_pos)
+#'   rob3  = qb6_4  "AI handles boring/repetitive tasks"     (positive, -> rob2024_pos)
+#'   r24_c = qb6_5  "robots steal jobs from people"          (INVERTED, -> rob2024_neg)
+#'   r24_d = qb6_1  "more jobs disappear than be created"    (INVERTED, -> rob2024_neg)
+#'
+#' Substantive rationale: citizens may simultaneously recognise the social utility
+#' of automation (rob2024_pos) AND fear its labour-market consequences (rob2024_neg).
+#' The two dimensions are expected to correlate positively but not collapse onto one
+#' factor. rob2024 is retained as descriptive composite and validity reference.
+
+#' -------------------------------------------------------------------
+#' ## 3b.1 Stage 1: 1-factor model — omega and CFA as basis for rejection [EXTENSION]
+#' -------------------------------------------------------------------
+#' Expected: omega < .70 and CFA fit below conventional thresholds
+#' (CFI < .95, RMSEA > .06), with asymmetric loadings (positive items < negative items).
+
+cat("\n--- Stage 1: 1-factor evidence (documentation of inadequacy) ---\n")
+
+#' **Omega — rob2024, 4 items, wave 4** [EXTENSION]
+cat("\nOmega (4 items, should be < .70):\n")           # [EXTENSION]
+if ("r24_c" %in% names(dati[[1]])) {                   # [EXTENSION]
+  omg.imp(dati,                                         # [EXTENSION]
+          items   = c(paste0("rob", 2:3), "r24_c", "r24_d"), # [EXTENSION]
+          poly    = TRUE,                               # [EXTENSION]
+          weights = "wgt1",                             # [EXTENSION]
+          subset  = (dati[[1]]$wave == 4))              # [EXTENSION]
+} else {                                                # [EXTENSION]
+  .omg_items <- c("rob2", "rob3", "r24_c", "r24_d")   # [EXTENSION]
+  .omg_dat   <- dat[dat$wave == 4, c(.omg_items, "wgt1")] # [EXTENSION]
+  .omg_dat   <- .omg_dat[complete.cases(.omg_dat), ]   # [EXTENSION]
+  .rho <- mixedCor(.omg_dat[, .omg_items],             # [EXTENSION]
+                   p = .omg_items,                     # [EXTENSION]
+                   weight = .omg_dat$wgt1)$poly$rho    # [EXTENSION]
+  .rho <- cor.smooth(.rho)                             # [EXTENSION]
+  .fa  <- fa(.rho, 1, n.obs = nrow(.omg_dat), fm = "ml") # [EXTENSION]
+  .lds <- c(loadings(.fa)[])                           # [EXTENSION]
+  .omg_val <- (sum(abs(.lds))^2) /                     # [EXTENSION]
+              (sum(abs(.lds))^2 + sum(1 - .lds^2))     # [EXTENSION]
+  cat("Omega (observed wave-4 data, N =", nrow(.omg_dat), "):", # [EXTENSION]
+      round(.omg_val, 2), "\n")                        # [EXTENSION]
+  rm(.omg_items, .omg_dat, .rho, .fa, .lds, .omg_val) # [EXTENSION]
+}                                                       # [EXTENSION]
+
+#' **1-factor CFA (WLSMV, observed data)** [EXTENSION]
+#' Fit rejection confirms inadequacy of unidimensional model.
+#' Asymmetric loadings (positive items rob2/rob3 < negative items r24_c/r24_d)
+#' are the empirical signature of bidimensionality.
+cat("\n1-factor CFA (WLSMV; CFI/TLI/RMSEA should indicate poor fit):\n") # [EXTENSION]
+.cfa_items <- c("rob2", "rob3", "r24_c", "r24_d")                        # [EXTENSION]
+dat_w4_cfa <- dat[dat$wave == 4 &                                         # [EXTENSION]
+                  complete.cases(dat[, .cfa_items]), .cfa_items]          # [EXTENSION]
+fit_1f <- cfa("f_rob =~ rob2 + rob3 + r24_c + r24_d",                    # [EXTENSION]
+              data = dat_w4_cfa, ordered = TRUE, estimator = "WLSMV")    # [EXTENSION]
+std_1f <- standardizedSolution(fit_1f)                                    # [EXTENSION]
+cat("\nStandardised loadings (expected: pos items < neg items):\n")       # [EXTENSION]
+print(std_1f[std_1f$op == "=~",                                           # [EXTENSION]
+             c("lhs", "rhs", "est.std", "se", "z", "pvalue")],           # [EXTENSION]
+      row.names = FALSE)                                                   # [EXTENSION]
+cat("\nFit indices (basis for rejection):\n")                             # [EXTENSION]
+print(fitMeasures(fit_1f,                                                 # [EXTENSION]
+                  c("cfi", "tli", "rmsea", "rmsea.ci.lower",             # [EXTENSION]
+                    "rmsea.ci.upper", "srmr")))                           # [EXTENSION]
+rm(.cfa_items, std_1f)                                                    # [EXTENSION]
+
+
+#' -------------------------------------------------------------------
+#' ## 3b.2 Stage 2: internal consistency of subscales [EXTENSION]
+#' -------------------------------------------------------------------
+#' With 2 items per subscale, CFA-based omega is not identified.
+#' The polychoric correlation is reported as internal consistency indicator.
+#' The Spearman-Brown formula (SB = 2r / (1+r)) gives the equivalent of
+#' alpha/omega for a 2-item scale and is reported alongside r_poly.
+#' Estimated on observed complete-case wave-4 data with wgt1.
+
+cat("\n--- Stage 2: polychoric internal consistency of subscales ---\n") # [EXTENSION]
+
+#' rob2024_pos: r(rob2, rob3) — benefit/utility dimension [EXTENSION]
+.d_pos  <- dat[dat$wave == 4, c("rob2", "rob3", "wgt1")]                 # [EXTENSION]
+.d_pos  <- .d_pos[complete.cases(.d_pos), ]                              # [EXTENSION]
+.r_pos  <- mixedCor(.d_pos[, c("rob2", "rob3")],                         # [EXTENSION]
+                    p = c("rob2", "rob3"),                               # [EXTENSION]
+                    weight = .d_pos$wgt1)$poly$rho[1, 2]                 # [EXTENSION]
+.sb_pos <- 2 * .r_pos / (1 + .r_pos)                                    # [EXTENSION]
+cat(sprintf("  rob2024_pos [rob2 + rob3]:   r_poly = %.3f   SB = %.3f\n",# [EXTENSION]
+            .r_pos, .sb_pos))                                            # [EXTENSION]
+rm(.d_pos, .r_pos, .sb_pos)                                              # [EXTENSION]
+
+#' rob2024_neg: r(r24_c, r24_d) — absence-of-threat dimension [EXTENSION]
+.d_neg  <- dat[dat$wave == 4, c("r24_c", "r24_d", "wgt1")]              # [EXTENSION]
+.d_neg  <- .d_neg[complete.cases(.d_neg), ]                             # [EXTENSION]
+.r_neg  <- mixedCor(.d_neg[, c("r24_c", "r24_d")],                      # [EXTENSION]
+                    p = c("r24_c", "r24_d"),                            # [EXTENSION]
+                    weight = .d_neg$wgt1)$poly$rho[1, 2]                 # [EXTENSION]
+.sb_neg <- 2 * .r_neg / (1 + .r_neg)                                    # [EXTENSION]
+cat(sprintf("  rob2024_neg [r24_c + r24_d]: r_poly = %.3f   SB = %.3f\n",# [EXTENSION]
+            .r_neg, .sb_neg))                                            # [EXTENSION]
+rm(.d_neg, .r_neg, .sb_neg)                                              # [EXTENSION]
+
+
+#' -------------------------------------------------------------------
+#' ## 3b.3 Stage 3: 2-factor CFA — confirmatory test [EXTENSION]
+#' -------------------------------------------------------------------
+#' Two correlated factors: pos_f (rob2, rob3) and neg_f (r24_c, r24_d).
+#' Expected: substantially better fit than 1-factor model (CFI > .95,
+#' RMSEA < .06). The inter-factor correlation quantifies shared variance
+#' between the utility and threat dimensions.
+#' Model has df = 1 (barely over-identified); the chi-square and RMSEA
+#' confidence interval are reported for completeness.
+
+cat("\n--- Stage 3: 2-factor CFA (WLSMV; expected good fit) ---\n")     # [EXTENSION]
+fit_2f <- cfa("pos_f =~ rob2 + rob3\n  neg_f =~ r24_c + r24_d",        # [EXTENSION]
+              data = dat_w4_cfa, ordered = TRUE, estimator = "WLSMV")   # [EXTENSION]
+std_2f <- standardizedSolution(fit_2f)                                   # [EXTENSION]
+cat("\nStandardised factor loadings:\n")                                  # [EXTENSION]
+print(std_2f[std_2f$op == "=~",                                          # [EXTENSION]
+             c("lhs", "rhs", "est.std", "se", "z", "pvalue")],          # [EXTENSION]
+      row.names = FALSE)                                                  # [EXTENSION]
+cat("\nInter-factor correlation (pos_f ~~ neg_f):\n")                    # [EXTENSION]
+.fcov <- std_2f[std_2f$op == "~~" & std_2f$lhs != std_2f$rhs, ]        # [EXTENSION]
+print(.fcov[, c("lhs", "rhs", "est.std", "se", "z", "pvalue")],        # [EXTENSION]
+      row.names = FALSE)                                                  # [EXTENSION]
+cat("\nFit indices (should be substantially better than 1-factor):\n")  # [EXTENSION]
+print(fitMeasures(fit_2f,                                                # [EXTENSION]
+                  c("cfi", "tli", "rmsea", "rmsea.ci.lower",            # [EXTENSION]
+                    "rmsea.ci.upper", "srmr")))                          # [EXTENSION]
+rm(std_2f, .fcov, dat_w4_cfa, fit_1f, fit_2f)                           # [EXTENSION]
+
+
+#' -------------------------------------------------------------------
+#' ## 3b.4 Stage 4: convergent validity with rob1 (QB5) [EXTENSION]
+#' -------------------------------------------------------------------
+#' rob1 (QB5: overall appraisal of robots/AI) is external to all four items
+#' and serves as the convergent validity criterion. Both subscales are expected
+#' to correlate positively with rob1 (r > .30). rob2024_pos is expected to
+#' correlate more strongly because QB5 is a positive valuation item, structurally
+#' closer to the utility dimension. rob2024 is retained as reference.
+
+cat("\n--- Stage 4: convergent validity with rob1 (QB5), wave 4 ---\n") # [EXTENSION]
+cat("  r(rob2024, rob1) — reference:\n")                                 # [EXTENSION]
+cor.imp(dati,                                                            # [EXTENSION]
+        items   = c("rob2024", "rob1"),                                  # [EXTENSION]
+        weights = "wgt2", digits = 3,                                    # [EXTENSION]
+        subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]
+cat("  r(rob2024_pos, rob1) — utility dimension:\n")                     # [EXTENSION]
+cor.imp(dati,                                                            # [EXTENSION]
+        items   = c("rob2024_pos", "rob1"),                              # [EXTENSION]
+        weights = "wgt2", digits = 3,                                    # [EXTENSION]
+        subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]
+cat("  r(rob2024_neg, rob1) — absence-of-threat dimension:\n")           # [EXTENSION]
+cor.imp(dati,                                                            # [EXTENSION]
+        items   = c("rob2024_neg", "rob1"),                              # [EXTENSION]
+        weights = "wgt2", digits = 3,                                    # [EXTENSION]
+        subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]
+
+#' Methodological note [EXTENSION]:
+#' The 1-factor model for rob2024 is rejected on both omega (< .70) and CFA fit
+#' (CFI < .95, RMSEA > .06) grounds. Asymmetric loadings indicate two distinct
+#' dimensions. The 2-factor solution (rob2024_pos + rob2024_neg) is adopted for
+#' all inferential analyses in Script 4, Section 9. rob2024 is retained as a
+#' descriptive composite and convergent validity reference.
+#' Acceptability benchmarks for the subscales: SB >= .60; 2-factor CFA CFI >= .95
+#' and RMSEA <= .06; inter-factor r positive and moderate (.30-.60).
+
+
+
+
+#' ===================================================================
 #' # 4. Descriptives and correlations — by wave
 #' ===================================================================
 
@@ -172,9 +357,10 @@ describe.imp(dati,
 #' **Wave 4 — 2024** [EXTENSION]
 #' feel1-4 are structurally absent in wave 4 (non-comparable scale).
 #' rob2item is the appropriate comparable composite for this wave.
+#' rob2024 (4-item wave-4 composite) is also reported. [EXTENSION]
 cat("\n--- Descriptives Wave 4 (2024) ---\n")
 describe.imp(dati,
-             items   = c("rob", "rob2item",
+             items   = c("rob", "rob2item", "rob2024",  # [EXTENSION] rob2024 added
                          "sex1", "age", "educ", "white2", "white3"),
              weights = "wgt2",
              stats   = c("mean", "sd"),
@@ -211,9 +397,10 @@ cor.imp(dati,
 
 #' **Wave 4 — 2024** [EXTENSION]
 #' rob2item replaces rob as the focal dependent variable for wave 4.
+#' rob2024 is included alongside rob2item as robustness check. [EXTENSION]
 cat("\n--- Correlations Wave 4 (2024) ---\n")
 cor.imp(dati,
-        items   = c("rob2item",
+        items   = c("rob2item", "rob2024",               # [EXTENSION] rob2024 added
                     "sex1", "age", "educ", "white2", "white3"),
         weights = "wgt2", digits = 3,
         subset  = (dati[[1]]$wave == 4))
@@ -243,9 +430,12 @@ apply(dat[dat$wave == 3,
 
 #' **Wave 4** [EXTENSION]
 #' feel1-4 are structurally absent (structural zeros, not missing data).
+#' r24_c, r24_d, and rob2024 are wave-4-only. [EXTENSION]
 cat("\n--- Missing Wave 4 ---\n")
 apply(dat[dat$wave == 4,
-          c("rob", "rob2item", "sex", "age", "educ", "white")],
+          c("rob", "rob2item", "rob2024",             # [EXTENSION] rob2024 added
+            "r24_c", "r24_d",                         # [EXTENSION]
+            "sex", "age", "educ", "white")],
       2, function(x) round(mean(is.na(x)), 3))
 
 

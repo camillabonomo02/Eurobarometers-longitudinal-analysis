@@ -352,14 +352,18 @@ display: none;
 <h1 class="title toc-ignore">Descriptive results — Extended (4 waves,
 2012-2024)</h1>
 <h4 class="author">Camilla Bonomo [extends Gnambs &amp; Appel 2019]</h4>
-<h4 class="date">2026-05-28 14:58:30.552406</h4>
+<h4 class="date">2026-06-03 10:25:01.563863</h4>
 
 </div>
 
 <div id="TOC">
 <ul>
-<li><a href="#b.-correlations-between-study-variables" id="toc-b.-correlations-between-study-variables"><span class="toc-section-number">1</span> ## 4b. Correlations between study
-variables</a></li>
+<li><a href="#b.3-stage-3-2-factor-cfa-confirmatory-test-extension" id="toc-b.3-stage-3-2-factor-cfa-confirmatory-test-extension"><span class="toc-section-number">1</span> ## 3b.3 Stage 3: 2-factor CFA —
+confirmatory test [EXTENSION]</a></li>
+<li><a href="#a.-means-and-standard-deviations" id="toc-a.-means-and-standard-deviations"><span class="toc-section-number">2</span> ## 4a. Means and standard
+deviations</a></li>
+<li><a href="#c.-missing-data-patterns-by-wave" id="toc-c.-missing-data-patterns-by-wave"><span class="toc-section-number">3</span> ## 4c. Missing data patterns by
+wave</a></li>
 </ul>
 </div>
 
@@ -370,15 +374,22 @@ variables</a></li>
 library(psych)
 library(doBy)
 library(mitml)
+library(lavaan)   # [EXTENSION] CFA for rob2024 measurement validation
 source(&quot;./syntax/0_Start.R&quot;)   # helper functions: describe.imp, cor.imp, omg.imp</code></pre>
 <p><strong>Load data</strong></p>
 <pre class="r"><code>load(&quot;./data/dat.Rdata&quot;)
 rm(dati_mice)   # dati_mice is not required for descriptive analyses
 
-# rob2item is available as a passive-imputed variable in dati;
-# the line below recomputes it from components as a consistency safeguard.
+# rob2item and rob2024 are available as passive-imputed variables in dati;
+# the block below recomputes them from components as a consistency safeguard.
 dati &lt;- lapply(dati, function(x) {
   x$rob2item &lt;- x$rob1 + x$rob2
+  if (&quot;r24_c&quot; %in% names(x)) {                  # [EXTENSION] guard for legacy dat.Rdata
+    x$rob2024 &lt;- ifelse(x$wave == 4,             # [EXTENSION]
+                        x$rob2 + x$rob3 +        # [EXTENSION]
+                        x$r24_c + x$r24_d,       # [EXTENSION]
+                        NA_real_)                # [EXTENSION]
+  }
   x
 })
 dati &lt;- as.mitml.list(dati)</code></pre>
@@ -545,329 +556,450 @@ used for the longitudinal analysis of waves 1-3, supported by
 measurement invariance testing (Script 2_2). The two-item composite
 (rob2item) is used for all comparisons extending to wave 4. This choice
 is documented in the methodological appendix.
-=================================================================== # 4.
-Descriptives and correlations — by wave
-===================================================================
-<strong>Dummy variables</strong> [G&amp;A]</p>
-<pre class="r"><code>dati &lt;- within(dati, {
-  sex1     &lt;- ifelse(sex == 1, 1, 0)
-  white2   &lt;- ifelse(white == 2, 1, 0)
-  white3   &lt;- ifelse(white == 3, 1, 0)
-  rob2item &lt;- rob1 + rob2     # recompute for safety
-})</code></pre>
+=================================================================== #
+3b. rob2024 measurement structure — justification for two-subscale
+solution [EXTENSION]
+=================================================================== Wave
+4 extends attitude measurement with four items intended to form rob2024.
+Psychometric validation demonstrates that a single-factor structure is
+untenable. The evidence is organised in four stages: Stage 1: 1-factor
+omega and CFA — basis for rejection Stage 2: internal consistency of
+each subscale (polychoric r, 2 items) Stage 3: 2-factor CFA —
+confirmatory test of the bidimensional structure Stage 4: convergent
+validity of both subscales with rob1 (QB5 global appraisal)</p>
+<p>Items: rob2 = qb6_2 “robots/AI help people at work” (positive, -&gt;
+rob2024_pos) rob3 = qb6_4 “AI handles boring/repetitive tasks”
+(positive, -&gt; rob2024_pos) r24_c = qb6_5 “robots steal jobs from
+people” (INVERTED, -&gt; rob2024_neg) r24_d = qb6_1 “more jobs disappear
+than be created” (INVERTED, -&gt; rob2024_neg)</p>
+<p>Substantive rationale: citizens may simultaneously recognise the
+social utility of automation (rob2024_pos) AND fear its labour-market
+consequences (rob2024_neg). The two dimensions are expected to correlate
+positively but not collapse onto one factor. rob2024 is retained as
+descriptive composite and validity reference. ——————————————————————- ##
+3b.1 Stage 1: 1-factor model — omega and CFA as basis for rejection
+[EXTENSION] ——————————————————————- Expected: omega &lt; .70 and CFA fit
+below conventional thresholds (CFI &lt; .95, RMSEA &gt; .06), with
+asymmetric loadings (positive items &lt; negative items).</p>
+<pre class="r"><code>cat(&quot;\n--- Stage 1: 1-factor evidence (documentation of inadequacy) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Stage 1: 1-factor evidence (documentation of inadequacy) ---</code></pre>
+<p><strong>Omega — rob2024, 4 items, wave 4</strong> [EXTENSION]</p>
+<pre class="r"><code>cat(&quot;\nOmega (4 items, should be &lt; .70):\n&quot;)           # [EXTENSION]</code></pre>
+<pre><code>## 
+## Omega (4 items, should be &lt; .70):</code></pre>
+<pre class="r"><code>if (&quot;r24_c&quot; %in% names(dati[[1]])) {                   # [EXTENSION]
+  omg.imp(dati,                                         # [EXTENSION]
+          items   = c(paste0(&quot;rob&quot;, 2:3), &quot;r24_c&quot;, &quot;r24_d&quot;), # [EXTENSION]
+          poly    = TRUE,                               # [EXTENSION]
+          weights = &quot;wgt1&quot;,                             # [EXTENSION]
+          subset  = (dati[[1]]$wave == 4))              # [EXTENSION]
+} else {                                                # [EXTENSION]
+  .omg_items &lt;- c(&quot;rob2&quot;, &quot;rob3&quot;, &quot;r24_c&quot;, &quot;r24_d&quot;)   # [EXTENSION]
+  .omg_dat   &lt;- dat[dat$wave == 4, c(.omg_items, &quot;wgt1&quot;)] # [EXTENSION]
+  .omg_dat   &lt;- .omg_dat[complete.cases(.omg_dat), ]   # [EXTENSION]
+  .rho &lt;- mixedCor(.omg_dat[, .omg_items],             # [EXTENSION]
+                   p = .omg_items,                     # [EXTENSION]
+                   weight = .omg_dat$wgt1)$poly$rho    # [EXTENSION]
+  .rho &lt;- cor.smooth(.rho)                             # [EXTENSION]
+  .fa  &lt;- fa(.rho, 1, n.obs = nrow(.omg_dat), fm = &quot;ml&quot;) # [EXTENSION]
+  .lds &lt;- c(loadings(.fa)[])                           # [EXTENSION]
+  .omg_val &lt;- (sum(abs(.lds))^2) /                     # [EXTENSION]
+              (sum(abs(.lds))^2 + sum(1 - .lds^2))     # [EXTENSION]
+  cat(&quot;Omega (observed wave-4 data, N =&quot;, nrow(.omg_dat), &quot;):&quot;, # [EXTENSION]
+      round(.omg_val, 2), &quot;\n&quot;)                        # [EXTENSION]
+  rm(.omg_items, .omg_dat, .rho, .fa, .lds, .omg_val) # [EXTENSION]
+}                                                       # [EXTENSION]</code></pre>
+<pre><code>## 
+## 
+## Omega reliability:
+## [1] 0.63</code></pre>
+<p><strong>1-factor CFA (WLSMV, observed data)</strong> [EXTENSION] Fit
+rejection confirms inadequacy of unidimensional model. Asymmetric
+loadings (positive items rob2/rob3 &lt; negative items r24_c/r24_d) are
+the empirical signature of bidimensionality.</p>
+<pre class="r"><code>cat(&quot;\n1-factor CFA (WLSMV; CFI/TLI/RMSEA should indicate poor fit):\n&quot;) # [EXTENSION]</code></pre>
+<pre><code>## 
+## 1-factor CFA (WLSMV; CFI/TLI/RMSEA should indicate poor fit):</code></pre>
+<pre class="r"><code>.cfa_items &lt;- c(&quot;rob2&quot;, &quot;rob3&quot;, &quot;r24_c&quot;, &quot;r24_d&quot;)                        # [EXTENSION]
+dat_w4_cfa &lt;- dat[dat$wave == 4 &amp;                                         # [EXTENSION]
+                  complete.cases(dat[, .cfa_items]), .cfa_items]          # [EXTENSION]
+fit_1f &lt;- cfa(&quot;f_rob =~ rob2 + rob3 + r24_c + r24_d&quot;,                    # [EXTENSION]
+              data = dat_w4_cfa, ordered = TRUE, estimator = &quot;WLSMV&quot;)    # [EXTENSION]
+std_1f &lt;- standardizedSolution(fit_1f)                                    # [EXTENSION]
+cat(&quot;\nStandardised loadings (expected: pos items &lt; neg items):\n&quot;)       # [EXTENSION]</code></pre>
+<pre><code>## 
+## Standardised loadings (expected: pos items &lt; neg items):</code></pre>
+<pre class="r"><code>print(std_1f[std_1f$op == &quot;=~&quot;,                                           # [EXTENSION]
+             c(&quot;lhs&quot;, &quot;rhs&quot;, &quot;est.std&quot;, &quot;se&quot;, &quot;z&quot;, &quot;pvalue&quot;)],           # [EXTENSION]
+      row.names = FALSE)                                                   # [EXTENSION]</code></pre>
+<pre><code>##    lhs   rhs est.std    se       z pvalue
+##  f_rob  rob2   0.574 0.005 120.121      0
+##  f_rob  rob3   0.538 0.005 107.145      0
+##  f_rob r24_c   0.781 0.005 167.209      0
+##  f_rob r24_d   0.714 0.005 142.869      0</code></pre>
+<pre class="r"><code>cat(&quot;\nFit indices (basis for rejection):\n&quot;)                             # [EXTENSION]</code></pre>
+<pre><code>## 
+## Fit indices (basis for rejection):</code></pre>
+<pre class="r"><code>print(fitMeasures(fit_1f,                                                 # [EXTENSION]
+                  c(&quot;cfi&quot;, &quot;tli&quot;, &quot;rmsea&quot;, &quot;rmsea.ci.lower&quot;,             # [EXTENSION]
+                    &quot;rmsea.ci.upper&quot;, &quot;srmr&quot;)))                           # [EXTENSION]</code></pre>
+<pre><code>##            cfi            tli          rmsea rmsea.ci.lower rmsea.ci.upper 
+##          0.759          0.276          0.577          0.570          0.585 
+##           srmr 
+##          0.211</code></pre>
+<pre class="r"><code>rm(.cfa_items, std_1f)                                                    # [EXTENSION]</code></pre>
 <table style="width:94%;">
 <colgroup>
 <col width="94%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">## 4a. Means and standard deviations</th>
+<th align="left">## 3b.2 Stage 2: internal consistency of subscales
+[EXTENSION]</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left"><strong>Wave 1 — 2012</strong> [G&amp;A] Note: feel3
-and feel4 are not available in wave 1.</td>
+<td align="left">With 2 items per subscale, CFA-based omega is not
+identified. The polychoric correlation is reported as internal
+consistency indicator. The Spearman-Brown formula (SB = 2r / (1+r))
+gives the equivalent of alpha/omega for a 2-item scale and is reported
+alongside r_poly. Estimated on observed complete-case wave-4 data with
+wgt1.</td>
 </tr>
 <tr class="even">
-<td align="left"><code>r cat(&quot;\n--- Descriptives Wave 1 (2012) ---\n&quot;)</code></td>
+<td align="left"><code>r cat(&quot;\n--- Stage 2: polychoric internal consistency of subscales ---\n&quot;) # [EXTENSION]</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>## ## --- Descriptives Wave 1 (2012) ---</code></td>
+<td align="left"><code>## ## --- Stage 2: polychoric internal consistency of subscales ---</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>r describe.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:2), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, stats   = c(&quot;mean&quot;, &quot;sd&quot;), subset  = (dati[[1]]$wave == 1))</code></td>
+<td align="left">rob2024_pos: r(rob2, rob3) — benefit/utility dimension
+[EXTENSION]</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>##        vars     n  mean    sd ## rob       1 25420  6.17  1.88 ## feel1     2 25420  2.95  2.98 ## feel2     3 25420  5.08  3.01 ## sex1      4 25420  0.52  0.50 ## age       5 25420 46.88 18.37 ## educ      6 25420  5.42  2.88 ## white2    7 25420  0.24  0.43 ## white3    8 25420  0.51  0.50</code></td>
+<td align="left"><code>r .d_pos  &lt;- dat[dat$wave == 4, c(&quot;rob2&quot;, &quot;rob3&quot;, &quot;wgt1&quot;)]                 # [EXTENSION] .d_pos  &lt;- .d_pos[complete.cases(.d_pos), ]                              # [EXTENSION] .r_pos  &lt;- mixedCor(.d_pos[, c(&quot;rob2&quot;, &quot;rob3&quot;)],                         # [EXTENSION] p = c(&quot;rob2&quot;, &quot;rob3&quot;),                               # [EXTENSION] weight = .d_pos$wgt1)$poly$rho[1, 2]                 # [EXTENSION] .sb_pos &lt;- 2 * .r_pos / (1 + .r_pos)                                    # [EXTENSION] cat(sprintf(&quot;  rob2024_pos [rob2 + rob3]:   r_poly = %.3f   SB = %.3f\n&quot;,# [EXTENSION] .r_pos, .sb_pos))                                            # [EXTENSION]</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>##   rob2024_pos [rob2 + rob3]:   r_poly = 0.621   SB = 0.766</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r rm(.d_pos, .r_pos, .sb_pos)                                              # [EXTENSION]</code></td>
+</tr>
+<tr class="even">
+<td align="left">rob2024_neg: r(r24_c, r24_d) — absence-of-threat
+dimension [EXTENSION]</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r .d_neg  &lt;- dat[dat$wave == 4, c(&quot;r24_c&quot;, &quot;r24_d&quot;, &quot;wgt1&quot;)]              # [EXTENSION] .d_neg  &lt;- .d_neg[complete.cases(.d_neg), ]                             # [EXTENSION] .r_neg  &lt;- mixedCor(.d_neg[, c(&quot;r24_c&quot;, &quot;r24_d&quot;)],                      # [EXTENSION] p = c(&quot;r24_c&quot;, &quot;r24_d&quot;),                            # [EXTENSION] weight = .d_neg$wgt1)$poly$rho[1, 2]                 # [EXTENSION] .sb_neg &lt;- 2 * .r_neg / (1 + .r_neg)                                    # [EXTENSION] cat(sprintf(&quot;  rob2024_neg [r24_c + r24_d]: r_poly = %.3f   SB = %.3f\n&quot;,# [EXTENSION] .r_neg, .sb_neg))                                            # [EXTENSION]</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>##   rob2024_neg [r24_c + r24_d]: r_poly = 0.691   SB = 0.817</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r rm(.d_neg, .r_neg, .sb_neg)                                              # [EXTENSION]</code></td>
+</tr>
+</tbody>
+</table>
+<div id="b.3-stage-3-2-factor-cfa-confirmatory-test-extension" class="section level2" number="1">
+<h2><span class="header-section-number">1</span> ## 3b.3 Stage 3:
+2-factor CFA — confirmatory test [EXTENSION]</h2>
+<p>Two correlated factors: pos_f (rob2, rob3) and neg_f (r24_c, r24_d).
+Expected: substantially better fit than 1-factor model (CFI &gt; .95,
+RMSEA &lt; .06). The inter-factor correlation quantifies shared variance
+between the utility and threat dimensions. Model has df = 1 (barely
+over-identified); the chi-square and RMSEA confidence interval are
+reported for completeness.</p>
+<pre class="r"><code>cat(&quot;\n--- Stage 3: 2-factor CFA (WLSMV; expected good fit) ---\n&quot;)     # [EXTENSION]</code></pre>
+<pre><code>## 
+## --- Stage 3: 2-factor CFA (WLSMV; expected good fit) ---</code></pre>
+<pre class="r"><code>fit_2f &lt;- cfa(&quot;pos_f =~ rob2 + rob3\n  neg_f =~ r24_c + r24_d&quot;,        # [EXTENSION]
+              data = dat_w4_cfa, ordered = TRUE, estimator = &quot;WLSMV&quot;)   # [EXTENSION]</code></pre>
+<pre><code>## Warning: lavaan-&gt;lav_object_post_check():  
+##    some estimated ov variances are negative</code></pre>
+<pre class="r"><code>std_2f &lt;- standardizedSolution(fit_2f)                                   # [EXTENSION]
+cat(&quot;\nStandardised factor loadings:\n&quot;)                                  # [EXTENSION]</code></pre>
+<pre><code>## 
+## Standardised factor loadings:</code></pre>
+<pre class="r"><code>print(std_2f[std_2f$op == &quot;=~&quot;,                                          # [EXTENSION]
+             c(&quot;lhs&quot;, &quot;rhs&quot;, &quot;est.std&quot;, &quot;se&quot;, &quot;z&quot;, &quot;pvalue&quot;)],          # [EXTENSION]
+      row.names = FALSE)                                                  # [EXTENSION]</code></pre>
+<pre><code>##    lhs   rhs est.std    se      z pvalue
+##  pos_f  rob2   1.010 0.021 47.825      0
+##  pos_f  rob3   0.622 0.014 45.874      0
+##  neg_f r24_c   1.077 0.022 48.626      0
+##  neg_f r24_d   0.636 0.014 46.115      0</code></pre>
+<pre class="r"><code>cat(&quot;\nInter-factor correlation (pos_f ~~ neg_f):\n&quot;)                    # [EXTENSION]</code></pre>
+<pre><code>## 
+## Inter-factor correlation (pos_f ~~ neg_f):</code></pre>
+<pre class="r"><code>.fcov &lt;- std_2f[std_2f$op == &quot;~~&quot; &amp; std_2f$lhs != std_2f$rhs, ]        # [EXTENSION]
+print(.fcov[, c(&quot;lhs&quot;, &quot;rhs&quot;, &quot;est.std&quot;, &quot;se&quot;, &quot;z&quot;, &quot;pvalue&quot;)],        # [EXTENSION]
+      row.names = FALSE)                                                  # [EXTENSION]</code></pre>
+<pre><code>##    lhs   rhs est.std    se      z pvalue
+##  pos_f neg_f   0.188 0.008 22.566      0</code></pre>
+<pre class="r"><code>cat(&quot;\nFit indices (should be substantially better than 1-factor):\n&quot;)  # [EXTENSION]</code></pre>
+<pre><code>## 
+## Fit indices (should be substantially better than 1-factor):</code></pre>
+<pre class="r"><code>print(fitMeasures(fit_2f,                                                # [EXTENSION]
+                  c(&quot;cfi&quot;, &quot;tli&quot;, &quot;rmsea&quot;, &quot;rmsea.ci.lower&quot;,            # [EXTENSION]
+                    &quot;rmsea.ci.upper&quot;, &quot;srmr&quot;)))                          # [EXTENSION]</code></pre>
+<pre><code>## Warning: lavaan-&gt;lav_object_post_check():  
+##    some estimated ov variances are negative
+## Warning: lavaan-&gt;lav_object_post_check():  
+##    some estimated ov variances are negative</code></pre>
+<pre><code>##            cfi            tli          rmsea rmsea.ci.lower rmsea.ci.upper 
+##          1.000          1.000          0.000          0.000          0.005 
+##           srmr 
+##          0.000</code></pre>
+<pre class="r"><code>rm(std_2f, .fcov, dat_w4_cfa, fit_1f, fit_2f)                           # [EXTENSION]</code></pre>
+<table style="width:94%;">
+<colgroup>
+<col width="94%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">## 3b.4 Stage 4: convergent validity with rob1 (QB5)
+[EXTENSION]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">rob1 (QB5: overall appraisal of robots/AI) is external
+to all four items and serves as the convergent validity criterion. Both
+subscales are expected to correlate positively with rob1 (r &gt; .30).
+rob2024_pos is expected to correlate more strongly because QB5 is a
+positive valuation item, structurally closer to the utility dimension.
+rob2024 is retained as reference.</td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;\n--- Stage 4: convergent validity with rob1 (QB5), wave 4 ---\n&quot;) # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## --- Stage 4: convergent validity with rob1 (QB5), wave 4 ---</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;  r(rob2024, rob1) — reference:\n&quot;)                                 # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>##   r(rob2024, rob1) — reference:</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cor.imp(dati,                                                            # [EXTENSION] items   = c(&quot;rob2024&quot;, &quot;rob1&quot;),                                  # [EXTENSION] weights = &quot;wgt2&quot;, digits = 3,                                    # [EXTENSION] subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## Pearson correlations: ##         rob2024  rob1 ## rob2024      NA 0.569 ## rob1      0.569    NA ## ## t-values: ##         rob2024 rob1 ## rob2024      NA 99.3 ## rob1       99.3   NA ## ## Degrees of freedom: ##         rob2024 rob1 ## rob2024      NA  834 ## rob1        834   NA ## ## P-values: ##         rob2024 rob1 ## rob2024      NA    0 ## rob1          0   NA</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;  r(rob2024_pos, rob1) — utility dimension:\n&quot;)                     # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>##   r(rob2024_pos, rob1) — utility dimension:</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cor.imp(dati,                                                            # [EXTENSION] items   = c(&quot;rob2024_pos&quot;, &quot;rob1&quot;),                              # [EXTENSION] weights = &quot;wgt2&quot;, digits = 3,                                    # [EXTENSION] subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## Pearson correlations: ##             rob2024_pos  rob1 ## rob2024_pos          NA 0.588 ## rob1              0.588    NA ## ## t-values: ##             rob2024_pos rob1 ## rob2024_pos          NA  106 ## rob1                106   NA ## ## Degrees of freedom: ##             rob2024_pos rob1 ## rob2024_pos          NA  512 ## rob1                512   NA ## ## P-values: ##             rob2024_pos rob1 ## rob2024_pos          NA    0 ## rob1                  0   NA</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;  r(rob2024_neg, rob1) — absence-of-threat dimension:\n&quot;)           # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>##   r(rob2024_neg, rob1) — absence-of-threat dimension:</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cor.imp(dati,                                                            # [EXTENSION] items   = c(&quot;rob2024_neg&quot;, &quot;rob1&quot;),                              # [EXTENSION] weights = &quot;wgt2&quot;, digits = 3,                                    # [EXTENSION] subset  = (dati[[1]]$wave == 4))                                 # [EXTENSION]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## Pearson correlations: ##             rob2024_neg  rob1 ## rob2024_neg          NA 0.271 ## rob1              0.271    NA ## ## t-values: ##             rob2024_neg rob1 ## rob2024_neg          NA 41.7 ## rob1               41.7   NA ## ## Degrees of freedom: ##             rob2024_neg rob1 ## rob2024_neg          NA 1972 ## rob1               1972   NA ## ## P-values: ##             rob2024_neg rob1 ## rob2024_neg          NA    0 ## rob1                  0   NA</code></td>
+</tr>
+<tr class="even">
+<td align="left">Methodological note [EXTENSION]: The 1-factor model for
+rob2024 is rejected on both omega (&lt; .70) and CFA fit (CFI &lt; .95,
+RMSEA &gt; .06) grounds. Asymmetric loadings indicate two distinct
+dimensions. The 2-factor solution (rob2024_pos + rob2024_neg) is adopted
+for all inferential analyses in Script 4, Section 9. rob2024 is retained
+as a descriptive composite and convergent validity reference.
+Acceptability benchmarks for the subscales: SB &gt;= .60; 2-factor CFA
+CFI &gt;= .95 and RMSEA &lt;= .06; inter-factor r positive and moderate
+(.30-.60).
+=================================================================== # 4.
+Descriptives and correlations — by wave
+===================================================================
+<strong>Dummy variables</strong> [G&amp;A]</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>r dati &lt;- within(dati, { sex1     &lt;- ifelse(sex == 1, 1, 0) white2   &lt;- ifelse(white == 2, 1, 0) white3   &lt;- ifelse(white == 3, 1, 0) rob2item &lt;- rob1 + rob2     # recompute for safety })</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="a.-means-and-standard-deviations" class="section level2" number="2">
+<h2><span class="header-section-number">2</span> ## 4a. Means and
+standard deviations</h2>
+<p><strong>Wave 1 — 2012</strong> [G&amp;A] Note: feel3 and feel4 are
+not available in wave 1.</p>
+<pre class="r"><code>cat(&quot;\n--- Descriptives Wave 1 (2012) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Descriptives Wave 1 (2012) ---</code></pre>
+<pre class="r"><code>describe.imp(dati,
+             items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:2),
+                         &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
+             weights = &quot;wgt2&quot;,
+             stats   = c(&quot;mean&quot;, &quot;sd&quot;),
+             subset  = (dati[[1]]$wave == 1))</code></pre>
+<pre><code>##        vars     n  mean    sd
+## rob       1 25420  6.17  1.88
+## feel1     2 25420  2.95  2.98
+## feel2     3 25420  5.08  3.01
+## sex1      4 25420  0.52  0.50
+## age       5 25420 46.88 18.37
+## educ      6 25420  5.42  2.88
+## white2    7 25420  0.24  0.43
+## white3    8 25420  0.51  0.50</code></pre>
+<p><strong>Wave 2 — 2014</strong> [G&amp;A]</p>
+<pre class="r"><code>cat(&quot;\n--- Descriptives Wave 2 (2014) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Descriptives Wave 2 (2014) ---</code></pre>
+<pre class="r"><code>describe.imp(dati,
+             items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4),
+                         &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
+             weights = &quot;wgt2&quot;,
+             stats   = c(&quot;mean&quot;, &quot;sd&quot;),
+             subset  = (dati[[1]]$wave == 2))</code></pre>
+<pre><code>##        vars     n  mean    sd
+## rob       1 26489  5.97  1.97
+## feel1     2 26489  3.03  3.13
+## feel2     3 26489  4.98  3.08
+## feel3     4 26489  3.48  3.19
+## feel4     5 26489  2.71  3.06
+## sex1      6 26489  0.52  0.50
+## age       7 26489 47.53 18.31
+## educ      8 26489  5.59  2.86
+## white2    9 26489  0.24  0.43
+## white3   10 26489  0.52  0.50</code></pre>
+<p><strong>Wave 3 — 2017</strong> [G&amp;A]</p>
+<pre class="r"><code>cat(&quot;\n--- Descriptives Wave 3 (2017) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Descriptives Wave 3 (2017) ---</code></pre>
+<pre class="r"><code>describe.imp(dati,
+             items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4),
+                         &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
+             weights = &quot;wgt2&quot;,
+             stats   = c(&quot;mean&quot;, &quot;sd&quot;),
+             subset  = (dati[[1]]$wave == 3))</code></pre>
+<pre><code>##        vars     n  mean    sd
+## rob       1 26555  5.77  1.94
+## feel1     2 26555  3.22  3.03
+## feel2     3 26555  4.22  3.00
+## feel3     4 26555  3.40  3.01
+## feel4     5 26555  2.94  2.97
+## sex1      6 26555  0.52  0.50
+## age       7 26555 48.43 18.68
+## educ      8 26555  5.71  2.86
+## white2    9 26555  0.23  0.42
+## white3   10 26555  0.52  0.50</code></pre>
+<p><strong>Wave 4 — 2024</strong> [EXTENSION] feel1-4 are structurally
+absent in wave 4 (non-comparable scale). rob2item is the appropriate
+comparable composite for this wave. rob2024 (4-item wave-4 composite) is
+also reported. [EXTENSION]</p>
+<pre class="r"><code>cat(&quot;\n--- Descriptives Wave 4 (2024) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Descriptives Wave 4 (2024) ---</code></pre>
+<pre class="r"><code>describe.imp(dati,
+             items   = c(&quot;rob&quot;, &quot;rob2item&quot;, &quot;rob2024&quot;,  # [EXTENSION] rob2024 added
+                         &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
+             weights = &quot;wgt2&quot;,
+             stats   = c(&quot;mean&quot;, &quot;sd&quot;),
+             subset  = (dati[[1]]$wave == 4))</code></pre>
+<pre><code>##          vars     n  mean    sd
+## rob         1 26404  5.29  2.06
+## rob2item    2 26404  3.43  1.44
+## rob2024     3 26404  5.70  2.35
+## sex1        4 26404  0.52  0.50
+## age         5 26404 49.09 18.61
+## educ        6 26404  6.03  2.67
+## white2      7 26404  0.25  0.43
+## white3      8 26404  0.46  0.50</code></pre>
+<table style="width:94%;">
+<colgroup>
+<col width="94%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">## 4b. Correlations between study variables</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>Wave 1 — 2012</strong> [G&amp;A]</td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cat(&quot;\n--- Correlations Wave 1 (2012) ---\n&quot;)</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## ## --- Correlations Wave 1 (2012) ---</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>r cor.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:2), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, digits = 3, subset  = (dati[[1]]$wave == 1))</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>## Pearson correlations: ##           rob  feel1  feel2   sex1    age   educ white2 white3 ## rob        NA  0.302  0.479 -0.111 -0.107  0.245 -0.024 -0.059 ## feel1   0.302     NA  0.339 -0.121 -0.015  0.164 -0.009 -0.067 ## feel2   0.479  0.339     NA -0.100 -0.112  0.238 -0.017 -0.062 ## sex1   -0.111 -0.121 -0.100     NA  0.062 -0.035 -0.116  0.127 ## age    -0.107 -0.015 -0.112  0.062     NA -0.441 -0.180  0.283 ## educ    0.245  0.164  0.238 -0.035 -0.441     NA -0.102 -0.142 ## white2 -0.024 -0.009 -0.017 -0.116 -0.180 -0.102     NA -0.581 ## white3 -0.059 -0.067 -0.062  0.127  0.283 -0.142 -0.581     NA ## ## t-values: ##           rob  feel1  feel2   sex1    age   educ  white2  white3 ## rob        NA  49.22  82.87 -17.40 -16.67  38.70   -3.68   -9.18 ## feel1   49.22     NA  53.87 -18.88  -2.34  26.12   -1.39  -10.43 ## feel2   82.87  53.87     NA -15.22 -17.38  37.58   -2.63   -9.59 ## sex1   -17.40 -18.88 -15.22     NA   9.97  -5.57  -18.63   20.34 ## age    -16.67  -2.34 -17.38   9.97     NA -77.39  -29.23   47.05 ## educ    38.70  26.12  37.58  -5.57 -77.39     NA  -16.25  -22.63 ## white2  -3.68  -1.39  -2.63 -18.63 -29.23 -16.25      NA -113.74 ## white3  -9.18 -10.43  -9.59  20.34  47.05 -22.63 -113.74      NA ## ## Degrees of freedom: ##         rob feel1 feel2  sex1   age  educ white2 white3 ## rob      NA  7713  2311  8824  6614  3318   5019   9497 ## feel1  7713    NA  1261  5430  3845 26538   7659   7428 ## feel2  2311  1261    NA  2314  4672  3117   7180   5211 ## sex1   8824  5430  2314    NA   Inf 26546    Inf    Inf ## age    6614  3845  4672   Inf    NA 28108    Inf    Inf ## educ   3318 26538  3117 26546 28108    NA  83059  70283 ## white2 5019  7659  7180   Inf   Inf 83059     NA    Inf ## white3 9497  7428  5211   Inf   Inf 70283    Inf     NA ## ## P-values: ##        rob feel1 feel2 sex1   age educ white2 white3 ## rob     NA 0.000 0.000    0 0.000    0  0.000      0 ## feel1    0    NA 0.000    0 0.019    0  0.166      0 ## feel2    0 0.000    NA    0 0.000    0  0.009      0 ## sex1     0 0.000 0.000   NA 0.000    0  0.000      0 ## age      0 0.019 0.000    0    NA    0  0.000      0 ## educ     0 0.000 0.000    0 0.000   NA  0.000      0 ## white2   0 0.166 0.009    0 0.000    0     NA      0 ## white3   0 0.000 0.000    0 0.000    0  0.000     NA</code></td>
 </tr>
 <tr class="even">
 <td align="left"><strong>Wave 2 — 2014</strong> [G&amp;A]</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>r cat(&quot;\n--- Descriptives Wave 2 (2014) ---\n&quot;)</code></td>
+<td align="left"><code>r cat(&quot;\n--- Correlations Wave 2 (2014) ---\n&quot;)</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>## ## --- Descriptives Wave 2 (2014) ---</code></td>
+<td align="left"><code>## ## --- Correlations Wave 2 (2014) ---</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>r describe.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, stats   = c(&quot;mean&quot;, &quot;sd&quot;), subset  = (dati[[1]]$wave == 2))</code></td>
+<td align="left"><code>r cor.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, digits = 3, subset  = (dati[[1]]$wave == 2))</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>##        vars     n  mean    sd ## rob       1 26489  5.97  1.97 ## feel1     2 26489  3.03  3.13 ## feel2     3 26489  4.98  3.08 ## feel3     4 26489  3.48  3.19 ## feel4     5 26489  2.71  3.06 ## sex1      6 26489  0.52  0.50 ## age       7 26489 47.53 18.31 ## educ      8 26489  5.59  2.86 ## white2    9 26489  0.24  0.43 ## white3   10 26489  0.52  0.50</code></td>
+<td align="left"><code>## Pearson correlations: ##           rob  feel1  feel2  feel3  feel4   sex1    age   educ white2 white3 ## rob        NA  0.346  0.523  0.356  0.320 -0.117 -0.073  0.205 -0.048 -0.036 ## feel1   0.346     NA  0.420  0.385  0.452 -0.134 -0.050  0.197 -0.042 -0.077 ## feel2   0.523  0.420     NA  0.412  0.381 -0.115 -0.140  0.244 -0.044 -0.047 ## feel3   0.356  0.385  0.412     NA  0.389 -0.114 -0.128  0.143 -0.013 -0.039 ## feel4   0.320  0.452  0.381  0.389     NA -0.153 -0.174  0.219 -0.019 -0.096 ## sex1   -0.117 -0.134 -0.115 -0.114 -0.153     NA  0.061 -0.061 -0.098  0.127 ## age    -0.073 -0.050 -0.140 -0.128 -0.174  0.061     NA -0.432 -0.174  0.287 ## educ    0.205  0.197  0.244  0.143  0.219 -0.061 -0.432     NA -0.088 -0.168 ## white2 -0.048 -0.042 -0.044 -0.013 -0.019 -0.098 -0.174 -0.088     NA -0.578 ## white3 -0.036 -0.077 -0.047 -0.039 -0.096  0.127  0.287 -0.168 -0.578     NA ## ## t-values: ##           rob  feel1  feel2  feel3  feel4   sex1    age   educ  white2  white3 ## rob        NA  56.49  89.86  56.01  51.27 -18.22 -10.91  31.39   -7.42   -5.52 ## feel1   56.49     NA  68.07  60.06  73.18 -20.74  -7.73  29.31   -6.41  -11.66 ## feel2   89.86  68.07     NA  68.26  61.61 -17.97 -21.43  37.82   -6.77   -7.34 ## feel3   56.01  60.06  68.26     NA  61.95 -17.62 -19.59  21.31   -2.02   -5.92 ## feel4   51.27  73.18  61.61  61.95     NA -23.41 -26.33  34.46   -2.86  -14.79 ## sex1   -18.22 -20.74 -17.97 -17.62 -23.41     NA   9.74  -9.58  -15.79   20.50 ## age    -10.91  -7.73 -21.43 -19.59 -26.33   9.74     NA -75.20  -28.16   47.81 ## educ    31.39  29.31  37.82  21.31  34.46  -9.58 -75.20     NA  -13.92  -26.56 ## white2  -7.42  -6.41  -6.77  -2.02  -2.86 -15.79 -28.16 -13.92      NA -113.01 ## white3  -5.52 -11.66  -7.34  -5.92 -14.79  20.50  47.81 -26.56 -113.01      NA ## ## Degrees of freedom: ##         rob feel1 feel2 feel3 feel4  sex1   age  educ white2 white3 ## rob      NA  3157   757   849  2022  6601  1015  1296   3021   2158 ## feel1  3157    NA   850   535   578  2705  3567   664   2503   1622 ## feel2   757   850    NA  1650  1283  5182  2033  1543   4028   6829 ## feel3   849   535  1650    NA   800  2945  2356   867   2163   1895 ## feel4  2022   578  1283   800    NA  1992  1186  3274   2932   2661 ## sex1   6601  2705  5182  2945  1992    NA   Inf 25355    Inf    Inf ## age    1015  3567  2033  2356  1186   Inf    NA 16207    Inf    Inf ## educ   1296   664  1543   867  3274 25355 16207    NA  34024   7401 ## white2 3021  2503  4028  2163  2932   Inf   Inf 34024     NA    Inf ## white3 2158  1622  6829  1895  2661   Inf   Inf  7401    Inf     NA ## ## P-values: ##        rob feel1 feel2 feel3 feel4 sex1 age educ white2 white3 ## rob     NA     0     0 0.000 0.000    0   0    0  0.000      0 ## feel1    0    NA     0 0.000 0.000    0   0    0  0.000      0 ## feel2    0     0    NA 0.000 0.000    0   0    0  0.000      0 ## feel3    0     0     0    NA 0.000    0   0    0  0.043      0 ## feel4    0     0     0 0.000    NA    0   0    0  0.004      0 ## sex1     0     0     0 0.000 0.000   NA   0    0  0.000      0 ## age      0     0     0 0.000 0.000    0  NA    0  0.000      0 ## educ     0     0     0 0.000 0.000    0   0   NA  0.000      0 ## white2   0     0     0 0.043 0.004    0   0    0     NA      0 ## white3   0     0     0 0.000 0.000    0   0    0  0.000     NA</code></td>
 </tr>
 <tr class="odd">
 <td align="left"><strong>Wave 3 — 2017</strong> [G&amp;A]</td>
 </tr>
 <tr class="even">
-<td align="left"><code>r cat(&quot;\n--- Descriptives Wave 3 (2017) ---\n&quot;)</code></td>
+<td align="left"><code>r cat(&quot;\n--- Correlations Wave 3 (2017) ---\n&quot;)</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>## ## --- Descriptives Wave 3 (2017) ---</code></td>
+<td align="left"><code>## ## --- Correlations Wave 3 (2017) ---</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>r describe.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, stats   = c(&quot;mean&quot;, &quot;sd&quot;), subset  = (dati[[1]]$wave == 3))</code></td>
+<td align="left"><code>r cor.imp(dati, items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4), &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, digits = 3, subset  = (dati[[1]]$wave == 3))</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>##        vars     n  mean    sd ## rob       1 26555  5.77  1.94 ## feel1     2 26555  3.22  3.03 ## feel2     3 26555  4.22  3.00 ## feel3     4 26555  3.40  3.01 ## feel4     5 26555  2.94  2.97 ## sex1      6 26555  0.52  0.50 ## age       7 26555 48.43 18.68 ## educ      8 26555  5.71  2.86 ## white2    9 26555  0.23  0.42 ## white3   10 26555  0.52  0.50</code></td>
+<td align="left"><code>## Pearson correlations: ##           rob  feel1  feel2  feel3  feel4   sex1    age   educ white2 white3 ## rob        NA  0.354  0.505  0.378  0.367 -0.115 -0.143  0.240 -0.002 -0.108 ## feel1   0.354     NA  0.480  0.465  0.524 -0.143 -0.093  0.214  0.006 -0.107 ## feel2   0.505  0.480     NA  0.520  0.507 -0.133 -0.164  0.236 -0.020 -0.049 ## feel3   0.378  0.465  0.520     NA  0.486 -0.116 -0.187  0.207 -0.001 -0.072 ## feel4   0.367  0.524  0.507  0.486     NA -0.147 -0.207  0.228  0.001 -0.126 ## sex1   -0.115 -0.143 -0.133 -0.116 -0.147     NA  0.063 -0.054 -0.102  0.118 ## age    -0.143 -0.093 -0.164 -0.187 -0.207  0.063     NA -0.433 -0.183  0.303 ## educ    0.240  0.214  0.236  0.207  0.228 -0.054 -0.433     NA -0.090 -0.172 ## white2 -0.002  0.006 -0.020 -0.001  0.001 -0.102 -0.183 -0.090     NA -0.571 ## white3 -0.108 -0.107 -0.049 -0.072 -0.126  0.118  0.303 -0.172 -0.571     NA ## ## t-values: ##            rob   feel1  feel2   feel3   feel4   sex1   age   educ   white2 ## rob         NA  55.375  86.78  61.161  58.907 -17.82 -21.5  36.96   -0.324 ## feel1   55.375      NA  81.75  75.531  91.117 -22.27 -13.9  33.48    0.864 ## feel2   86.779  81.751     NA  94.016  87.863 -20.37 -25.3  35.67   -2.996 ## feel3   61.161  75.531  94.02      NA  81.043 -17.96 -29.3  31.70   -0.175 ## feel4   58.907  91.117  87.86  81.043      NA -22.87 -33.0  35.39    0.123 ## sex1   -17.817 -22.271 -20.37 -17.957 -22.871     NA  10.0  -8.46  -16.402 ## age    -21.534 -13.873 -25.26 -29.278 -33.003  10.01    NA -74.64  -29.661 ## educ    36.958  33.476  35.67  31.695  35.391  -8.46 -74.6     NA  -14.306 ## white2  -0.324   0.864  -3.00  -0.175   0.123 -16.40 -29.7 -14.31       NA ## white3 -16.784 -16.453  -7.33 -10.954 -19.186  18.98  50.8 -27.53 -111.094 ##         white3 ## rob     -16.78 ## feel1   -16.45 ## feel2    -7.33 ## feel3   -10.95 ## feel4   -19.19 ## sex1     18.98 ## age      50.78 ## educ    -27.53 ## white2 -111.09 ## white3      NA ## ## Degrees of freedom: ##         rob feel1 feel2 feel3 feel4  sex1  age  educ white2 white3 ## rob      NA   755  1011  1302  1195  4226 1184  1226   3039   3879 ## feel1   755    NA  1186   525   990  4052 1126  2473   2343   2855 ## feel2  1011  1186    NA  4817  1188  1916 1876   828   1835   1673 ## feel3  1302   525  4817    NA   696  2910 3738  1267   3336   1877 ## feel4  1195   990  1188   696    NA  3614 8504  1629   5440   1860 ## sex1   4226  4052  1916  2910  3614    NA  Inf 14913    Inf    Inf ## age    1184  1126  1876  3738  8504   Inf   NA  6695    Inf    Inf ## educ   1226  2473   828  1267  1629 14913 6695    NA  26872  25852 ## white2 3039  2343  1835  3336  5440   Inf  Inf 26872     NA    Inf ## white3 3879  2855  1673  1877  1860   Inf  Inf 25852    Inf     NA ## ## P-values: ##          rob feel1 feel2 feel3 feel4 sex1 age educ white2 white3 ## rob       NA 0.000 0.000 0.000 0.000    0   0    0  0.746      0 ## feel1  0.000    NA 0.000 0.000 0.000    0   0    0  0.388      0 ## feel2  0.000 0.000    NA 0.000 0.000    0   0    0  0.003      0 ## feel3  0.000 0.000 0.000    NA 0.000    0   0    0  0.861      0 ## feel4  0.000 0.000 0.000 0.000    NA    0   0    0  0.902      0 ## sex1   0.000 0.000 0.000 0.000 0.000   NA   0    0  0.000      0 ## age    0.000 0.000 0.000 0.000 0.000    0  NA    0  0.000      0 ## educ   0.000 0.000 0.000 0.000 0.000    0   0   NA  0.000      0 ## white2 0.746 0.388 0.003 0.861 0.902    0   0    0     NA      0 ## white3 0.000 0.000 0.000 0.000 0.000    0   0    0  0.000     NA</code></td>
 </tr>
 <tr class="even">
-<td align="left"><strong>Wave 4 — 2024</strong> [EXTENSION] feel1-4 are
-structurally absent in wave 4 (non-comparable scale). rob2item is the
-appropriate comparable composite for this wave.</td>
+<td align="left"><strong>Wave 4 — 2024</strong> [EXTENSION] rob2item
+replaces rob as the focal dependent variable for wave 4. rob2024 is
+included alongside rob2item as robustness check. [EXTENSION]</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>r cat(&quot;\n--- Descriptives Wave 4 (2024) ---\n&quot;)</code></td>
+<td align="left"><code>r cat(&quot;\n--- Correlations Wave 4 (2024) ---\n&quot;)</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>## ## --- Descriptives Wave 4 (2024) ---</code></td>
+<td align="left"><code>## ## --- Correlations Wave 4 (2024) ---</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>r describe.imp(dati, items   = c(&quot;rob&quot;, &quot;rob2item&quot;, &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, stats   = c(&quot;mean&quot;, &quot;sd&quot;), subset  = (dati[[1]]$wave == 4))</code></td>
+<td align="left"><code>r cor.imp(dati, items   = c(&quot;rob2item&quot;, &quot;rob2024&quot;,               # [EXTENSION] rob2024 added &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;), weights = &quot;wgt2&quot;, digits = 3, subset  = (dati[[1]]$wave == 4))</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>##          vars     n  mean    sd ## rob         1 26404  5.29  2.06 ## rob2item    2 26404  3.43  1.44 ## sex1        3 26404  0.52  0.50 ## age         4 26404 49.09 18.61 ## educ        5 26404  6.03  2.67 ## white2      6 26404  0.25  0.43 ## white3      7 26404  0.46  0.50</code></td>
+<td align="left"><code>## Pearson correlations: ##          rob2item rob2024   sex1    age   educ white2 white3 ## rob2item       NA   0.694 -0.090 -0.173  0.233 -0.060 -0.075 ## rob2024     0.694      NA -0.098 -0.156  0.222 -0.044 -0.090 ## sex1       -0.090  -0.098     NA  0.058 -0.040 -0.070  0.095 ## age        -0.173  -0.156  0.058     NA -0.399 -0.148  0.306 ## educ        0.233   0.222 -0.040 -0.399     NA -0.124 -0.167 ## white2     -0.060  -0.044 -0.070 -0.148 -0.124     NA -0.533 ## white3     -0.075  -0.090  0.095  0.306 -0.167 -0.533     NA ## ## t-values: ##          rob2item rob2024   sex1    age  educ  white2 white3 ## rob2item       NA  146.82 -13.94 -25.96  35.9   -9.47  -11.3 ## rob2024    146.82      NA -15.18 -24.22  34.8   -6.76  -14.0 ## sex1       -13.94  -15.18     NA   9.47  -6.4  -11.42   15.4 ## age        -25.96  -24.22   9.47     NA -69.9  -24.39   52.2 ## educ        35.91   34.81  -6.40 -69.87    NA  -20.18  -27.3 ## white2      -9.47   -6.76 -11.42 -24.39 -20.2      NA -102.4 ## white3     -11.33  -14.03  15.45  52.19 -27.3 -102.37     NA ## ## Degrees of freedom: ##          rob2item rob2024     sex1     age   educ   white2  white3 ## rob2item       NA    9330     1799     653    831     3703     987 ## rob2024      9330      NA    43347   23465  14818    37265   58505 ## sex1         1799   43347       NA 1032584  36837 55321065 3166846 ## age           653   23465  1032584      NA  38107      Inf     Inf ## educ          831   14818    36837   38107     NA    84264  101759 ## white2       3703   37265 55321065     Inf  84264       NA     Inf ## white3        987   58505  3166846     Inf 101759      Inf      NA ## ## P-values: ##          rob2item rob2024 sex1 age educ white2 white3 ## rob2item       NA       0    0   0    0      0      0 ## rob2024         0      NA    0   0    0      0      0 ## sex1            0       0   NA   0    0      0      0 ## age             0       0    0  NA    0      0      0 ## educ            0       0    0   0   NA      0      0 ## white2          0       0    0   0    0     NA      0 ## white3          0       0    0   0    0      0     NA</code></td>
 </tr>
 </tbody>
 </table>
-<div id="b.-correlations-between-study-variables" class="section level2" number="1">
-<h2><span class="header-section-number">1</span> ## 4b. Correlations
-between study variables</h2>
-<p><strong>Wave 1 — 2012</strong> [G&amp;A]</p>
-<pre class="r"><code>cat(&quot;\n--- Correlations Wave 1 (2012) ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- Correlations Wave 1 (2012) ---</code></pre>
-<pre class="r"><code>cor.imp(dati,
-        items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:2),
-                    &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
-        weights = &quot;wgt2&quot;, digits = 3,
-        subset  = (dati[[1]]$wave == 1))</code></pre>
-<pre><code>## Pearson correlations:
-##           rob  feel1  feel2   sex1    age   educ white2 white3
-## rob        NA  0.302  0.479 -0.111 -0.107  0.245 -0.024 -0.059
-## feel1   0.302     NA  0.339 -0.121 -0.015  0.164 -0.009 -0.067
-## feel2   0.479  0.339     NA -0.100 -0.112  0.238 -0.017 -0.062
-## sex1   -0.111 -0.121 -0.100     NA  0.062 -0.035 -0.116  0.127
-## age    -0.107 -0.015 -0.112  0.062     NA -0.441 -0.180  0.283
-## educ    0.245  0.164  0.238 -0.035 -0.441     NA -0.102 -0.142
-## white2 -0.024 -0.009 -0.017 -0.116 -0.180 -0.102     NA -0.581
-## white3 -0.059 -0.067 -0.062  0.127  0.283 -0.142 -0.581     NA
-## 
-## t-values:
-##           rob  feel1  feel2   sex1    age   educ  white2  white3
-## rob        NA  49.22  82.87 -17.40 -16.67  38.70   -3.68   -9.18
-## feel1   49.22     NA  53.87 -18.88  -2.34  26.12   -1.39  -10.43
-## feel2   82.87  53.87     NA -15.22 -17.38  37.58   -2.63   -9.59
-## sex1   -17.40 -18.88 -15.22     NA   9.97  -5.57  -18.63   20.34
-## age    -16.67  -2.34 -17.38   9.97     NA -77.39  -29.23   47.05
-## educ    38.70  26.12  37.58  -5.57 -77.39     NA  -16.25  -22.63
-## white2  -3.68  -1.39  -2.63 -18.63 -29.23 -16.25      NA -113.74
-## white3  -9.18 -10.43  -9.59  20.34  47.05 -22.63 -113.74      NA
-## 
-## Degrees of freedom:
-##         rob feel1 feel2  sex1   age  educ white2 white3
-## rob      NA  7713  2311  8824  6614  3318   5019   9497
-## feel1  7713    NA  1261  5430  3845 26538   7659   7428
-## feel2  2311  1261    NA  2314  4672  3117   7180   5211
-## sex1   8824  5430  2314    NA   Inf 26546    Inf    Inf
-## age    6614  3845  4672   Inf    NA 28108    Inf    Inf
-## educ   3318 26538  3117 26546 28108    NA  83059  70283
-## white2 5019  7659  7180   Inf   Inf 83059     NA    Inf
-## white3 9497  7428  5211   Inf   Inf 70283    Inf     NA
-## 
-## P-values:
-##        rob feel1 feel2 sex1   age educ white2 white3
-## rob     NA 0.000 0.000    0 0.000    0  0.000      0
-## feel1    0    NA 0.000    0 0.019    0  0.166      0
-## feel2    0 0.000    NA    0 0.000    0  0.009      0
-## sex1     0 0.000 0.000   NA 0.000    0  0.000      0
-## age      0 0.019 0.000    0    NA    0  0.000      0
-## educ     0 0.000 0.000    0 0.000   NA  0.000      0
-## white2   0 0.166 0.009    0 0.000    0     NA      0
-## white3   0 0.000 0.000    0 0.000    0  0.000     NA</code></pre>
-<p><strong>Wave 2 — 2014</strong> [G&amp;A]</p>
-<pre class="r"><code>cat(&quot;\n--- Correlations Wave 2 (2014) ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- Correlations Wave 2 (2014) ---</code></pre>
-<pre class="r"><code>cor.imp(dati,
-        items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4),
-                    &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
-        weights = &quot;wgt2&quot;, digits = 3,
-        subset  = (dati[[1]]$wave == 2))</code></pre>
-<pre><code>## Pearson correlations:
-##           rob  feel1  feel2  feel3  feel4   sex1    age   educ white2 white3
-## rob        NA  0.346  0.523  0.356  0.320 -0.117 -0.073  0.205 -0.048 -0.036
-## feel1   0.346     NA  0.420  0.385  0.452 -0.134 -0.050  0.197 -0.042 -0.077
-## feel2   0.523  0.420     NA  0.412  0.381 -0.115 -0.140  0.244 -0.044 -0.047
-## feel3   0.356  0.385  0.412     NA  0.389 -0.114 -0.128  0.143 -0.013 -0.039
-## feel4   0.320  0.452  0.381  0.389     NA -0.153 -0.174  0.219 -0.019 -0.096
-## sex1   -0.117 -0.134 -0.115 -0.114 -0.153     NA  0.061 -0.061 -0.098  0.127
-## age    -0.073 -0.050 -0.140 -0.128 -0.174  0.061     NA -0.432 -0.174  0.287
-## educ    0.205  0.197  0.244  0.143  0.219 -0.061 -0.432     NA -0.088 -0.168
-## white2 -0.048 -0.042 -0.044 -0.013 -0.019 -0.098 -0.174 -0.088     NA -0.578
-## white3 -0.036 -0.077 -0.047 -0.039 -0.096  0.127  0.287 -0.168 -0.578     NA
-## 
-## t-values:
-##           rob  feel1  feel2  feel3  feel4   sex1    age   educ  white2  white3
-## rob        NA  56.49  89.86  56.01  51.27 -18.22 -10.91  31.39   -7.42   -5.52
-## feel1   56.49     NA  68.07  60.06  73.18 -20.74  -7.73  29.31   -6.41  -11.66
-## feel2   89.86  68.07     NA  68.26  61.61 -17.97 -21.43  37.82   -6.77   -7.34
-## feel3   56.01  60.06  68.26     NA  61.95 -17.62 -19.59  21.31   -2.02   -5.92
-## feel4   51.27  73.18  61.61  61.95     NA -23.41 -26.33  34.46   -2.86  -14.79
-## sex1   -18.22 -20.74 -17.97 -17.62 -23.41     NA   9.74  -9.58  -15.79   20.50
-## age    -10.91  -7.73 -21.43 -19.59 -26.33   9.74     NA -75.20  -28.16   47.81
-## educ    31.39  29.31  37.82  21.31  34.46  -9.58 -75.20     NA  -13.92  -26.56
-## white2  -7.42  -6.41  -6.77  -2.02  -2.86 -15.79 -28.16 -13.92      NA -113.01
-## white3  -5.52 -11.66  -7.34  -5.92 -14.79  20.50  47.81 -26.56 -113.01      NA
-## 
-## Degrees of freedom:
-##         rob feel1 feel2 feel3 feel4  sex1   age  educ white2 white3
-## rob      NA  3157   757   849  2022  6601  1015  1296   3021   2158
-## feel1  3157    NA   850   535   578  2705  3567   664   2503   1622
-## feel2   757   850    NA  1650  1283  5182  2033  1543   4028   6829
-## feel3   849   535  1650    NA   800  2945  2356   867   2163   1895
-## feel4  2022   578  1283   800    NA  1992  1186  3274   2932   2661
-## sex1   6601  2705  5182  2945  1992    NA   Inf 25355    Inf    Inf
-## age    1015  3567  2033  2356  1186   Inf    NA 16207    Inf    Inf
-## educ   1296   664  1543   867  3274 25355 16207    NA  34024   7401
-## white2 3021  2503  4028  2163  2932   Inf   Inf 34024     NA    Inf
-## white3 2158  1622  6829  1895  2661   Inf   Inf  7401    Inf     NA
-## 
-## P-values:
-##        rob feel1 feel2 feel3 feel4 sex1 age educ white2 white3
-## rob     NA     0     0 0.000 0.000    0   0    0  0.000      0
-## feel1    0    NA     0 0.000 0.000    0   0    0  0.000      0
-## feel2    0     0    NA 0.000 0.000    0   0    0  0.000      0
-## feel3    0     0     0    NA 0.000    0   0    0  0.043      0
-## feel4    0     0     0 0.000    NA    0   0    0  0.004      0
-## sex1     0     0     0 0.000 0.000   NA   0    0  0.000      0
-## age      0     0     0 0.000 0.000    0  NA    0  0.000      0
-## educ     0     0     0 0.000 0.000    0   0   NA  0.000      0
-## white2   0     0     0 0.043 0.004    0   0    0     NA      0
-## white3   0     0     0 0.000 0.000    0   0    0  0.000     NA</code></pre>
-<p><strong>Wave 3 — 2017</strong> [G&amp;A]</p>
-<pre class="r"><code>cat(&quot;\n--- Correlations Wave 3 (2017) ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- Correlations Wave 3 (2017) ---</code></pre>
-<pre class="r"><code>cor.imp(dati,
-        items   = c(&quot;rob&quot;, paste0(&quot;feel&quot;, 1:4),
-                    &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
-        weights = &quot;wgt2&quot;, digits = 3,
-        subset  = (dati[[1]]$wave == 3))</code></pre>
-<pre><code>## Pearson correlations:
-##           rob  feel1  feel2  feel3  feel4   sex1    age   educ white2 white3
-## rob        NA  0.354  0.505  0.378  0.367 -0.115 -0.143  0.240 -0.002 -0.108
-## feel1   0.354     NA  0.480  0.465  0.524 -0.143 -0.093  0.214  0.006 -0.107
-## feel2   0.505  0.480     NA  0.520  0.507 -0.133 -0.164  0.236 -0.020 -0.049
-## feel3   0.378  0.465  0.520     NA  0.486 -0.116 -0.187  0.207 -0.001 -0.072
-## feel4   0.367  0.524  0.507  0.486     NA -0.147 -0.207  0.228  0.001 -0.126
-## sex1   -0.115 -0.143 -0.133 -0.116 -0.147     NA  0.063 -0.054 -0.102  0.118
-## age    -0.143 -0.093 -0.164 -0.187 -0.207  0.063     NA -0.433 -0.183  0.303
-## educ    0.240  0.214  0.236  0.207  0.228 -0.054 -0.433     NA -0.090 -0.172
-## white2 -0.002  0.006 -0.020 -0.001  0.001 -0.102 -0.183 -0.090     NA -0.571
-## white3 -0.108 -0.107 -0.049 -0.072 -0.126  0.118  0.303 -0.172 -0.571     NA
-## 
-## t-values:
-##            rob   feel1  feel2   feel3   feel4   sex1   age   educ   white2
-## rob         NA  55.375  86.78  61.161  58.907 -17.82 -21.5  36.96   -0.324
-## feel1   55.375      NA  81.75  75.531  91.117 -22.27 -13.9  33.48    0.864
-## feel2   86.779  81.751     NA  94.016  87.863 -20.37 -25.3  35.67   -2.996
-## feel3   61.161  75.531  94.02      NA  81.043 -17.96 -29.3  31.70   -0.175
-## feel4   58.907  91.117  87.86  81.043      NA -22.87 -33.0  35.39    0.123
-## sex1   -17.817 -22.271 -20.37 -17.957 -22.871     NA  10.0  -8.46  -16.402
-## age    -21.534 -13.873 -25.26 -29.278 -33.003  10.01    NA -74.64  -29.661
-## educ    36.958  33.476  35.67  31.695  35.391  -8.46 -74.6     NA  -14.306
-## white2  -0.324   0.864  -3.00  -0.175   0.123 -16.40 -29.7 -14.31       NA
-## white3 -16.784 -16.453  -7.33 -10.954 -19.186  18.98  50.8 -27.53 -111.094
-##         white3
-## rob     -16.78
-## feel1   -16.45
-## feel2    -7.33
-## feel3   -10.95
-## feel4   -19.19
-## sex1     18.98
-## age      50.78
-## educ    -27.53
-## white2 -111.09
-## white3      NA
-## 
-## Degrees of freedom:
-##         rob feel1 feel2 feel3 feel4  sex1  age  educ white2 white3
-## rob      NA   755  1011  1302  1195  4226 1184  1226   3039   3879
-## feel1   755    NA  1186   525   990  4052 1126  2473   2343   2855
-## feel2  1011  1186    NA  4817  1188  1916 1876   828   1835   1673
-## feel3  1302   525  4817    NA   696  2910 3738  1267   3336   1877
-## feel4  1195   990  1188   696    NA  3614 8504  1629   5440   1860
-## sex1   4226  4052  1916  2910  3614    NA  Inf 14913    Inf    Inf
-## age    1184  1126  1876  3738  8504   Inf   NA  6695    Inf    Inf
-## educ   1226  2473   828  1267  1629 14913 6695    NA  26872  25852
-## white2 3039  2343  1835  3336  5440   Inf  Inf 26872     NA    Inf
-## white3 3879  2855  1673  1877  1860   Inf  Inf 25852    Inf     NA
-## 
-## P-values:
-##          rob feel1 feel2 feel3 feel4 sex1 age educ white2 white3
-## rob       NA 0.000 0.000 0.000 0.000    0   0    0  0.746      0
-## feel1  0.000    NA 0.000 0.000 0.000    0   0    0  0.388      0
-## feel2  0.000 0.000    NA 0.000 0.000    0   0    0  0.003      0
-## feel3  0.000 0.000 0.000    NA 0.000    0   0    0  0.861      0
-## feel4  0.000 0.000 0.000 0.000    NA    0   0    0  0.902      0
-## sex1   0.000 0.000 0.000 0.000 0.000   NA   0    0  0.000      0
-## age    0.000 0.000 0.000 0.000 0.000    0  NA    0  0.000      0
-## educ   0.000 0.000 0.000 0.000 0.000    0   0   NA  0.000      0
-## white2 0.746 0.388 0.003 0.861 0.902    0   0    0     NA      0
-## white3 0.000 0.000 0.000 0.000 0.000    0   0    0  0.000     NA</code></pre>
-<p><strong>Wave 4 — 2024</strong> [EXTENSION] rob2item replaces rob as
-the focal dependent variable for wave 4.</p>
-<pre class="r"><code>cat(&quot;\n--- Correlations Wave 4 (2024) ---\n&quot;)</code></pre>
-<pre><code>## 
-## --- Correlations Wave 4 (2024) ---</code></pre>
-<pre class="r"><code>cor.imp(dati,
-        items   = c(&quot;rob2item&quot;,
-                    &quot;sex1&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white2&quot;, &quot;white3&quot;),
-        weights = &quot;wgt2&quot;, digits = 3,
-        subset  = (dati[[1]]$wave == 4))</code></pre>
-<pre><code>## Pearson correlations:
-##          rob2item   sex1    age   educ white2 white3
-## rob2item       NA -0.090 -0.173  0.233 -0.060 -0.075
-## sex1       -0.090     NA  0.058 -0.040 -0.070  0.095
-## age        -0.173  0.058     NA -0.399 -0.148  0.306
-## educ        0.233 -0.040 -0.399     NA -0.124 -0.167
-## white2     -0.060 -0.070 -0.148 -0.124     NA -0.533
-## white3     -0.075  0.095  0.306 -0.167 -0.533     NA
-## 
-## t-values:
-##          rob2item   sex1    age  educ  white2 white3
-## rob2item       NA -13.94 -25.96  35.9   -9.47  -11.3
-## sex1       -13.94     NA   9.47  -6.4  -11.42   15.4
-## age        -25.96   9.47     NA -69.9  -24.39   52.2
-## educ        35.91  -6.40 -69.87    NA  -20.18  -27.3
-## white2      -9.47 -11.42 -24.39 -20.2      NA -102.4
-## white3     -11.33  15.45  52.19 -27.3 -102.37     NA
-## 
-## Degrees of freedom:
-##          rob2item     sex1     age   educ   white2  white3
-## rob2item       NA     1799     653    831     3703     987
-## sex1         1799       NA 1032584  36837 55321065 3166846
-## age           653  1032584      NA  38107      Inf     Inf
-## educ          831    36837   38107     NA    84264  101759
-## white2       3703 55321065     Inf  84264       NA     Inf
-## white3        987  3166846     Inf 101759      Inf      NA
-## 
-## P-values:
-##          rob2item sex1 age educ white2 white3
-## rob2item       NA    0   0    0      0      0
-## sex1            0   NA   0    0      0      0
-## age             0    0  NA    0      0      0
-## educ            0    0   0   NA      0      0
-## white2          0    0   0    0     NA      0
-## white3          0    0   0    0      0     NA</code></pre>
-<table>
-<tbody>
-<tr class="odd">
-<td align="left">## 4c. Missing data patterns by wave</td>
-</tr>
-</tbody>
-</table>
+</div>
+<div id="c.-missing-data-patterns-by-wave" class="section level2" number="3">
+<h2><span class="header-section-number">3</span> ## 4c. Missing data
+patterns by wave</h2>
 <p><strong>Wave 1</strong> [G&amp;A]</p>
 <pre class="r"><code>cat(&quot;\n--- Missing Wave 1 ---\n&quot;)</code></pre>
 <pre><code>## 
@@ -896,15 +1028,20 @@ the focal dependent variable for wave 4.</p>
 <pre><code>##   rob feel1 feel2 feel3 feel4   sex   age  educ white 
 ## 0.122 0.046 0.059 0.036 0.030 0.000 0.000 0.015 0.000</code></pre>
 <p><strong>Wave 4</strong> [EXTENSION] feel1-4 are structurally absent
-(structural zeros, not missing data).</p>
+(structural zeros, not missing data). r24_c, r24_d, and rob2024 are
+wave-4-only. [EXTENSION]</p>
 <pre class="r"><code>cat(&quot;\n--- Missing Wave 4 ---\n&quot;)</code></pre>
 <pre><code>## 
 ## --- Missing Wave 4 ---</code></pre>
 <pre class="r"><code>apply(dat[dat$wave == 4,
-          c(&quot;rob&quot;, &quot;rob2item&quot;, &quot;sex&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white&quot;)],
+          c(&quot;rob&quot;, &quot;rob2item&quot;, &quot;rob2024&quot;,             # [EXTENSION] rob2024 added
+            &quot;r24_c&quot;, &quot;r24_d&quot;,                         # [EXTENSION]
+            &quot;sex&quot;, &quot;age&quot;, &quot;educ&quot;, &quot;white&quot;)],
       2, function(x) round(mean(is.na(x)), 3))</code></pre>
-<pre><code>##      rob rob2item      sex      age     educ    white 
-##    0.117    0.099    0.002    0.000    0.015    0.000</code></pre>
+<pre><code>##      rob rob2item  rob2024    r24_c    r24_d      sex      age     educ 
+##    0.117    0.099    0.126    0.044    0.066    0.002    0.000    0.015 
+##    white 
+##    0.000</code></pre>
 <p>=================================================================== #
 5. Longitudinal overview — composite score by wave and country
 ===================================================================

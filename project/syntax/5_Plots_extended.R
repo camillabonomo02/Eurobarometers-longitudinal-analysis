@@ -8,6 +8,10 @@
 #' date: "`r Sys.time()`"
 #' ---
 #'
+#' NOTE: Figures 5 and 6 archived in ./syntax/archive/Hofstede_explorations.R
+#' (deprecated — UAI p = 0.304, 0.0% L2 variance reduction vs. Model A2).
+#' Numbering gaps (4 then 7) are intentional to preserve cross-references.
+#'
 #' Figures produced:
 #'   Figure 1a — EU map: mean composite score by country (wave 3; G&A replication)
 #'   Figure 1b — EU map: attitude change wave 1 -> 3 (G&A replication)
@@ -16,8 +20,7 @@
 #'   Figure 3a — Quantile regression: individual predictors, waves 1-3 (G&A replication)
 #'   Figure 3b — Quantile regression: individual predictors, waves 1-4 (EXTENSION, rob2item)
 #'   Figure 4  — Longitudinal trajectory: Italy vs. EU benchmark (rob2item)
-#'   Figure 5  — Scatter plot: UAI vs. composite score by country (rob2item)
-#'   Figure 6  — Country random effects with Italy highlighted (rob2item)
+#'   [Fig 5 archived — UAI scatter; Fig 6 archived — random effects A2 vs B2]
 #'   Figure 7  — ICC decline across waves: convergence of national attitudes (rob2item)
 #'   Figure 8  — Gender gap by country (wave 4): dot plot
 #'   Figure 9  — Country rank bump chart across all four waves (rob2item)
@@ -27,6 +30,7 @@
 #'   Figure 13 — Age gradient across waves: EU27 and Italy (rob2item)
 #'   Figure 14 — Latitude vs. composite score by country (North-South divide)
 #'   Figure 15 — Gender gap across waves: EU27 and Italy (rob2item)
+#'   Figure 16 — Bidimensionality wave 4: rob2024_pos vs. rob2024_neg by country (EXTENSION)
 #'
 #' Dependent variable note:
 #'   rob      = three-item composite (rob1+rob2+rob3, range 0-9), waves 1-3 only.
@@ -613,213 +617,7 @@ rm(traj_data, eu_traj, p4, labels_2024, benchmark_countries,
 
 
 
-
-#' ===================================================================
-#' # 5. UAI scatter — by country [EXTENSION]
-#' ===================================================================
-#' rob2item used for both panels (waves 3 and 4).
-#' FIX: geom_smooth uses inherit.aes = FALSE to fit ONE line over ALL countries
-#' (not grouped by is_italy). r computed and displayed over all countries.
-#' Fixed y-axis enables direct comparison of association strength across waves.
-
-cat("\n=== FIGURE 5: UAI vs. COMPOSITE SCORE (rob2item) ===\n")
-
-scatter_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) {
-  uai_val <- dat$UAI[dat$cntry == cc][1]
-  m3 <- {
-    sub <- dat[dat$cntry == cc & dat$wave == 3 &
-                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
-    if (nrow(sub) > 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
-  }
-  m4 <- {
-    sub <- dat[dat$cntry == cc & dat$wave == 4 &
-                 !is.na(dat$rob2item) & !is.na(dat$wgt2), ]
-    if (nrow(sub) > 0) weighted.mean(sub$rob2item, sub$wgt2) else NA
-  }
-  data.frame(cntry = cc, UAI = uai_val, score_w3 = m3, score_w4 = m4)
-}))
-scatter_data$is_italy <- scatter_data$cntry == "IT"
-
-r_2017 <- cor(scatter_data$UAI, scatter_data$score_w3, use = "complete.obs")
-r_2024 <- cor(scatter_data$UAI, scatter_data$score_w4, use = "complete.obs")
-cat(sprintf("  r(UAI, rob2item_2017) = %.3f\n", r_2017))
-cat(sprintf("  r(UAI, rob2item_2024) = %.3f\n", r_2024))
-
-scatter_long <- rbind(
-  data.frame(cntry    = scatter_data$cntry,
-             UAI      = scatter_data$UAI,
-             score    = scatter_data$score_w3,
-             wave     = "2017",
-             is_italy = scatter_data$is_italy),
-  data.frame(cntry    = scatter_data$cntry,
-             UAI      = scatter_data$UAI,
-             score    = scatter_data$score_w4,
-             wave     = "2024",
-             is_italy = scatter_data$is_italy)
-)
-scatter_long <- scatter_long[!is.na(scatter_long$score) &
-                               !is.na(scatter_long$UAI), ]
-scatter_long$wave <- factor(scatter_long$wave, levels = c("2017", "2024"))
-
-y_max <- max(scatter_long$score, na.rm = TRUE)
-y_min <- min(scatter_long$score, na.rm = TRUE)
-uai_max <- max(scatter_long$UAI, na.rm = TRUE)
-
-r_labels <- data.frame(
-  wave  = factor(c("2017", "2024"), levels = c("2017", "2024")),
-  label = c(sprintf("italic(r) == %.3f", r_2017),
-            sprintf("italic(r) == %.3f", r_2024)),
-  UAI   = uai_max,
-  score = y_max - 0.05 * (y_max - y_min)
-)
-
-p5 <- ggplot(scatter_long, aes(x = UAI, y = score)) +
-  # Regression line over ALL countries (inherit.aes = FALSE prevents grouping by is_italy)
-  geom_smooth(inherit.aes = FALSE,
-              mapping      = aes(x = UAI, y = score),
-              method       = "lm", se = TRUE,
-              colour       = "grey40", fill = "grey80",
-              linewidth    = 0.8, linetype = "dashed") +
-  geom_point(aes(colour = is_italy, size = is_italy)) +
-  geom_text_repel(aes(label = cntry, colour = is_italy),
-                  size = 2.8, max.overlaps = 20,
-                  segment.size = 0.2, segment.color = "grey60") +
-  geom_text(data        = r_labels,
-            aes(x = UAI, y = score, label = label),
-            inherit.aes = FALSE,
-            parse       = TRUE,
-            hjust = 1, vjust = 1,
-            size = 4, fontface = "italic", colour = "grey25") +
-  scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
-                      labels = c("EU countries", "Italy"), name = NULL) +
-  scale_size_manual(values = c("FALSE" = 2, "TRUE" = 4), guide = "none") +
-  facet_wrap(~ wave, scales = "fixed",
-             labeller = labeller(wave = c("2017" = "2017 (rob2item)",
-                                          "2024" = "2024 (rob2item)"))) +
-  labs(title    = "Uncertainty Avoidance Index and robot attitudes by EU country",
-       subtitle = "Each point = one country; dashed line = OLS fit (95% CI) over all 27 countries.",
-       x        = "Hofstede Uncertainty Avoidance Index (UAI)",
-       y        = "Weighted mean score (rob2item, 0–6)",
-       caption  = "Fixed y-axis enables direct comparison of association strength across waves.") +
-  theme_academic(base_size = 12) +
-  theme(legend.position = "bottom")
-
-ggsave("./plots/Figure_5_UAI_scatter.png", p5,
-       width = 12, height = 6, dpi = 150)
-cat("Saved: Figure_5_UAI_scatter.png\n")
-rm(scatter_data, scatter_long, r_labels, r_2017, r_2024, p5,
-   y_max, y_min, uai_max)
-
-
-
-
-#' ===================================================================
-#' # 6. Country random effects with Italy highlighted [EXTENSION]
-#' ===================================================================
-#' Models A2 and B2 fitted on rob2item (waves 1-4). Random effects (BLUPs)
-#' averaged across all m=20 imputed datasets.
-
-cat("\n=== FIGURE 6: COUNTRY RANDOM EFFECTS ===\n")
-
-load("./data/dat.Rdata")
-rm(dati_mice)
-dati <- lapply(dati, function(x) {
-  x$rob2item <- x$rob1 + x$rob2
-  x
-})
-dati <- as.mitml.list(dati)
-
-dati <- within(dati, {
-  white <- as.factor(white)
-  sex   <- as.factor(sex)
-  wave  <- as.factor(wave)
-  age   <- scale(age,  scale = FALSE) / 10
-  educ  <- scale(educ, scale = FALSE)
-})
-
-uai_mean <- mean(unique(dati[[1]][, c("cid", "UAI")])$UAI, na.rm = TRUE)
-uai_sd   <- sd(unique(dati[[1]][,  c("cid", "UAI")])$UAI,  na.rm = TRUE)
-dati <- lapply(dati, function(x) { x$UAI_z <- (x$UAI - uai_mean) / uai_sd; x })
-dati <- as.mitml.list(dati)
-
-m_A2_list <- lapply(dati, function(x) {
-  lmer(rob2item ~ wave + sex + age + educ + white +
-         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-         (1 | cid),
-       data = x, weights = x$wgt2,
-       control = lmerControl(optimizer = "nloptwrap"))
-})
-
-m_B2_list <- lapply(dati, function(x) {
-  lmer(rob2item ~ wave + sex + age + educ + white +
-         AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-         (1 | cid),
-       data = x, weights = x$wgt2,
-       control = lmerControl(optimizer = "nloptwrap"))
-})
-
-re_A2 <- Reduce("+", lapply(m_A2_list, function(m) ranef(m)$cid)) /
-  length(m_A2_list)
-re_B2 <- Reduce("+", lapply(m_B2_list, function(m) ranef(m)$cid)) /
-  length(m_B2_list)
-
-re_A2$cid <- as.integer(rownames(re_A2))
-re_B2$cid <- as.integer(rownames(re_B2))
-cid_cntry <- unique(dati[[1]][, c("cid", "cntry")])
-re_A2 <- merge(re_A2, cid_cntry, by = "cid")
-re_B2 <- merge(re_B2, cid_cntry, by = "cid")
-names(re_A2)[2] <- "re_A2"
-names(re_B2)[2] <- "re_B2"
-
-re_long <- rbind(
-  data.frame(cntry = re_A2$cntry, re = re_A2$re_A2, model = "A2 (without UAI)"),
-  data.frame(cntry = re_B2$cntry, re = re_B2$re_B2, model = "B2 (with UAI)")
-)
-re_long$is_italy <- re_long$cntry == "IT"
-
-ord <- re_A2$cntry[order(re_A2$re_A2)]
-re_long$cntry <- factor(re_long$cntry, levels = ord)
-
-it_pos  <- which(levels(re_long$cntry) == "IT")
-re_range <- range(re_long$re, na.rm = TRUE)
-
-p6 <- ggplot(re_long, aes(x = cntry, y = re)) +
-  geom_hline(yintercept = 0, colour = "grey40", linetype = "dashed",
-             linewidth = 0.5) +
-  geom_line(aes(group = cntry, colour = is_italy),
-            linewidth = 0.6, alpha = 0.5) +
-  geom_point(aes(colour = is_italy, shape = model), size = 2.5) +
-  annotate("text", x = it_pos, y = re_range[1] - 0.05,
-           label = "Italy", colour = col_italy,
-           size = 3.5, fontface = "bold") +
-  annotate("text", x = length(levels(re_long$cntry)) - 1,
-           y = re_range[2] + 0.03,
-           label = "Above prediction", colour = col_eu,
-           size = 2.8, fontface = "italic", hjust = 0.5) +
-  annotate("text", x = 2, y = re_range[1] + 0.03,
-           label = "Below prediction", colour = col_italy,
-           size = 2.8, fontface = "italic", hjust = 0.5) +
-  scale_colour_manual(values = c("FALSE" = col_neutral, "TRUE" = col_italy),
-                      labels = c("Other EU countries", "Italy"), name = NULL) +
-  scale_shape_manual(values = c("A2 (without UAI)" = 16, "B2 (with UAI)" = 17),
-                     name = "Model") +
-  coord_cartesian(clip = "off") +
-  labs(title    = "Country random effects: Model A2 vs. B2 (waves 1–4, rob2item)",
-       subtitle = "Lines connect A2 → B2 per country. Negative = below structural prediction.",
-       x        = "Country (ordered by A2 random intercept)",
-       y        = "Random intercept",
-       caption  = "Models fitted on rob2item across m = 20 imputed datasets; BLUPs averaged.") +
-  theme_academic(base_size = 11) +
-  theme(axis.text.x    = element_text(angle = 45, hjust = 1, size = 8.5),
-        legend.position = "bottom",
-        legend.box      = "horizontal",
-        plot.margin     = margin(10, 12, 15, 10))
-
-ggsave("./plots/Figure_6_random_effects.png", p6,
-       width = 13, height = 6.5, dpi = 150)
-cat("Saved: Figure_6_random_effects.png\n")
-rm(m_A2_list, m_B2_list, re_A2, re_B2, re_long, ord, p6,
-   uai_mean, uai_sd, cid_cntry, it_pos, re_range)
+#' (Figures 5 and 6 archived in ./syntax/archive/Hofstede_explorations.R)
 
 
 
@@ -1373,6 +1171,58 @@ ggsave("./plots/Figure_15_gender_gap_waves.png", p15,
        width = 11, height = 6, dpi = 150)
 cat("Saved: Figure_15_gender_gap_waves.png\n")
 rm(gend_eu, gend_it, gend_all, p15, compute_gender_means, col_sex)
+
+
+#' (Figures 16-19 Hofstede archived in ./syntax/archive/Hofstede_explorations.R)
+
+#' ===================================================================
+#' # 16. Bidimensionality wave 4: rob2024_pos vs. rob2024_neg [EXTENSION]
+#' ===================================================================
+#' rob2024_pos (benefit/utility) on x-axis; rob2024_neg (absence-of-threat)
+#' on y-axis. Each point = one EU27 country; size proportional to wave-4
+#' sample size. Italy highlighted in col_italy. Dashed y = x reference line.
+
+cat("\n=== FIGURE 16: BIDIMENSIONALITY WAVE 4 (rob2024_pos vs. rob2024_neg) ===\n")
+
+fig16_data <- do.call(rbind, lapply(unique(dat$cntry), function(cc) { # [EXTENSION]
+  sub <- dat[dat$cntry == cc & dat$wave == 4 &                        # [EXTENSION]
+               !is.na(dat$rob2024_pos) & !is.na(dat$rob2024_neg) &   # [EXTENSION]
+               !is.na(dat$wgt2), ]                                    # [EXTENSION]
+  if (nrow(sub) < 10) return(NULL)                                    # [EXTENSION]
+  data.frame(                                                          # [EXTENSION]
+    cntry    = cc,                                                     # [EXTENSION]
+    pos      = weighted.mean(sub$rob2024_pos, sub$wgt2),              # [EXTENSION]
+    neg      = weighted.mean(sub$rob2024_neg, sub$wgt2),              # [EXTENSION]
+    n        = nrow(sub),                                              # [EXTENSION]
+    is_italy = cc == "IT"                                              # [EXTENSION]
+  )                                                                    # [EXTENSION]
+}))                                                                    # [EXTENSION]
+
+p16 <- ggplot(fig16_data, aes(x = pos, y = neg)) +                   # [EXTENSION]
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed",         # [EXTENSION]
+              colour = "grey55", linewidth = 0.6) +                  # [EXTENSION]
+  geom_point(aes(colour = is_italy, size = n), alpha = 0.85) +       # [EXTENSION]
+  geom_text_repel(aes(label = cntry, colour = is_italy),              # [EXTENSION]
+                  size = 2.8, max.overlaps = 20,                      # [EXTENSION]
+                  segment.size = 0.2, segment.color = "grey60") +    # [EXTENSION]
+  scale_colour_manual(                                                 # [EXTENSION]
+    values = c("FALSE" = col_neutral, "TRUE" = col_italy),            # [EXTENSION]
+    labels = c("EU countries", "Italy"), name = NULL) +               # [EXTENSION]
+  scale_size_continuous(range = c(2, 7), name = "N (wave 4)") +      # [EXTENSION]
+  scale_x_continuous(breaks = seq(2, 5, 0.5)) +                      # [EXTENSION]
+  scale_y_continuous(breaks = seq(2, 5, 0.5)) +                      # [EXTENSION]
+  labs(title    = "Bidimensionality of robot attitudes by EU country (wave 4, 2024)",  # [EXTENSION]
+       subtitle = "Each point = one country; size proportional to sample. Dashed: equal scores (pos = neg).", # [EXTENSION]
+       x        = "rob2024_pos — benefit/utility (0-6)",              # [EXTENSION]
+       y        = "rob2024_neg — absence of threat (0-6)",            # [EXTENSION]
+       caption  = "rob2024_pos = rob2 + rob3; rob2024_neg = r24_c + r24_d (inverted). Weighted country means.") + # [EXTENSION]
+  theme_academic(base_size = 12) +                                    # [EXTENSION]
+  theme(legend.position = "bottom")                                   # [EXTENSION]
+
+ggsave("./plots/Figure_16_bidimensionality_pos_neg.png", p16,        # [EXTENSION]
+       width = 10, height = 8, dpi = 150)                            # [EXTENSION]
+cat("Saved: Figure_16_bidimensionality_pos_neg.png\n")               # [EXTENSION]
+rm(fig16_data, p16)                                                   # [EXTENSION]
 
 
 cat("\n=== ALL FIGURES COMPLETE ===\n")

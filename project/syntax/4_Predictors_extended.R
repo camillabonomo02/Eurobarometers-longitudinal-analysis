@@ -13,28 +13,14 @@
 #'   Section 2 — Model A0: null model (ICC) by wave [G&A + extension]
 #'   Section 3 — Model A1: individual-level predictors [G&A + wave 4]
 #'   Section 4 — Model A2: individual + contextual predictors [G&A replication]
-#'   Section 5 — Model B2: A2 + UAI [EXTENSION — H1 and H2]
-#'   Section 6 — A2 vs. B2 comparison and Italian residuals
-#'   Section 7 — Feel items (G&A replication, waves 1-3)
-#'   Section 8 — Italy focus, wave 4: within-country regression
+#'   Section 5 — Italian residuals in Model A2 (waves 1-3 and 1-4)
+#'   Section 6 — Feel items (G&A replication, waves 1-3)
+#'   Section 7 — Italy focus, wave 4: within-country regression
+#'   Section 8 — Wave-4 subscale analysis: rob2024_pos and rob2024_neg
 #'
-#' Hypotheses tested:
-#'   H1 (multidimensional cultural hypothesis):
-#'       National cultural orientations jointly predict robot acceptance,
-#'       net of the structural L2 predictors from Model A2. Specifically:
-#'         H1a: UAI_z < 0  — uncertainty avoidance -> negative attitudes
-#'         H1b: IDV_z > 0  — individualism -> positive attitudes
-#'         H1c: LTO_z > 0  — long-term orientation -> positive attitudes
-#'         H1d: PDI_z      — exploratory (power distance, sign unclear)
-#'         H1e: MAS_z      — exploratory (performance vs. quality-of-life)
-#'         H1f: IVR_z > 0  — indulgence -> openness to new technology
-#'       H1a is tested in isolation in Model B2 (UAI only).
-#'       The full hypothesis is tested in Model B2_multi (all six dimensions).
-#'       Note: with N = 27 L2 units, the full model has limited df at L2;
-#'       results should be interpreted as exploratory.
-#'   H2 (mediation): the effect of latitude is attenuated when UAI
-#'       is added to the model, indicating that UAI partially mediates
-#'       the geographic North-South gradient.
+#' NOTE: Hofstede models (B2, B2_multi, B3, one-at-a-time, VIF) have been
+#' archived in ./syntax/archive/Hofstede_explorations.R and are NOT part
+#' of this pipeline. UAI showed p = 0.304 with 0.0% L2 variance reduction.
 #'
 #' Dependent variable note:
 #'   Waves 1-3 analyses use rob (three-item composite, range 0-9).
@@ -42,6 +28,8 @@
 #'   range 0-6), because rob3 wording changed in wave 4 ("boring/
 #'   repetitive" vs. "hard/dangerous"), rendering rob non-comparable
 #'   across all four waves.
+#'   Section 8 uses rob2024_pos and rob2024_neg (wave-4 subscales) to
+#'   probe the bidimensional structure of attitudes in 2024. [EXTENSION]
 
 
 #' **Clear workspace**
@@ -73,50 +61,20 @@ dati <- within(dati, {
   educ  <- scale(educ, scale = FALSE)         # centred
 })
 
-#' **Ensure rob2item is available** [EXTENSION]
-#' rob2item is available as a passive-imputed variable in dati;
-#' this step recomputes it from components as a consistency safeguard.
+#' **Ensure rob2item and rob2024 subscales are available** [EXTENSION]
+#' Passive-imputed variables recomputed here as a consistency safeguard.
 dati <- lapply(dati, function(x) {
   x$rob2item <- x$rob1 + x$rob2
+  if ("r24_c" %in% names(x)) {
+    x$rob2024     <- ifelse(x$wave == 4,
+                            x$rob2 + x$rob3 + x$r24_c + x$r24_d,
+                            NA_real_)
+    x$rob2024_pos <- ifelse(x$wave == 4, x$rob2 + x$rob3,    NA_real_)  # [EXTENSION]
+    x$rob2024_neg <- ifelse(x$wave == 4, x$r24_c + x$r24_d, NA_real_)  # [EXTENSION]
+  }
   x
 })
 dati <- as.mitml.list(dati)
-
-#' **Standardise UAI at the country level** [EXTENSION]
-#' z-score computed over the 27 unique country values (not over all
-#' individual observations), appropriate for a time-invariant L2 variable.
-uai_mean <- mean(unique(dati[[1]][, c("cid", "UAI")])$UAI, na.rm = TRUE)
-uai_sd   <- sd(unique(dati[[1]][, c("cid", "UAI")])$UAI,   na.rm = TRUE)
-dati <- lapply(dati, function(x) {
-  x$UAI_z <- (x$UAI - uai_mean) / uai_sd
-  x
-})
-dati <- as.mitml.list(dati)
-
-cat(sprintf("UAI: M = %.1f  SD = %.1f  (N countries = %d)\n",
-            uai_mean, uai_sd,
-            length(unique(dati[[1]]$UAI[!is.na(dati[[1]]$UAI)]))))
-cat("Italy UAI_z:", round((75 - uai_mean) / uai_sd, 3), "\n\n")
-
-#' **Standardise remaining Hofstede dimensions at the country level** [EXTENSION]
-#' Same procedure as UAI_z: z-score over the 27 unique country values.
-hof_dims <- c("PDI", "IDV", "MAS", "LTO", "IVR")
-for (dim in hof_dims) {
-  dim_vals <- unique(dati[[1]][, c("cid", dim)])[[dim]]
-  m <- mean(dim_vals, na.rm = TRUE)
-  s <- sd(dim_vals,   na.rm = TRUE)
-  zname <- paste0(dim, "_z")
-  dati <- lapply(dati, function(x) {
-    x[[zname]] <- (x[[dim]] - m) / s
-    x
-  })
-  dati <- as.mitml.list(dati)
-  cat(sprintf("%s: M = %.1f  SD = %.1f  Italy_%s = %.3f\n",
-              dim, m, s, zname,
-              (dati[[1]][dati[[1]]$cntry == "IT", dim][1] - m) / s))
-}
-cat("\n")
-rm(hof_dims, dim, dim_vals, m, s, zname)
 
 
 
@@ -255,138 +213,15 @@ fit_A2_1234 <- lmer.imp(
 
 
 #' ===================================================================
-#' # 5. Model B2 / B2_multi [EXTENSION — testing H1 and H2]
+#' # 5. Italian residuals — Model A2
 #' ===================================================================
-#' Model B2      = A2 + UAI_z          (tests H1a and H2 in isolation)
-#' Model B2_multi = A2 + all six Hofstede z-scores (tests full H1)
+#' Random intercept for Italy in Model A2 (structural + individual predictors,
+#' without Hofstede). Extracted from the first imputed dataset (m=1) using
+#' normalised weights to avoid AIC/BIC overflow in log-likelihood computation.
 #'
-#' H1a: UAI_z < 0 — uncertainty avoidance -> negative attitudes toward robots
-#' H2:  the effect of LAT diminishes when UAI is added (cultural mediation).
-#'
-#' Caution for B2_multi: with N = 27 L2 units and 12 L2 predictors total
-#' (6 G&A + 6 Hofstede), df at Level 2 is very low. Treat as exploratory;
-#' focus interpretation on effect signs and relative magnitudes.
-
-#' -------------------------------------------------------------------
-#' ## 5a. Model B2 on waves 1-3
-#' -------------------------------------------------------------------
-cat("\n=== MODEL B2: A2 + UAI (waves 1-3) ===\n")
-cat("[EXTENSION] Tests H1 (UAI main effect) and H2 (latitude mediation)\n\n")
-
-fit_B2_123 <- lmer.imp(
-  rob ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-    (1 | cid),
-  data    = dati,
-  weights = "wgt2",
-  stdy    = TRUE,
-  stdx    = FALSE,
-  subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
-  control = lmerControl(optimizer = "nloptwrap")
-)
-
-
-#' -------------------------------------------------------------------
-#' ## 5b. Model B2 on waves 1-4
-#' -------------------------------------------------------------------
-#' rob2item used as dependent variable for cross-wave comparability.
-cat("\n=== MODEL B2: A2 + UAI (waves 1-4) ===\n")
-cat("[EXTENSION] Dependent variable = rob2item\n\n")
-
-fit_B2_1234 <- lmer.imp(
-  rob2item ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-    (1 | cid),
-  data    = dati,
-  weights = "wgt2",
-  stdy    = TRUE,
-  stdx    = FALSE,
-  control = lmerControl(optimizer = "nloptwrap")
-)
-
-
-#' -------------------------------------------------------------------
-#' ## 5c. Model B2_multi: A2 + all Hofstede dimensions [EXTENSION — full H1]
-#' -------------------------------------------------------------------
-#' Tests H1 as a multidimensional cultural hypothesis.
-#' Expected signs: UAI_z(-), IDV_z(+), LTO_z(+), IVR_z(+); PDI/MAS exploratory.
-
-cat("\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-3) ===\n")
-cat("[EXTENSION] Tests multidimensional H1; exploratory due to N=27 L2 units\n\n")
-
-fit_B2multi_123 <- lmer.imp(
-  rob ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
-    (1 | cid),
-  data    = dati,
-  weights = "wgt2",
-  stdy    = TRUE,
-  stdx    = FALSE,
-  subset  = (dati[[1]]$wave %in% c(1, 2, 3)),
-  control = lmerControl(optimizer = "nloptwrap")
-)
-
-cat("\n=== MODEL B2_MULTI: A2 + ALL HOFSTEDE DIMENSIONS (waves 1-4) ===\n")
-cat("[EXTENSION] Dependent variable = rob2item\n\n")
-
-fit_B2multi_1234 <- lmer.imp(
-  rob2item ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
-    (1 | cid),
-  data    = dati,
-  weights = "wgt2",
-  stdy    = TRUE,
-  stdx    = FALSE,
-  control = lmerControl(optimizer = "nloptwrap")
-)
-
-
-#' -------------------------------------------------------------------
-#' ## 5d. Cross-level interactions [EXTENSION — testing moderation by UAI]
-#' -------------------------------------------------------------------
-#' H3a: Does UAI_z moderate the effect of education?
-#'      (Education compensates cultural anxiety more strongly in high-UAI countries)
-#' H3b: Does UAI_z moderate the effect of blue-collar status?
-#'      (The negative effect of manual labour amplified by high UAI)
-#'
-#' rob2item used as dependent variable for cross-wave comparability.
-
-cat("\n=== MODEL B3: CROSS-LEVEL INTERACTIONS (waves 1-4) ===\n")
-cat("[EXTENSION] UAI x education and UAI x employment moderation\n\n")
-
-fit_B3_1234 <- lmer.imp(
-  rob2item ~ wave + sex + age + educ + white +
-    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-    UAI_z:educ +   # H3a: UAI moderates the education effect
-    UAI_z:white +  # H3b: UAI moderates the employment effect
-    (1 | cid),
-  data    = dati,
-  weights = "wgt2",
-  stdy    = TRUE,
-  stdx    = FALSE,
-  control = lmerControl(optimizer = "nloptwrap")
-)
-
-
-
-
-#' ===================================================================
-#' # 6. A2 vs. B2 comparison and Italian residuals
-#' ===================================================================
-
-cat("\n\n=== A2 vs. B2 COMPARISON: L2 VARIANCE EXPLAINED ===\n")
-
-#' Extract variance components for comparison.
-#' Note: AIC/BIC = Inf in lme4 with large weighted samples — a known
-#' overflow issue in log-likelihood computation. Variance reduction
-#' (pseudo-R2 at the country level) is used as an alternative.
-#'
-#' The residual analysis below uses the first imputed dataset (m=1).
-#' This approximation is documented as a limitation: a fully pooled
-#' estimate of BLUPs across all 20 imputed datasets is not feasible
-#' with standard lme4 infrastructure and is therefore not computed here.
+#' The A2 vs. B2 comparison that originally appeared here (showing that UAI
+#' accounts for 0% of Italy's residual) has been archived in:
+#' ./syntax/archive/Hofstede_explorations.R
 
 d1 <- dati[[1]]
 d1$wave_num <- as.numeric(as.character(d1$wave))
@@ -397,8 +232,10 @@ d1_123$wgt2_norm <- d1_123$wgt2 / mean(d1_123$wgt2, na.rm = TRUE)
 d1$wgt2_norm     <- d1$wgt2     / mean(d1$wgt2,     na.rm = TRUE)
 
 #' -------------------------------------------------------------------
-#' ## 6a. Variance reduction — waves 1-3
+#' ## 5a. Waves 1-3 (rob)
 #' -------------------------------------------------------------------
+cat("\n=== ITALIAN RESIDUAL — MODEL A2 (waves 1-3) ===\n")
+
 m_A2 <- lmer(rob ~ wave + sex + age + educ + white +
                AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
                (1 | cid),
@@ -407,77 +244,27 @@ m_A2 <- lmer(rob ~ wave + sex + age + educ + white +
              REML    = FALSE,
              control = lmerControl(optimizer = "nloptwrap"))
 
-m_B2 <- lmer(rob ~ wave + sex + age + educ + white +
-               AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-               (1 | cid),
-             data    = d1_123,
-             weights = wgt2_norm,
-             REML    = FALSE,
-             control = lmerControl(optimizer = "nloptwrap"))
-
-cat("\nL2 variance comparison A2 vs. B2 (waves 1-3, first imputed dataset):\n")
-vc_A2 <- as.data.frame(VarCorr(m_A2))
-vc_B2 <- as.data.frame(VarCorr(m_B2))
-var_A2 <- vc_A2$vcov[vc_A2$grp == "cid"]
-var_B2 <- vc_B2$vcov[vc_B2$grp == "cid"]
-res_A2 <- vc_A2$vcov[vc_A2$grp == "Residual"]
-res_B2 <- vc_B2$vcov[vc_B2$grp == "Residual"]
-cat(sprintf("  Intercept variance A2: %.4f   ICC A2: %.4f\n",
-            var_A2, var_A2 / (var_A2 + res_A2)))
-cat(sprintf("  Intercept variance B2: %.4f   ICC B2: %.4f\n",
-            var_B2, var_B2 / (var_B2 + res_B2)))
-cat(sprintf("  Variance reduction at L2 by adding UAI: %.1f%%\n",
-            (var_A2 - var_B2) / var_A2 * 100))
-
-
-#' -------------------------------------------------------------------
-#' ## 6b. Italian residuals — A2 vs. B2 (waves 1-3)
-#' -------------------------------------------------------------------
-#' If the Italian residual decreases from A2 to B2:
-#'   -> UAI accounts for part of Italy's country-specific scepticism.
-#' If the residual persists in B2:
-#'   -> Italy's peculiarity is not captured by the Hofstede UAI dimension;
-#'      country-specific mechanisms (collective memory, SME structure,
-#'      industrial relations) are explored qualitatively in Chapter 6.
-
-cat("\n=== ITALIAN RESIDUALS — A2 vs. B2 (waves 1-3) ===\n")
-
 re_A2 <- ranef(m_A2)$cid
-re_B2 <- ranef(m_B2)$cid
-
 cid_cntry <- unique(d1_123[, c("cid", "cntry")])
 re_A2$cid <- as.integer(rownames(re_A2))
-re_B2$cid <- as.integer(rownames(re_B2))
 re_A2 <- merge(re_A2, cid_cntry, by = "cid")
-re_B2 <- merge(re_B2, cid_cntry, by = "cid")
 names(re_A2)[2] <- "re_A2"
-names(re_B2)[2] <- "re_B2"
+re_A2 <- re_A2[order(re_A2$re_A2), ]
+re_A2$re_A2 <- round(re_A2$re_A2, 3)
 
-re_compare <- merge(re_A2[, c("cntry", "re_A2")],
-                    re_B2[, c("cntry", "re_B2")],
-                    by = "cntry")
-re_compare$change <- re_compare$re_B2 - re_compare$re_A2
-re_compare <- re_compare[order(re_compare$re_A2), ]
+cat("\nRandom effects by country (Model A2, waves 1-3):\n")
+print(re_A2[, c("cntry", "re_A2")])
 
-cat("\nRandom effects by country (A2 vs. B2, waves 1-3):\n")
-re_compare[, c("re_A2", "re_B2", "change")] <-
-  round(re_compare[, c("re_A2", "re_B2", "change")], 3)
-print(re_compare)
-
-it_re <- re_compare[re_compare$cntry == "IT", ]
-cat(sprintf("\n*** ITALY ***\n"))
-cat(sprintf("  Residual Model A2: %+.3f\n", it_re$re_A2))
-cat(sprintf("  Residual Model B2: %+.3f\n", it_re$re_B2))
-cat(sprintf("  Change:            %+.3f\n", it_re$change))
-cat(sprintf("  UAI accounts for %.1f%% of the Italian residual\n",
-            abs(it_re$change / it_re$re_A2) * 100))
+it_re <- re_A2[re_A2$cntry == "IT", ]
+cat(sprintf("\n*** ITALY — Model A2, waves 1-3 ***\n"))
+cat(sprintf("  Random intercept: %+.3f\n", it_re$re_A2))
 
 
 #' -------------------------------------------------------------------
-#' ## 6c. Italian residuals — waves 1-4
+#' ## 5b. Waves 1-4 (rob2item)
 #' -------------------------------------------------------------------
 #' rob2item used as dependent variable for cross-wave comparability.
-cat("\n--- Italian residuals — waves 1-4 (rob2item) ---\n")
+cat("\n--- Italian residual — Model A2 (waves 1-4, rob2item) ---\n")
 
 m_A2_4 <- lmer(rob2item ~ wave + sex + age + educ + white +
                  AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
@@ -487,68 +274,25 @@ m_A2_4 <- lmer(rob2item ~ wave + sex + age + educ + white +
                REML    = FALSE,
                control = lmerControl(optimizer = "nloptwrap"))
 
-m_B2_4 <- lmer(rob2item ~ wave + sex + age + educ + white +
-                 AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG + UAI_z +
-                 (1 | cid),
-               data    = d1,
-               weights = wgt2_norm,
-               REML    = FALSE,
-               control = lmerControl(optimizer = "nloptwrap"))
-
 re_A2_4 <- ranef(m_A2_4)$cid
-re_B2_4 <- ranef(m_B2_4)$cid
 re_A2_4$cid <- as.integer(rownames(re_A2_4))
-re_B2_4$cid <- as.integer(rownames(re_B2_4))
 cid_cntry4 <- unique(d1[, c("cid", "cntry")])
 re_A2_4 <- merge(re_A2_4, cid_cntry4, by = "cid")
-re_B2_4 <- merge(re_B2_4, cid_cntry4, by = "cid")
 names(re_A2_4)[2] <- "re_A2"
-names(re_B2_4)[2] <- "re_B2"
-re_compare4 <- merge(re_A2_4[, c("cntry", "re_A2")],
-                     re_B2_4[, c("cntry", "re_B2")], by = "cntry")
-re_compare4$change <- re_compare4$re_B2 - re_compare4$re_A2
-it_re4 <- re_compare4[re_compare4$cntry == "IT", ]
-cat(sprintf("\n*** ITALY (waves 1-4, rob2item) ***\n"))
-cat(sprintf("  Residual Model A2: %+.3f\n", it_re4$re_A2))
-cat(sprintf("  Residual Model B2: %+.3f\n", it_re4$re_B2))
-cat(sprintf("  Change:            %+.3f\n", it_re4$change))
-if (it_re4$re_A2 != 0) {
-  cat(sprintf("  UAI accounts for %.1f%% of the Italian residual\n",
-              abs(it_re4$change / it_re4$re_A2) * 100))
-}
+it_re4 <- re_A2_4[re_A2_4$cntry == "IT", ]
 
-#' -------------------------------------------------------------------
-#' ## 6d. Variance reduction — A2 vs. B2_multi (waves 1-3)
-#' -------------------------------------------------------------------
-#' How much additional L2 variance do all six Hofstede dimensions explain
-#' beyond the structural G&A predictors?
+cat(sprintf("\n*** ITALY — Model A2, waves 1-4, rob2item ***\n"))
+cat(sprintf("  Random intercept: %+.3f\n",
+            round(it_re4$re_A2, 3)))
 
-m_B2multi <- lmer(rob ~ wave + sex + age + educ + white +
-                    AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
-                    PDI_z + IDV_z + MAS_z + UAI_z + LTO_z + IVR_z +
-                    (1 | cid),
-                  data    = d1_123,
-                  weights = wgt2_norm,
-                  REML    = FALSE,
-                  control = lmerControl(optimizer = "nloptwrap"))
-
-vc_Bm <- as.data.frame(VarCorr(m_B2multi))
-var_Bm <- vc_Bm$vcov[vc_Bm$grp == "cid"]
-res_Bm <- vc_Bm$vcov[vc_Bm$grp == "Residual"]
-cat("\nL2 variance comparison A2 vs. B2_multi (waves 1-3):\n")
-cat(sprintf("  Intercept variance B2_multi: %.4f   ICC: %.4f\n",
-            var_Bm, var_Bm / (var_Bm + res_Bm)))
-cat(sprintf("  Variance reduction vs. A2: %.1f%%  (vs. B2 UAI-only: %.1f%%)\n",
-            (var_A2 - var_Bm) / var_A2 * 100,
-            (var_B2 - var_Bm) / var_A2 * 100))
-
-rm(m_A2, m_B2, m_B2multi, m_A2_4, m_B2_4)
+rm(m_A2, m_A2_4, d1, d1_123,
+   re_A2, re_A2_4, cid_cntry, cid_cntry4, it_re, it_re4)
 
 
 
 
 #' ===================================================================
-#' # 7. Feel items — Model A2 [G&A replication, waves 1-3]
+#' # 6. Feel items — Model A2 [G&A replication, waves 1-3]
 #' ===================================================================
 #' Model A2 replicated for each feel item (G&A Table 4).
 #' Feel items are not available with a comparable scale in wave 4.
@@ -569,7 +313,6 @@ lmer.imp(feel1 ~ wave + sex + age + educ + white +
 cat("\n--- feel2: robots at work ---\n")
 #' feel2 (qa8_3 wave 1 / qa7_2 wave 2 / qd13_2 wave 3) is available and
 #' comparably labelled as "Assisting at work" across all three waves.
-#' The G&A original script includes all three waves without restriction.
 lmer.imp(feel2 ~ wave + sex + age + educ + white +
            AGEOLD + TECHEXP + INVEST + UNEMP + LAT + LONG +
            (1 | cid),
@@ -606,7 +349,7 @@ lmer.imp(feel4 ~ wave + sex + age + educ + white +
 
 
 #' ===================================================================
-#' # 8. Italy focus — within-country regression, wave 4 [EXTENSION]
+#' # 7. Italy focus — within-country regression, wave 4 [EXTENSION]
 #' ===================================================================
 #' Single-country subsample (N ~ 1,037, wave 4).
 #' lmer is not applicable for a single country (L2 = 1 unit).
@@ -626,7 +369,8 @@ cat("[EXTENSION] Italian subsample, wave 4 (N ~ 1,037)\n\n")
 cat("lmer not applicable for a single-country subsample (L2 = 1 unit).\n")
 cat("Weighted lm with Rubin pooling across 20 imputed datasets.\n\n")
 
-#' Helper: pool weighted lm results across a list of imputed datasets
+#' Helper: pool weighted lm results across a list of imputed datasets.
+#' Uses print() to force output in both interactive and knitr contexts.
 pool_lm <- function(dati_list, formula_str, subset_expr, weight_var = "wgt2") {
   results <- lapply(dati_list, function(x) {
     sub <- x[eval(parse(text = subset_expr), envir = x), ]
@@ -639,12 +383,12 @@ pool_lm <- function(dati_list, formula_str, subset_expr, weight_var = "wgt2") {
   uhat <- sapply(results, `[[`, "vcov")
   n    <- mean(sapply(results, `[[`, "n"))
   cat(sprintf("Mean N per imputed dataset: %.0f\n\n", n))
-  testEstimates(qhat = qhat, uhat = uhat)
+  print(testEstimates(qhat = qhat, uhat = uhat))
 }
 
 
 #' -------------------------------------------------------------------
-#' ## 8a. Block 1: sociodemographic predictors
+#' ## 7a. Block 1: sociodemographic predictors
 #' -------------------------------------------------------------------
 cat("--- Block 1: Sociodemographic (sex, age, educ) ---\n")
 pool_lm(dati,
@@ -652,7 +396,7 @@ pool_lm(dati,
         "wave == 4 & cntry == 'IT'")
 
 #' -------------------------------------------------------------------
-#' ## 8b. Block 2: + employment type
+#' ## 7b. Block 2: + employment type
 #' -------------------------------------------------------------------
 cat("\n--- Block 2: + Employment type (white) ---\n")
 pool_lm(dati,
@@ -660,7 +404,7 @@ pool_lm(dati,
         "wave == 4 & cntry == 'IT'")
 
 #' -------------------------------------------------------------------
-#' ## 8c. EU vs. Italy: individual-level effects in wave 4
+#' ## 7c. EU vs. Italy: individual-level effects in wave 4
 #' -------------------------------------------------------------------
 cat("\n--- EU vs. Italy: individual-level effects (wave 4) ---\n")
 cat("(Coefficients standardised by Y)\n")
@@ -677,6 +421,116 @@ cat("\nItaly, wave 4 (rob2item, pooled lm):\n")
 pool_lm(dati,
         "rob2item ~ sex + age + educ + white",
         "wave == 4 & cntry == 'IT'")
+
+
+
+
+#' ===================================================================
+#' # 8. Wave-4 subscale analysis: rob2024_pos and rob2024_neg [EXTENSION]
+#' ===================================================================
+#' Psychometric validation (Script 2_1, Section 3b) rejected the 1-factor
+#' structure for the four-item rob2024 composite (omega < .70; CFI < .95;
+#' RMSEA > .06). A 2-factor CFA supports decomposition into two subscales:
+#'   rob2024_pos = rob2 + rob3, range 0-6: "benefit/utility" dimension
+#'                (social utility of automation + necessity for repetitive tasks)
+#'   rob2024_neg = r24_c + r24_d, range 0-6: "absence-of-threat" dimension
+#'                (items inverted; high = low perceived job-loss risk)
+#'
+#' Both are wave-4-only. The analyses mirror section 7 (Italy focus, wave 4),
+#' producing parallel coefficients for the two dimensions. rob2024 is retained
+#' in section 8e for descriptive comparison and is NOT used in inference.
+#'
+#' Substantive hypothesis [EXTENSION]:
+#'   The occupational fracture (blue-collar effect) may be asymmetric across
+#'   dimensions. Blue-collar workers are hypothesised to show a more negative
+#'   coefficient on rob2024_neg (heightened job-loss threat perception) than
+#'   on rob2024_pos (perceived utility of automation). If confirmed, this
+#'   asymmetry implies that the widely observed occupation gradient in robot
+#'   acceptance operates primarily through the threat dimension, not through
+#'   utility perceptions. Treated as an exploratory hypothesis; not asserted.
+
+cat("\n\n=== WAVE-4 SUBSCALE ANALYSIS: rob2024_pos and rob2024_neg ===\n")
+cat("[EXTENSION] Two-subscale solution; 1-factor model rejected in Script 2_1\n")
+cat("Hypothesis: blue-collar coefficient stronger (more negative) on rob2024_neg\n")
+cat("            than on rob2024_pos — asymmetric occupational fracture.\n\n")
+
+#' -------------------------------------------------------------------
+#' ## 8a. EU27, wave 4 — rob2024_pos (benefit/utility) [EXTENSION]
+#' -------------------------------------------------------------------
+cat("--- EU27, wave 4 (rob2024_pos — benefit/utility, range 0-6) ---\n")
+cat("(Coefficients standardised by Y)\n\n")
+lmer.imp(rob2024_pos ~ sex + age + educ + white + (1 | cid), # [EXTENSION]
+         data    = dati,                                      # [EXTENSION]
+         weights = "wgt2",                                    # [EXTENSION]
+         stdy    = TRUE,                                      # [EXTENSION]
+         stdx    = FALSE,                                     # [EXTENSION]
+         subset  = (dati[[1]]$wave == 4))                     # [EXTENSION]
+
+#' -------------------------------------------------------------------
+#' ## 8b. EU27, wave 4 — rob2024_neg (absence of threat) [EXTENSION]
+#' -------------------------------------------------------------------
+cat("\n--- EU27, wave 4 (rob2024_neg — absence of threat, range 0-6) ---\n")
+cat("(Coefficients standardised by Y)\n\n")
+lmer.imp(rob2024_neg ~ sex + age + educ + white + (1 | cid), # [EXTENSION]
+         data    = dati,                                      # [EXTENSION]
+         weights = "wgt2",                                    # [EXTENSION]
+         stdy    = TRUE,                                      # [EXTENSION]
+         stdx    = FALSE,                                     # [EXTENSION]
+         subset  = (dati[[1]]$wave == 4))                     # [EXTENSION]
+
+cat("\n[Compare 8a vs. 8b: is the blue-collar coefficient",    # [EXTENSION]
+    "larger on rob2024_neg?]\n")                              # [EXTENSION]
+
+#' -------------------------------------------------------------------
+#' ## 8c. Italy, wave 4 — rob2024_pos [EXTENSION]
+#' -------------------------------------------------------------------
+cat("\n--- Italy, wave 4 (rob2024_pos, pooled lm) ---\n")
+pool_lm(dati,                                                # [EXTENSION]
+        "rob2024_pos ~ sex + age + educ + white",            # [EXTENSION]
+        "wave == 4 & cntry == 'IT'")                        # [EXTENSION]
+
+#' -------------------------------------------------------------------
+#' ## 8d. Italy, wave 4 — rob2024_neg [EXTENSION]
+#' -------------------------------------------------------------------
+cat("\n--- Italy, wave 4 (rob2024_neg, pooled lm) ---\n")
+pool_lm(dati,                                                # [EXTENSION]
+        "rob2024_neg ~ sex + age + educ + white",            # [EXTENSION]
+        "wave == 4 & cntry == 'IT'")                        # [EXTENSION]
+
+cat("\n[Compare 8c vs. 8d: Italy-specific asymmetry",          # [EXTENSION]
+    "between threat and utility dimensions?]\n")              # [EXTENSION]
+
+#' -------------------------------------------------------------------
+#' ## 8e. rob2024 retained as descriptive reference [EXTENSION]
+#' -------------------------------------------------------------------
+#' rob2024 (4-item composite, range 0-12) is not used for inferential
+#' conclusions given the rejected 1-factor measurement structure.
+#' The mean comparison below verifies consistency with the subscale findings
+#' and provides a descriptive anchor for the methodological appendix.
+cat("\n--- Descriptive reference: mean comparison wave 4 ---\n") # [EXTENSION]
+cat("  [rob2item 0-6; rob2024 0-12; rob2024_pos/neg 0-6;",      # [EXTENSION]
+    "means as % of range]\n\n")                                  # [EXTENSION]
+for (sub_lbl in c("EU27", "Italy")) {                            # [EXTENSION]
+  mask <- if (sub_lbl == "Italy")                                # [EXTENSION]
+    dati[[1]]$wave == 4 & dati[[1]]$cntry == "IT"               # [EXTENSION]
+  else                                                           # [EXTENSION]
+    dati[[1]]$wave == 4                                          # [EXTENSION]
+  .m2i  <- mean(sapply(dati, function(x)                        # [EXTENSION]
+    mean(x$rob2item[mask],    na.rm = TRUE)))                    # [EXTENSION]
+  .m24  <- mean(sapply(dati, function(x)                        # [EXTENSION]
+    mean(x$rob2024[mask],     na.rm = TRUE)))                    # [EXTENSION]
+  .mpos <- mean(sapply(dati, function(x)                        # [EXTENSION]
+    mean(x$rob2024_pos[mask], na.rm = TRUE)))                    # [EXTENSION]
+  .mneg <- mean(sapply(dati, function(x)                        # [EXTENSION]
+    mean(x$rob2024_neg[mask], na.rm = TRUE)))                    # [EXTENSION]
+  cat(sprintf(                                                   # [EXTENSION]
+    "  %s: rob2item=%.2f(%.0f%%)  rob2024=%.2f(%.0f%%)",        # [EXTENSION]
+    sub_lbl, .m2i, .m2i/6*100, .m24, .m24/12*100))             # [EXTENSION]
+  cat(sprintf(                                                   # [EXTENSION]
+    "  pos=%.2f(%.0f%%)  neg=%.2f(%.0f%%)\n",                   # [EXTENSION]
+    .mpos, .mpos/6*100, .mneg, .mneg/6*100))                    # [EXTENSION]
+}                                                                # [EXTENSION]
+rm(.m2i, .m24, .mpos, .mneg, mask, sub_lbl)                     # [EXTENSION]
 
 
 cat("\nScript 4 complete. Proceed to 5_Plots_extended.R\n")

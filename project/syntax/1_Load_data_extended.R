@@ -10,22 +10,25 @@
 #'
 #' This script adapts the original Gnambs & Appel (2019) code to:
 #'   1. Add wave 4 (EB 101.4 / SP EB 554, 2024)
-#'   2. Add Hofstede UAI as a country-level predictor [EXTENSION]
+#'   2. Add all six Hofstede dimensions as country-level predictors [EXTENSION]
 #'   3. Exclude the United Kingdom (absent from wave 4 post-Brexit)
 #'   4. Prepare the Italian subsample for the Italy focus [EXTENSION]
+#'   5. Derive rob2024, a four-item wave-4-specific composite [EXTENSION]
 #'
 #' Comments marked [G&A] indicate code replicated from the original.
 #' Comments marked [EXTENSION] indicate original contributions of this thesis.
 #'
 #' Methodological note on imputation of composite scores:
-#'   The composites rob (rob1+rob2+rob3) and rob2item (rob1+rob2) are
-#'   treated as passive variables in the MICE algorithm (method = "~ I(...)").
-#'   Passive imputation ensures internal consistency: composites are
-#'   recomputed algebraically from their imputed components after each
-#'   iteration, rather than being imputed independently (which would
-#'   violate the deterministic relationship between items and composites).
-#'   Both composites are excluded from the predictor matrix (column = 0)
-#'   to prevent circularity.
+#'   The composites rob (rob1+rob2+rob3), rob2item (rob1+rob2), and
+#'   rob2024 (rob2+rob3+r24_c+r24_d) are treated as passive variables in
+#'   the MICE algorithm (method = "~ I(...)"). Passive imputation ensures
+#'   internal consistency: composites are recomputed algebraically from
+#'   their imputed components after each iteration, rather than being
+#'   imputed independently (which would violate the deterministic
+#'   relationship between items and composites). All three composites are
+#'   excluded from the predictor matrix (column = 0) to prevent circularity.
+#'   r24_c and r24_d (wave-4-only) are imputed with CART; any values
+#'   imputed for non-wave-4 rows are overwritten with NA post-imputation.
 
 
 #' **Clear workspace**
@@ -223,6 +226,12 @@ names(hof) <- c("cntry", "PDI", "IDV", "MAS", "UAI", "LTO", "IVR")
 
 cntry_data <- merge(cntry_data, hof, by = "cntry", all.x = TRUE)
 
+#' NOTE: Hofstede dimensions are merged into cntry_data and dati for
+#' descriptive and contextual use (e.g., reporting Italy's UAI = 75 in
+#' the written text). They are NOT used as predictors in the final
+#' inferential models. See ./syntax/archive/Hofstede_explorations.R
+#' for the exploratory analyses that justified their exclusion.
+
 #' **Numeric country identifier** [G&A]
 cntry_data$cid <- recodeVar(cntry_data$cntry, isocntry, cid_seq,
                              default = NA)
@@ -385,6 +394,19 @@ dat4$wgt2 <- dat4$w22
 dat4$steal_jobs   <- recodeVar(dat4$qb6_5, 1:4, 3:0, default = NA)
 dat4$careful_mgmt <- recodeVar(dat4$qb6_3, 1:4, 3:0, default = NA)
 
+#' rob2024 component items — wave 4 only [EXTENSION]
+#' These two negative items complement the two positive items (rob2, rob3)
+#' to form the four-item wave-4-specific composite rob2024 (range 0-12).
+#' Negative items are INVERTED so that higher scores indicate more positive
+#' attitudes, consistent with the direction of rob2 and rob3.
+#'
+#' r24_c = qb6_5: "Robots and AI steal jobs from people"
+#'         (1=totally agree -> 0; 4=totally disagree -> 3)
+#' r24_d = qb6_1: "More jobs will disappear than be created"
+#'         (1=totally agree -> 0; 4=totally disagree -> 3)
+dat4$r24_c <- recodeVar(dat4$qb6_5, 1:4, 0:3, default = NA)  # [EXTENSION]
+dat4$r24_d <- recodeVar(dat4$qb6_1, 1:4, 0:3, default = NA)  # [EXTENSION]
+
 
 
 
@@ -392,9 +414,19 @@ dat4$careful_mgmt <- recodeVar(dat4$qb6_3, 1:4, 3:0, default = NA)
 #' # 4. Merge individual and country-level data
 #' ===================================================================
 
+#' r24_c and r24_d are wave-4-only items; initialise as NA for waves 1-3 [EXTENSION]
+#' so that bind_rows can align columns without dropping wave-4 values.
+dat1$r24_c <- NA_real_  # [EXTENSION]
+dat1$r24_d <- NA_real_  # [EXTENSION]
+dat2$r24_c <- NA_real_  # [EXTENSION]
+dat2$r24_d <- NA_real_  # [EXTENSION]
+dat3$r24_c <- NA_real_  # [EXTENSION]
+dat3$r24_d <- NA_real_  # [EXTENSION]
+
 #' [G&A; extended to wave 4, UK excluded, HR correction applied]
 items <- c("cid", "wave",
            paste0("rob", 1:3), paste0("feel", 1:4),
+           "r24_c", "r24_d",                         # [EXTENSION] wave-4-only items
            "married", "age", "sex", "educ", "empl",
            "wgt1", "wgt2")
 
@@ -433,6 +465,31 @@ dat$rob <- rowSums(dat[, paste0("rob", 1:3)])
 #' Used for all longitudinal analyses extending to wave 4, including
 #' cross-wave multilevel models, trajectory plots, and the Italy focus.
 dat$rob2item <- rowSums(dat[, paste0("rob", 1:2)])
+
+#' **Four-item wave-4-only composite** [EXTENSION]
+#' rob2024 = rob2 + rob3 + r24_c + r24_d, range 0-12.
+#' Items: rob2 (qb6_2, positive), rob3 (qb6_4, positive),
+#'        r24_c (qb6_5, negative-inverted), r24_d (qb6_1, negative-inverted).
+#' Structurally NA for waves 1-3 because r24_c and r24_d are absent outside
+#' wave 4. Used as a wave-4-specific robustness check alongside rob2item.
+dat$rob2024 <- ifelse(dat$wave == 4,                          # [EXTENSION]
+                      dat$rob2 + dat$rob3 +                   # [EXTENSION]
+                      dat$r24_c + dat$r24_d,                  # [EXTENSION]
+                      NA_real_)                               # [EXTENSION]
+
+#' **Wave-4 subscales — benefit/utility (pos) and absence-of-threat (neg)** [EXTENSION]
+#' CFA evidence (1-factor: CFI=0.759, RMSEA=0.577) rejects a single composite
+#' and supports two correlated dimensions:
+#'   rob2024_pos = rob2 + rob3, range 0-6: social utility + task necessity
+#'   rob2024_neg = r24_c + r24_d, range 0-6: low perceived job-loss threat
+#'                 (items already inverted; high = favourable attitude)
+#' Both are passive variables in MICE, structurally NA outside wave 4.
+dat$rob2024_pos <- ifelse(dat$wave == 4,                      # [EXTENSION]
+                          dat$rob2 + dat$rob3,                # [EXTENSION]
+                          NA_real_)                           # [EXTENSION]
+dat$rob2024_neg <- ifelse(dat$wave == 4,                      # [EXTENSION]
+                          dat$r24_c + dat$r24_d,              # [EXTENSION]
+                          NA_real_)                           # [EXTENSION]
 
 #' **Unique respondent identifier** [G&A]
 dat$pid <- seq_len(nrow(dat))
@@ -474,6 +531,97 @@ if (file.exists(dat_rdata_path)) {
   cat("  dati:       ", length(dati), "imputed datasets\n")
   cat("  dati_mice:  mice object\n")
 
+  #' **Post-hoc augmentation: add rob2024 if absent from loaded data** [EXTENSION]
+  #' If dat.Rdata was saved before rob2024 was introduced, r24_c, r24_d, and
+  #' rob2024 will be missing from both dat and dati. This block derives them
+  #' from the raw ZA8844 file without re-running MICE.
+  #' Note: r24_c and r24_d are added at their observed values (not re-imputed).
+  #' Full proper imputation is performed when dat.Rdata is regenerated from scratch.
+  if (!("r24_c" %in% names(dat))) {                                         # [EXTENSION]
+    message("Augmenting dat and dati with rob2024 components (post-hoc).")  # [EXTENSION]
+
+    # Re-load wave 4 and re-derive items using the same recoding as above [EXTENSION]
+    dat4_aug <- zap_labels(                                                  # [EXTENSION]
+      read_dta(file.path(RAWDATA_DIR, "ZA8844_v1-0-0.dta")))               # [EXTENSION]
+    dat4_aug$cntry <- recodeVar(trimws(dat4_aug$isocntry),                  # [EXTENSION]
+                                c("DE-E", "DE-W"), c("DE", "DE"))           # [EXTENSION]
+    dat4_aug$cid   <- as.numeric(                                           # [EXTENSION]
+      recodeVar(dat4_aug$cntry, isocntry, cid_seq, default = NA))           # [EXTENSION]
+    dat4_aug$r24_c <- recodeVar(dat4_aug$qb6_5, 1:4, 0:3, default = NA)    # [EXTENSION]
+    dat4_aug$r24_d <- recodeVar(dat4_aug$qb6_1, 1:4, 0:3, default = NA)    # [EXTENSION]
+
+    # Filter to the same rows that entered dat (valid cid only) [EXTENSION]
+    dat4_sub  <- dat4_aug[!is.na(dat4_aug$cid), c("r24_c", "r24_d")]       # [EXTENSION]
+    wave4_idx <- which(dat$wave == 4)                                       # [EXTENSION]
+    stopifnot(length(wave4_idx) == nrow(dat4_sub))                         # [EXTENSION]
+
+    # Augment dat [EXTENSION]
+    dat$r24_c  <- NA_real_                                                  # [EXTENSION]
+    dat$r24_d  <- NA_real_                                                  # [EXTENSION]
+    dat$r24_c[wave4_idx]  <- dat4_sub$r24_c                                # [EXTENSION]
+    dat$r24_d[wave4_idx]  <- dat4_sub$r24_d                                # [EXTENSION]
+    dat$rob2024 <- ifelse(dat$wave == 4,                                    # [EXTENSION]
+                          dat$rob2 + dat$rob3 + dat$r24_c + dat$r24_d,     # [EXTENSION]
+                          NA_real_)                                         # [EXTENSION]
+    dat$rob2024_pos <- ifelse(dat$wave == 4,                               # [EXTENSION]
+                              dat$rob2 + dat$rob3,                         # [EXTENSION]
+                              NA_real_)                                     # [EXTENSION]
+    dat$rob2024_neg <- ifelse(dat$wave == 4,                               # [EXTENSION]
+                              dat$r24_c + dat$r24_d,                       # [EXTENSION]
+                              NA_real_)                                     # [EXTENSION]
+
+    # Build pid-keyed lookup for dati augmentation [EXTENSION]
+    r24_lookup <- data.frame(                                               # [EXTENSION]
+      pid   = dat$pid[dat$wave == 4],                                       # [EXTENSION]
+      r24_c = dat4_sub$r24_c,                                               # [EXTENSION]
+      r24_d = dat4_sub$r24_d,                                               # [EXTENSION]
+      stringsAsFactors = FALSE)                                             # [EXTENSION]
+
+    # Augment each imputed dataset [EXTENSION]
+    for (i in seq_along(dati)) {                                            # [EXTENSION]
+      dati[[i]] <- merge(dati[[i]], r24_lookup, by = "pid", all.x = TRUE)  # [EXTENSION]
+      dati[[i]]$rob2024 <- ifelse(                                          # [EXTENSION]
+        dati[[i]]$wave == 4,                                                # [EXTENSION]
+        dati[[i]]$rob2 + dati[[i]]$rob3 +                                  # [EXTENSION]
+          dati[[i]]$r24_c + dati[[i]]$r24_d,                               # [EXTENSION]
+        NA_real_)                                                           # [EXTENSION]
+      dati[[i]]$rob2024_pos <- ifelse(                                      # [EXTENSION]
+        dati[[i]]$wave == 4,                                                # [EXTENSION]
+        dati[[i]]$rob2 + dati[[i]]$rob3,                                   # [EXTENSION]
+        NA_real_)                                                           # [EXTENSION]
+      dati[[i]]$rob2024_neg <- ifelse(                                      # [EXTENSION]
+        dati[[i]]$wave == 4,                                                # [EXTENSION]
+        dati[[i]]$r24_c + dati[[i]]$r24_d,                                 # [EXTENSION]
+        NA_real_)                                                           # [EXTENSION]
+    }                                                                       # [EXTENSION]
+    dati <- as.mitml.list(dati)                                             # [EXTENSION]
+
+    rm(dat4_aug, dat4_sub, wave4_idx, r24_lookup, i)                       # [EXTENSION]
+    message("Augmentation complete.")                                       # [EXTENSION]
+    save(dat, dati, dati_mice, file = dat_rdata_path)                      # [EXTENSION]
+    cat("  Updated dat.Rdata saved with r24_c, r24_d, rob2024.\n")        # [EXTENSION]
+  } else if (!("rob2024_pos" %in% names(dat))) {                          # [EXTENSION]
+    # r24_c already present but subscales added later — derive directly   # [EXTENSION]
+    message("Augmenting dat and dati with rob2024_pos/neg (post-hoc).")   # [EXTENSION]
+    dat$rob2024_pos <- ifelse(dat$wave == 4,                               # [EXTENSION]
+                              dat$rob2 + dat$rob3, NA_real_)              # [EXTENSION]
+    dat$rob2024_neg <- ifelse(dat$wave == 4,                               # [EXTENSION]
+                              dat$r24_c + dat$r24_d, NA_real_)            # [EXTENSION]
+    for (.i in seq_along(dati)) {                                          # [EXTENSION]
+      dati[[.i]]$rob2024_pos <- ifelse(dati[[.i]]$wave == 4,              # [EXTENSION]
+                                       dati[[.i]]$rob2 + dati[[.i]]$rob3,# [EXTENSION]
+                                       NA_real_)                          # [EXTENSION]
+      dati[[.i]]$rob2024_neg <- ifelse(dati[[.i]]$wave == 4,              # [EXTENSION]
+                                       dati[[.i]]$r24_c + dati[[.i]]$r24_d, # [EXTENSION]
+                                       NA_real_)                          # [EXTENSION]
+    }                                                                      # [EXTENSION]
+    dati <- as.mitml.list(dati)                                            # [EXTENSION]
+    message("Augmentation complete.")                                      # [EXTENSION]
+    save(dat, dati, dati_mice, file = dat_rdata_path)                     # [EXTENSION]
+    cat("  Updated dat.Rdata saved with rob2024_pos, rob2024_neg.\n")     # [EXTENSION]
+    rm(.i)                                                                 # [EXTENSION]
+  }
+
 } else {
 
   #' **Select variables for imputation** [G&A; rob2item added]
@@ -483,9 +631,12 @@ if (file.exists(dat_rdata_path)) {
   items_imp <- c("pid", "cid",
                  paste0("rob", 1:3),
                  paste0("feel", 1:4),
+                 "r24_c", "r24_d",                # [EXTENSION] wave-4-only items
                  "sex", "age", "educ",
                  "white", "wave", "wgt1", "wgt2",
-                 "rob", "rob2item")   # passive composites — visited last
+                 "rob", "rob2item",                # passive composites
+                 "rob2024",                        # [EXTENSION] wave-4 four-item composite
+                 "rob2024_pos", "rob2024_neg")     # [EXTENSION] wave-4 subscales — visited last
 
   d <- dat[, items_imp]
   d$white <- as.factor(d$white)
@@ -501,14 +652,20 @@ if (file.exists(dat_rdata_path)) {
   #' derived composites (rob, rob2item) are excluded from the predictor
   #' matrix: they are neither imputed actively nor used as predictors.
   ini$predictorMatrix[c("pid", "cid", "wave", "wgt1", "wgt2",
-                         "rob", "rob2item"), items_imp] <- 0
+                         "rob", "rob2item", "rob2024",
+                         "rob2024_pos", "rob2024_neg"), items_imp] <- 0  # [EXTENSION]
   ini$predictorMatrix[items_imp, c("pid", "cid", "wave", "wgt1", "wgt2",
-                                     "rob", "rob2item")] <- 0
+                                     "rob", "rob2item", "rob2024",
+                                     "rob2024_pos", "rob2024_neg")] <- 0  # [EXTENSION]
 
   #' **Imputation methods** [G&A; passive method for composites]
-  ini$method[c(paste0("rob", 1:3), paste0("feel", 1:4), "educ")] <- "cart"
-  ini$method["rob"]      <- "~ I(rob1 + rob2 + rob3)"  # passive: sum of items
-  ini$method["rob2item"] <- "~ I(rob1 + rob2)"          # passive: 2-item comparable composite
+  ini$method[c(paste0("rob", 1:3), paste0("feel", 1:4),
+              "educ", "r24_c", "r24_d")] <- "cart"  # [EXTENSION] r24_c, r24_d added
+  ini$method["rob"]         <- "~ I(rob1 + rob2 + rob3)"
+  ini$method["rob2item"]    <- "~ I(rob1 + rob2)"
+  ini$method["rob2024"]     <- "~ I(rob2 + rob3 + r24_c + r24_d)"  # [EXTENSION]
+  ini$method["rob2024_pos"] <- "~ I(rob2 + rob3)"                  # [EXTENSION]
+  ini$method["rob2024_neg"] <- "~ I(r24_c + r24_d)"                # [EXTENSION]
 
   #' **Run imputation** [G&A]
   cat("\nRunning MICE (m = 20; this may take several minutes)...\n")
@@ -535,6 +692,14 @@ if (file.exists(dat_rdata_path)) {
       dati[[i]]$feel2[dati[[i]]$wave == 4] <- NA
       dati[[i]]$feel3[dati[[i]]$wave == 4] <- NA
       dati[[i]]$feel4[dati[[i]]$wave == 4] <- NA
+
+      # r24_c, r24_d and wave-4 composites are structurally absent outside wave 4 [EXTENSION]
+      # MICE may have imputed values for earlier waves; overwrite with NA.
+      dati[[i]]$r24_c[dati[[i]]$wave != 4]       <- NA  # [EXTENSION]
+      dati[[i]]$r24_d[dati[[i]]$wave != 4]       <- NA  # [EXTENSION]
+      dati[[i]]$rob2024[dati[[i]]$wave != 4]     <- NA  # [EXTENSION]
+      dati[[i]]$rob2024_pos[dati[[i]]$wave != 4] <- NA  # [EXTENSION]
+      dati[[i]]$rob2024_neg[dati[[i]]$wave != 4] <- NA  # [EXTENSION]
 
       # Merge country-level data
       dati[[i]] <- merge(dati[[i]], cntry_long, by = c("cid", "wave"), all.x = TRUE)
@@ -601,6 +766,34 @@ cat("\nConsistency check — rob2item == rob1 + rob2 (wave 4, unimputed):\n")
 sub4 <- dat[dat$wave == 4 & !is.na(dat$rob2item) & !is.na(dat$rob1) & !is.na(dat$rob2), ]
 ok <- all(sub4$rob2item == sub4$rob1 + sub4$rob2)
 cat(sprintf("  Consistent: %s\n", ok))
+
+#' **Check rob2024 consistency and missingness** [EXTENSION]
+cat("\nConsistency check — rob2024 == rob2+rob3+r24_c+r24_d (wave 4):\n")
+sub24 <- dat[dat$wave == 4 &
+             !is.na(dat$rob2024) & !is.na(dat$rob2) &
+             !is.na(dat$rob3)    & !is.na(dat$r24_c) & !is.na(dat$r24_d), ]
+ok24 <- all(sub24$rob2024 == sub24$rob2 + sub24$rob3 + sub24$r24_c + sub24$r24_d)
+cat(sprintf("  Consistent: %s\n", ok24))
+n4_rob2024 <- sum(!is.na(dat$rob2024[dat$wave == 4]))
+n4_total   <- sum(dat$wave == 4)
+cat(sprintf("  Non-missing in wave 4: %d / %d (%.1f%%)\n",
+            n4_rob2024, n4_total, 100 * n4_rob2024 / n4_total))
+cat(sprintf("  rob2024 is NA for waves 1-3: %s\n",
+            all(is.na(dat$rob2024[dat$wave != 4]))))
+
+#' **Check rob2024 decomposition: rob2024 == rob2024_pos + rob2024_neg** [EXTENSION]
+cat("\nConsistency check — rob2024 == rob2024_pos + rob2024_neg (wave 4):\n")
+if (all(c("rob2024_pos", "rob2024_neg") %in% names(dat))) {     # [EXTENSION]
+  .sub_dec <- dat[dat$wave == 4 & !is.na(dat$rob2024) &         # [EXTENSION]
+                    !is.na(dat$rob2024_pos) &                    # [EXTENSION]
+                    !is.na(dat$rob2024_neg), ]                   # [EXTENSION]
+  cat(sprintf("  Consistent: %s\n",                             # [EXTENSION]
+              all(.sub_dec$rob2024 ==                           # [EXTENSION]
+                    .sub_dec$rob2024_pos + .sub_dec$rob2024_neg))) # [EXTENSION]
+  rm(.sub_dec)                                                   # [EXTENSION]
+} else {                                                         # [EXTENSION]
+  cat("  (rob2024_pos/neg absent — will be created on next run)\n") # [EXTENSION]
+}                                                                # [EXTENSION]
 
 #' **UAI values present**
 cat("\nUAI snapshot (first 5 rows, wave 4):\n")
