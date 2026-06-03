@@ -210,7 +210,6 @@ wmsd <- function(x, w) {                                       # [EXTENSION]
 #' ===================================================================
 #' Weighted proportions at each count value (0-6).
 #' Italy in col_italy, EU27 in col_eu.
-#' Vertical lines = weighted means.
 
 cat("\n=== FIGURE 17: ai_exposure_2024 DISTRIBUTION ===\n")
 
@@ -224,21 +223,11 @@ prop_tbl <- do.call(rbind, lapply(c("Italy","EU27"), function(grp) { # [EXTENSIO
   data.frame(group = grp, count = counts, prop = props,              # [EXTENSION]
              mean  = weighted.mean(sub$ai_exposure_2024, sub$wgt2))  # [EXTENSION]
 }))                                                                    # [EXTENSION]
-prop_tbl$group <- factor(prop_tbl$group, levels = c("EU27","Italy"))
-
-mean_lbl <- unique(prop_tbl[, c("group","mean")])
 
 p17 <- ggplot(prop_tbl, aes(x = factor(count), y = prop,            # [EXTENSION]
                               fill = group, colour = group)) +        # [EXTENSION]
   geom_col(position = position_dodge(0.85), width = 0.78,            # [EXTENSION]
            alpha = 0.82, colour = "white") +                          # [EXTENSION]
-  geom_vline(data = mean_lbl,                                         # [EXTENSION]
-             aes(xintercept = mean + 1, colour = group),              # [EXTENSION]
-             linetype = "dashed", linewidth = 0.9) +                  # [EXTENSION]
-  geom_text(data = mean_lbl,                                          # [EXTENSION]
-            aes(x = mean + 1 + 0.15, y = 0.38,                       # [EXTENSION]
-                label = sprintf("Mean\n%.2f", mean), colour = group), # [EXTENSION]
-            size = 3.2, hjust = 0, fontface = "bold") +               # [EXTENSION]
   scale_fill_manual(values = c(EU27 = col_eu, Italy = col_italy),     # [EXTENSION]
                     name = NULL) +                                     # [EXTENSION]
   scale_colour_manual(values = c(EU27 = col_eu, Italy = col_italy),   # [EXTENSION]
